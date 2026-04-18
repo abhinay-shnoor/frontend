@@ -6,8 +6,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Upload a file buffer (from multer memoryStorage) to Cloudinary.
-// Returns the public secure URL.
 const uploadBuffer = (buffer, options = {}) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
