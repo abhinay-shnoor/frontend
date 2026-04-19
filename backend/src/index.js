@@ -10,6 +10,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
+const calendarRoutes = require('./routes/calendar.routes');
 
 const passport = require('./config/passport');
 const pool = require('./config/db');
@@ -84,6 +85,7 @@ app.use('/api/spaces', apiLimiter, spacesRoutes);
 app.use('/api', apiLimiter, messagesRoutes);
 app.use('/api/users', apiLimiter, usersRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/calendar', apiLimiter, calendarRoutes);
 
 app.get('/', (req, res) => res.send('SHNOOR Workspace API running'));
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

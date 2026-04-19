@@ -148,14 +148,6 @@ function HelpDropdown({ onClose, onGoToContact }) {
           </div>
         ))}
       </div>
-      <div style={{ padding: '10px 16px', borderTop: '0.5px solid var(--ws-border)' }}>
-        <button
-          onClick={() => { onClose(); onGoToContact?.(); }}
-          style={{ fontSize: 12, color: '#0D9488', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          Contact support →
-        </button>
-      </div>
     </div>
   );
 }

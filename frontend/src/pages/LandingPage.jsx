@@ -315,14 +315,14 @@ function About() {
             </p>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: "🔒", label: "Privacy First" },
-                { icon: "⚡", label: "Built for Speed" },
+                { icon: null, label: "Privacy First" },
+                { icon: null, label: "Built for Speed" },
               ].map(item => (
                 <div
                   key={item.label}
                   className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"}`}
                 >
-                  <span className="text-xl">{item.icon}</span>
+              
                   <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{item.label}</span>
                 </div>
               ))}
@@ -516,15 +516,15 @@ function Contact() {
 
           <div className="grid grid-cols-2 gap-4 mt-6">
             {[
-              { icon: "📧", label: "Email", value: "hello@shnoor.com" },
-              { icon: "📍", label: "Location", value: "UAE & Worldwide" },
+              { label: "Email", value: "hello@shnoor.com" },
+              { label: "Location", value: "UAE & Worldwide" },
             ].map(item => (
               <div
                 key={item.label}
                 className={`flex items-center gap-3 p-4 rounded-xl border ${isDark ? "bg-gray-900 border-white/10" : "bg-white border-gray-100"
                   }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                
                 <div>
                   <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{item.label}</div>
                   <div className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{item.value}</div>

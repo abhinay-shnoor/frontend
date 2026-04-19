@@ -32,8 +32,8 @@ function AttachmentPreview({ attachments }) {
             fontSize: 12, color: '#1a73e8', border: '0.5px solid var(--ws-border)',
           }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
             </svg>
             {a.name}
           </a>
@@ -48,9 +48,9 @@ function MessageBubble({
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
   isDeleting, onDeleteConfirm, onDeleteCancel, onReply,
 }) {
-  const [hovered, setHovered]     = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const isOwn     = msg.senderId === currentUserId;
+  const isOwn = msg.senderId === currentUserId;
   const reactions = groupReactions(msg.reactions);
 
   return (
@@ -169,24 +169,35 @@ function MessageBubble({
         {/* Action bar — floats above bubble on hover */}
         {hovered && !isEditing && !isDeleting && (
           <div style={{
-            position: 'absolute', [isOwn ? 'left' : 'right']: 0, top: -36,
-            display: 'flex', gap: 2,
-            background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)',
-            borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 2, zIndex: 10,
+            position: 'absolute', right: 20, top: 4,
+            display: 'flex', gap: 2, background: '#fff',
+            border: '1px solid #e5e7eb', borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 2,
           }}>
             <div style={{ position: 'relative' }}>
-              <ActionBtn title="React" onClick={() => setShowPicker(p => !p)}>😊</ActionBtn>
+              <ActionBtn title="React" onClick={() => setShowPicker(prev => !prev)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
+                </svg>
+              </ActionBtn>
               {showPicker && (
                 <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 4, zIndex: 100 }}>
-                  <EmojiPicker onSelect={emoji => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
+                  <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
                 </div>
               )}
             </div>
-            <ActionBtn title="Reply" onClick={() => onReply(msg)}>↩</ActionBtn>
             {isOwn && (
               <>
-                <ActionBtn title="Edit"   onClick={() => onEdit(msg.id, msg.text)}>✏️</ActionBtn>
-                <ActionBtn title="Delete" onClick={() => onDelete(msg.id)}>🗑️</ActionBtn>
+                <ActionBtn title="Edit" onClick={() => onEdit(msg.id, msg.text)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </ActionBtn>
+                <ActionBtn title="Delete" onClick={() => onDelete(msg.id)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </ActionBtn>
               </>
             )}
           </div>
@@ -325,8 +336,8 @@ export default function ChatArea({
   const [pendingFiles, setPendingFiles] = useState([]); // [{url, name, type, size}]
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  const bottomRef    = useRef(null);
-  const inputRef     = useRef(null);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
   const typingTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const searchTimerRef = useRef(null);
@@ -354,7 +365,7 @@ export default function ChatArea({
       try {
         const results = await searchMessages(searchQuery.trim(), spaceId || null);
         setSearchResults(results);
-      } catch {}
+      } catch { }
       setSearchLoading(false);
     }, 350);
     return () => clearTimeout(searchTimerRef.current);
@@ -385,7 +396,7 @@ export default function ChatArea({
 
   const handleMentionSelect = (user) => {
     const before = input.slice(0, mentionStartPos);
-    const after  = input.slice(mentionStartPos + 1 + mentionSearch.length);
+    const after = input.slice(mentionStartPos + 1 + mentionSearch.length);
     setInput(`${before}@${user.name} ${after}`);
     setShowMentionDropdown(false);
     setMentionStartPos(-1);
@@ -440,12 +451,12 @@ export default function ChatArea({
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--ws-bg)' }}>
         <svg viewBox="0 0 200 180" fill="none" style={{ width: 160, height: 140, marginBottom: 20, opacity: 0.5 }}>
-          <rect x="65" y="20" width="80" height="110" rx="8" fill="var(--ws-surface-2)" stroke="var(--ws-border)" strokeWidth="2"/>
-          <rect x="80" y="45" width="50" height="4" rx="2" fill="var(--ws-border)"/>
-          <rect x="80" y="57" width="40" height="4" rx="2" fill="var(--ws-border)"/>
-          <rect x="80" y="69" width="45" height="4" rx="2" fill="var(--ws-border)"/>
-          <circle cx="55" cy="140" r="18" fill="#0D9488" opacity="0.7"/>
-          <path d="M48 140l5 5 9-9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <rect x="65" y="20" width="80" height="110" rx="8" fill="var(--ws-surface-2)" stroke="var(--ws-border)" strokeWidth="2" />
+          <rect x="80" y="45" width="50" height="4" rx="2" fill="var(--ws-border)" />
+          <rect x="80" y="57" width="40" height="4" rx="2" fill="var(--ws-border)" />
+          <rect x="80" y="69" width="45" height="4" rx="2" fill="var(--ws-border)" />
+          <circle cx="55" cy="140" r="18" fill="#0D9488" opacity="0.7" />
+          <path d="M48 140l5 5 9-9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </svg>
         <p style={{ fontSize: 16, color: 'var(--ws-text)', fontWeight: 600, margin: '0 0 6px' }}>No conversation selected</p>
         <p style={{ fontSize: 14, color: 'var(--ws-text-muted)' }}>Select a space or DM to start</p>
@@ -472,12 +483,36 @@ export default function ChatArea({
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setSearchResults([]); }} style={iconBtn(showSearch)}>🔍 Search</button>
+            <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setSearchResults([]); }} style={iconBtn(showSearch)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              Search
+            </button>
             {memberCount && (
-              <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>👥 Members</button>
+              <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Members
+              </button>
             )}
-            <button onClick={onToggleMaximize} style={iconBtn(false)} title={isMaximized ? 'Restore' : 'Expand'}>{isMaximized ? '⊡' : '⊞'}</button>
-            <button onClick={onClose} style={{ ...iconBtn(false), color: 'var(--ws-text-muted)' }}>✕</button>
+            <button onClick={onToggleMaximize} style={iconBtn(false)} title={isMaximized ? 'Restore' : 'Expand'}>
+              {isMaximized ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="21" y2="3"/><line x1="3" y1="21" x2="14" y2="10"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              )}
+            </button>
+            <button onClick={onClose} style={{ ...iconBtn(false), color: 'var(--ws-text-muted)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -582,7 +617,7 @@ export default function ChatArea({
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: 12, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}
-            onFocus={() => {}} onBlur={() => {}}
+            onFocus={() => { }} onBlur={() => { }}
           >
             {/* File attachment button */}
             <button
@@ -617,7 +652,7 @@ export default function ChatArea({
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
             </button>
           </div>
         </div>
