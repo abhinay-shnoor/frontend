@@ -14,10 +14,8 @@ export const searchMessages = (q, spaceId = null) => {
 };
 
 // cursor = ISO timestamp of the oldest conversation for pagination
-export const getDMConversations = (cursor = null) => {
-  const params = cursor ? `?cursor=${encodeURIComponent(cursor)}&limit=20` : '?limit=20';
-  return api.get(`/api/dm/conversations${params}`).then(r => r.data);
-};
+export const getDMConversations = () =>
+  api.get('/api/dm/conversations').then(r => r.data);
 
 // Fetch threaded replies for a parent message
 export const getThreadReplies = (msgId) =>

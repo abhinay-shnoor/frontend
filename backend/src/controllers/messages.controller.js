@@ -304,34 +304,29 @@ exports.sendDMMessage = async (req, res) => {
 
 exports.getDMConversations = async (req, res) => {
   const userId = req.user.id;
-  const limit  = Math.min(parseInt(req.query.limit) || 20, 50);
-  const cursor = req.query.cursor; // ISO timestamp for pagination
-
   try {
-    const cursorClause = cursor ? `AND COALESCE(lm.created_at, dc.created_at) < '${cursor}'` : '';
     const result = await pool.query(`
       SELECT
         dc.id AS conversation_id,
         CASE WHEN dc.user_one_id=$1 THEN dc.user_two_id ELSE dc.user_one_id END AS other_user_id,
-        ou.name      AS other_user_name,
+        ou.name       AS other_user_name,
         ou.avatar_url AS other_user_avatar,
-        ou.email     AS other_user_email,
-        lm.content   AS last_message,
+        ou.email      AS other_user_email,
+        lm.content    AS last_message,
         lm.created_at AS last_message_at,
         lm.sender_id  AS last_message_sender_id,
-        su.name      AS last_message_sender_name
+        su.name       AS last_message_sender_name
       FROM direct_conversations dc
       JOIN users ou ON ou.id = CASE WHEN dc.user_one_id=$1 THEN dc.user_two_id ELSE dc.user_one_id END
       LEFT JOIN LATERAL (
         SELECT content, created_at, sender_id FROM messages
-        WHERE conversation_id=dc.id ORDER BY created_at DESC LIMIT 1
+        WHERE conversation_id = dc.id ORDER BY created_at DESC LIMIT 1
       ) lm ON true
       LEFT JOIN users su ON su.id = lm.sender_id
-      WHERE (dc.user_one_id=$1 OR dc.user_two_id=$1) ${cursorClause}
+      WHERE dc.user_one_id=$1 OR dc.user_two_id=$1
       ORDER BY COALESCE(lm.created_at, dc.created_at) DESC NULLS LAST
-      LIMIT $2
-    `, [userId, limit]);
-    res.json({ conversations: result.rows, hasMore: result.rows.length === limit });
+    `, [userId]);
+    res.json(result.rows);
   } catch (err) {
     console.error('getDMConversations error:', err);
     res.status(500).json({ message: 'Failed to fetch DM conversations' });
