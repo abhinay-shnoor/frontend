@@ -6,6 +6,7 @@ import { ToastProvider, useToast } from './context/ToastContext.jsx';
 import AdminApp from './Admin/AdminApp.jsx';
 import ProfileSettingsModal from './components/ui/ProfileSettingsModal.jsx';
 import ChatSettingsModal from './components/ui/ChatSettingsModal.jsx';
+import { getSpaces, getSpaceMessages, sendSpaceMessage, editSpaceMessage, deleteSpaceMessage, getSpaceMembers } from './api/spaces.js';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -45,34 +46,35 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     avatar_url: user.avatar_url,
   };
 
-  const [spaces, setSpaces]           = useState([]);
-  const [allUsers, setAllUsers]       = useState([]);
+  const [spaces, setSpaces] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [dmConversations, setDmConversations] = useState([]);
   const [activeSpace, setActiveSpace] = useState(null);
-  const [activeDM, setActiveDM]       = useState(null);
-  const [activeView, setActiveView]   = useState('home');
-  const [messages, setMessages]       = useState([]);
+  const [activeDM, setActiveDM] = useState(null);
+  const [activeView, setActiveView] = useState('home');
+  const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const [hasMore, setHasMore]         = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [spaceMembers, setSpaceMembers] = useState([]);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
-  const [showChatSettings, setShowChatSettings]       = useState(false);
+  const [showChatSettings, setShowChatSettings] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentStatus, setCurrentStatus] = useState('active');
-  const [isMaximized, setIsMaximized]   = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [navSearchQuery, setNavSearchQuery] = useState('');
-  const [typingUsers, setTypingUsers]   = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
 
   useEffect(() => {
     getSpaces().then(setSpaces).catch(() => showToast('Failed to load spaces', 'error'));
-    getAllUsers().then(setAllUsers).catch(() => {});
-    getDMConversations().then(setDmConversations).catch(() => {});
+    getAllUsers().then(setAllUsers).catch(() => { });
+    getDMConversations().then(setDmConversations).catch(() => { });
   }, []);
 
   useEffect(() => {
     if (!connected) return;
     return onDMPreviewUpdated(() => {
-      getDMConversations().then(setDmConversations).catch(() => {});
+      getDMConversations().then(setDmConversations).catch(() => { });
     });
   }, [connected]);
 
@@ -181,38 +183,47 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     color: '#0D9488', online: onlineUsers.has(u.id),
   }));
 
-  const handleSelectSpace = (space) => { setActiveSpace(space); setActiveDM(null); setActiveView('space'); };
-  const handleSelectDM    = (dmUser) => { setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null); };
-  const handleBackToHome  = () => { setActiveSpace(null); setActiveDM(null); setActiveView('home'); setIsMaximized(false); setMessages([]); setTypingUsers([]); };
+  const handleSelectSpace = async (space) => {
+    setActiveSpace(space); setActiveDM(null); setActiveView('space');
+    setSpaceMembers([]);
+    // Fetch real members for this space so the Members panel works
+    try {
+      const members = await getSpaceMembers(space.id);
+      setSpaceMembers(members);
+    } catch { setSpaceMembers([]); }
+  };
+  const handleSelectDM = (dmUser) => { setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null); };
+  const handleBackToHome = () => {
+  setActiveSpace(null); setActiveDM(null);
+  setActiveView('home'); setIsMaximized(false);
+  setMessages([]); setTypingUsers([]); setSpaceMembers([]);
+};
 
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
     try {
       if (activeView === 'space' && activeSpace) await sendSpaceMessage(activeSpace.id, text);
-      else if (activeView === 'dm' && activeDM)  await sendDMMessage(activeDM.id, text);
+      else if (activeView === 'dm' && activeDM) await sendDMMessage(activeDM.id, text);
     } catch { showToast('Failed to send message', 'error'); }
   };
 
-  // Optimistic update: update state immediately after the API call succeeds.
-  // Also listen for the socket broadcast so other users in the room see the change.
-  // This dual approach ensures the sender always sees the change even if the socket
-  // event is delayed or dropped.
+
   const handleEditMessage = async (msgId, content) => {
     if (!activeSpace) return;
     try {
       await editSpaceMessage(activeSpace.id, msgId, content);
-      // Immediately reflect the edit for the sender without waiting for socket
+      // Update locally immediately — don't rely on socket
       setMessages(prev => prev.map(m =>
         m.id === msgId ? { ...m, text: content, is_edited: true } : m
       ));
     } catch { showToast('Failed to edit message', 'error'); }
   };
 
-  // Same pattern for delete — remove from state immediately so the UI is responsive
   const handleDeleteMessage = async (msgId) => {
     if (!activeSpace) return;
     try {
       await deleteSpaceMessage(activeSpace.id, msgId);
+      // Remove locally immediately — don't rely on socket
       setMessages(prev => prev.filter(m => m.id !== msgId));
     } catch { showToast('Failed to delete message', 'error'); }
   };
@@ -237,7 +248,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     try {
       let data;
       if (activeView === 'space' && activeSpace) data = await getSpaceMessages(activeSpace.id, oldest.created_at || oldest.time);
-      else if (activeView === 'dm' && activeDM)   data = await getDMMessages(activeDM.id, oldest.created_at);
+      else if (activeView === 'dm' && activeDM) data = await getDMMessages(activeDM.id, oldest.created_at);
       if (data?.messages) { setMessages(prev => [...data.messages.map(formatMsg), ...prev]); setHasMore(data.hasMore || false); }
     } catch { showToast('Failed to load more messages', 'error'); }
   };
@@ -247,7 +258,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     else if (activeView === 'dm' && activeDMConversationId) emitTyping('dm', activeDMConversationId, user.name, isTyping);
   };
 
-  const chatTitle   = activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || '';
+  const chatTitle = activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || '';
   const memberCount = activeView === 'space' && activeSpace ? activeSpace.memberCount : null;
 
   return (
@@ -279,7 +290,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
             activeView={activeView}
             onHomeClick={handleBackToHome}
             onMentionsClick={() => { setActiveSpace(null); setActiveDM(null); setActiveView('mentions'); setIsMaximized(false); }}
-            onCreateSpace={() => {}}
+            onCreateSpace={() => { }}
             allSpaces={formattedSpaces}
             currentUser={currentUser}
             dmUsers={dmUsers}
@@ -314,7 +325,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
               onClose={handleBackToHome}
               isMaximized={isMaximized}
               onToggleMaximize={() => setIsMaximized(prev => !prev)}
-              spaceMembers={activeSpace?.members || []}
+              spaceMembers={spaceMembers}
               currentUserId={user.id}
               onEditMessage={handleEditMessage}
               onDeleteMessage={handleDeleteMessage}
@@ -334,7 +345,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         )}
       </div>
       {showProfileSettings && <ProfileSettingsModal onClose={() => setShowProfileSettings(false)} />}
-      {showChatSettings    && <ChatSettingsModal    onClose={() => setShowChatSettings(false)} />}
+      {showChatSettings && <ChatSettingsModal onClose={() => setShowChatSettings(false)} />}
     </div>
   );
 }
@@ -362,10 +373,10 @@ function AppRouter() {
   }
 
   if (user) return <WorkspaceRoot user={user} onSignOut={handleSignOut} />;
-  if (page === 'login')    return <LoginPage    onNavigate={navigate} />;
-  if (page === 'privacy')  return <PrivacyPolicyPage onNavigate={navigate} />;
-  if (page === 'terms')    return <TermsPage    onNavigate={navigate} />;
-  if (page === 'cookie')   return <CookiePolicyPage onNavigate={navigate} />;
+  if (page === 'login') return <LoginPage onNavigate={navigate} />;
+  if (page === 'privacy') return <PrivacyPolicyPage onNavigate={navigate} />;
+  if (page === 'terms') return <TermsPage onNavigate={navigate} />;
+  if (page === 'cookie') return <CookiePolicyPage onNavigate={navigate} />;
   if (page === 'security') return <SecurityPage onNavigate={navigate} />;
   return <LandingPage onNavigate={navigate} />;
 }
