@@ -11,15 +11,15 @@ import {
 } from "../../api/calendar.js";
 
 export const indianHolidays = {
-  "1-1":  "New Year's Day",
+  "1-1": "New Year's Day",
   "1-26": "Republic Day",
   "3-14": "Holi",
   "4-14": "Ambedkar Jayanti",
-  "5-1":  "Labour Day",
+  "5-1": "Labour Day",
   "8-15": "Independence Day",
   "10-2": "Gandhi Jayanti",
-  "10-19":"Diwali",
-  "12-25":"Christmas Day"
+  "10-19": "Diwali",
+  "12-25": "Christmas Day"
 };
 
 export default function CalendarView({ isSidebarOpen, navSearchQuery }) {
@@ -44,7 +44,7 @@ export default function CalendarView({ isSidebarOpen, navSearchQuery }) {
           completed: t.completed,
         })));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -80,14 +80,14 @@ export default function CalendarView({ isSidebarOpen, navSearchQuery }) {
     try {
       await apiDeleteTask(id);
       setTasks(prev => prev.filter(t => t.id !== id));
-    } catch {}
+    } catch { }
   };
 
   // Search logic (tasks + holidays)
   const query = (navSearchQuery || "").toLowerCase().trim();
   let searchResults = null;
   if (query.length > 0) {
-    const matchingTasks    = tasks.filter(t => t.title.toLowerCase().includes(query));
+    const matchingTasks = tasks.filter(t => t.title.toLowerCase().includes(query));
     const matchingHolidays = Object.entries(indianHolidays).filter(([_, name]) => name.toLowerCase().includes(query));
     searchResults = (
       <div className="absolute top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-md max-h-[300px] overflow-y-auto">
@@ -112,11 +112,11 @@ export default function CalendarView({ isSidebarOpen, navSearchQuery }) {
               <h4 className="text-[13px] font-medium text-[#ea4335] mb-1">Holidays</h4>
               {matchingHolidays.map(([key, name]) => {
                 const [m, d] = key.split('-');
-                const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 return (
                   <div key={key} className="py-1 px-2 hover:bg-gray-50 text-[14px] flex justify-between cursor-pointer">
                     <span>{name}</span>
-                    <span className="text-gray-500 text-[12px]">{monthNames[parseInt(m)-1]} {d}</span>
+                    <span className="text-gray-500 text-[12px]">{monthNames[parseInt(m) - 1]} {d}</span>
                   </div>
                 );
               })}
@@ -128,42 +128,58 @@ export default function CalendarView({ isSidebarOpen, navSearchQuery }) {
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden relative">
-      {searchResults}
+    <div className="flex flex-col flex-1 overflow-hidden relative">
+      {/* Back to chat bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderBottom: '1px solid #e5e7eb', background: '#fff', flexShrink: 0 }}>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('calendar:back'))}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#5f6368', fontWeight: 500, padding: '4px 8px', borderRadius: 6 }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f1f3f4'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Back to Chat
+        </button>
+      </div>
+      <div className="flex flex-1 overflow-hidden relative">
+        {searchResults}
 
-      <CalendarSidebar
-        isOpen={isSidebarOpen}
-        onAddTask={() => setIsModalOpen(true)}
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        indianHolidays={indianHolidays}
-      />
-
-      {viewMode === "Tasks" ? (
-        <TasksList
-          tasks={tasks}
-          loading={loading}
-          toggleTaskCompletion={toggleTaskCompletion}
-          deleteTask={deleteTask}
-          onViewCalendar={() => setViewMode("Month")}
-        />
-      ) : (
-        <CalendarMain
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
+        <CalendarSidebar
+          isOpen={isSidebarOpen}
+          onAddTask={() => setIsModalOpen(true)}
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
-          tasks={tasks}
           indianHolidays={indianHolidays}
         />
-      )}
 
-      {isModalOpen && (
-        <AddTaskModal
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleAddTask}
-        />
-      )}
-    </div>
-  );
+        {viewMode === "Tasks" ? (
+          <TasksList
+            tasks={tasks}
+            loading={loading}
+            toggleTaskCompletion={toggleTaskCompletion}
+            deleteTask={deleteTask}
+            onViewCalendar={() => setViewMode("Month")}
+          />
+        ) : (
+          <CalendarMain
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            currentDate={currentDate}
+            setCurrentDate={setCurrentDate}
+            tasks={tasks}
+            indianHolidays={indianHolidays}
+          />
+        )}
+
+        {isModalOpen && (
+          <AddTaskModal
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleAddTask}
+          />
+        )}
+      </div>
+        </div>
+      );
 }

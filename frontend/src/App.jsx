@@ -63,6 +63,17 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
 
+  // Listen for the calendar back button event from CalendarView
+  useEffect(() => {
+    const handleCalendarBack = () => {
+      setActiveView('home');
+      setActiveSpace(null);
+      setActiveDM(null);
+    };
+    window.addEventListener('calendar:back', handleCalendarBack);
+    return () => window.removeEventListener('calendar:back', handleCalendarBack);
+  }, []);
+
   useEffect(() => {
     getSpaces().then(setSpaces).catch(() => showToast('Failed to load spaces', 'error'));
     getAllUsers().then(setAllUsers).catch(() => { });
@@ -192,10 +203,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
   const handleSelectDM = (dmUser) => { setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null); };
   const handleBackToHome = () => {
-  setActiveSpace(null); setActiveDM(null);
-  setActiveView('home'); setIsMaximized(false);
-  setMessages([]); setTypingUsers([]); setSpaceMembers([]);
-};
+    setActiveSpace(null); setActiveDM(null);
+    setActiveView('home'); setIsMaximized(false);
+    setMessages([]); setTypingUsers([]); setSpaceMembers([]);
+  };
 
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
