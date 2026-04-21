@@ -8,7 +8,7 @@ export function SocketProvider({ children }) {
   const { user } = useAuth();
   const socketRef = useRef(null);
   const [connected, setConnected] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [userPresence, setUserPresence] = useState({});
 
   useEffect(() => {
     if (!user) return;
@@ -21,8 +21,8 @@ export function SocketProvider({ children }) {
     socketRef.current.on('connect', () => setConnected(true));
     socketRef.current.on('disconnect', () => setConnected(false));
 
-    socketRef.current.on('users:online', (userIds) => {
-      setOnlineUsers(new Set(userIds));
+    socketRef.current.on('users:presence', (presenceMap) => {
+      setUserPresence(presenceMap);
     });
 
     return () => {
@@ -48,6 +48,8 @@ export function SocketProvider({ children }) {
   const joinDM = (otherUserId) => emit('join_dm', otherUserId);
   const leaveCurrentDM = (conversationId) => emit('leave_dm', conversationId);
 
+  const emitStatus = (status) => emit('status:update', status);
+
   const emitTyping = (roomType, roomId, userName, isTyping) => {
     const event = isTyping ? 'typing:start' : 'typing:stop';
     emit(event, { roomType, roomId, userName });
@@ -70,8 +72,8 @@ export function SocketProvider({ children }) {
 
   return (
     <SocketContext.Provider value={{
-      connected, onlineUsers,
-      joinSpace, leaveSpace, joinDM, leaveCurrentDM, emitTyping,
+      connected, userPresence,
+      joinSpace, leaveSpace, joinDM, leaveCurrentDM, emitTyping, emitStatus,
       onNewMessage, onMessageEdited, onMessageDeleted,
       onReactionUpdated, onDMJoined, onTypingUpdate,
       onDMPreviewUpdated, onUserRoleChanged,

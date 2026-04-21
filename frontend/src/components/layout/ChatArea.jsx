@@ -317,10 +317,6 @@ export default function ChatArea({
   spaceId,
 }) {
   const [input, setInput] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
@@ -340,7 +336,6 @@ export default function ChatArea({
   const inputRef = useRef(null);
   const typingTimerRef = useRef(null);
   const fileInputRef = useRef(null);
-  const searchTimerRef = useRef(null);
 
   useEffect(() => {
     if (!loadingMore) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -355,21 +350,6 @@ export default function ChatArea({
   useEffect(() => {
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, []);
-
-  // Run search when query changes (debounced 350ms)
-  useEffect(() => {
-    if (!showSearch || !searchQuery.trim()) { setSearchResults([]); return; }
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    setSearchLoading(true);
-    searchTimerRef.current = setTimeout(async () => {
-      try {
-        const results = await searchMessages(searchQuery.trim(), spaceId || null);
-        setSearchResults(results);
-      } catch { }
-      setSearchLoading(false);
-    }, 350);
-    return () => clearTimeout(searchTimerRef.current);
-  }, [searchQuery, showSearch, spaceId]);
 
   const handleInputChange = (val) => {
     setInput(val);
@@ -487,12 +467,6 @@ const handleEditSave = async () => {
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setSearchResults([]); }} style={iconBtn(showSearch)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-              Search
-            </button>
             {memberCount && (
               <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -520,28 +494,7 @@ const handleEditSave = async () => {
           </div>
         </div>
 
-        {/* Inline search bar */}
-        {showSearch && (
-          <div style={{ padding: '8px 16px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
-            <input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search messages..."
-              autoFocus
-              style={{ width: '100%', padding: '7px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}
-            />
-          </div>
-        )}
 
-        {/* Search results overlay */}
-        {showSearch && (searchQuery.trim() || searchLoading) && (
-          <SearchResultsPanel
-            results={searchResults}
-            loading={searchLoading}
-            onClose={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
-            onJump={(r) => { setShowSearch(false); setSearchQuery(''); /* jump to message handled in parent */ }}
-          />
-        )}
 
         {/* Message list */}
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: 8 }}>

@@ -152,12 +152,11 @@ function HelpDropdown({ onClose, onGoToContact }) {
   );
 }
 
-function AppsDropdown({ onClose }) {
+function AppsDropdown({ onClose, onOpenAdmin }) {
   const ref = useRef(null);
   useClickOutside(ref, onClose);
   const apps = [
-    { name: 'Admin Panel', icon: '⭐', desc: 'Manage users and spaces' },
-    { name: 'Contact Form', icon: '✉️', desc: 'Submit a support request' },
+    { name: 'Admin Panel', icon: '⭐', desc: 'Manage users and spaces', onClick: () => { onOpenAdmin?.(); onClose(); } },
   ];
   return (
     <div ref={ref} style={{
@@ -170,7 +169,7 @@ function AppsDropdown({ onClose }) {
         Apps
       </p>
       {apps.map(app => (
-        <button key={app.name} style={{
+        <button key={app.name} onClick={app.onClick} style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10,
           padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
         }}
@@ -235,6 +234,7 @@ export default function TopNavbar({
   onGoToContact,
   onOpenCalendar,   
   onOpenChat,
+  activeView,
 }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
@@ -272,27 +272,29 @@ export default function TopNavbar({
 
       {/* Search */}
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '0 24px' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          width: '100%', maxWidth: 600, borderRadius: 24,
-          padding: '7px 16px',
-          background: searchFocused ? 'var(--ws-bg)' : 'var(--ws-surface-2)',
-          border: searchFocused ? '1.5px solid #0D9488' : '1px solid var(--ws-border)',
-          transition: 'all 0.2s',
-        }}>
-          <SearchIcon />
-          <input
-            value={navSearchQuery || ''}
-            onChange={e => onNavSearchChange?.(e.target.value)}
-            placeholder="Search conversations"
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
-          />
-          {navSearchQuery && (
-            <button onClick={() => onNavSearchChange?.('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', lineHeight: 1 }}>✕</button>
-          )}
-        </div>
+        {activeView !== 'calendar' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            width: '100%', maxWidth: 600, borderRadius: 24,
+            padding: '7px 16px',
+            background: searchFocused ? 'var(--ws-bg)' : 'var(--ws-surface-2)',
+            border: searchFocused ? '1.5px solid #0D9488' : '1px solid var(--ws-border)',
+            transition: 'all 0.2s',
+          }}>
+            <SearchIcon />
+            <input
+              value={navSearchQuery || ''}
+              onChange={e => onNavSearchChange?.(e.target.value)}
+              placeholder="Search conversations"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
+            />
+            {navSearchQuery && (
+              <button onClick={() => onNavSearchChange?.('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', lineHeight: 1 }}>✕</button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right controls */}
@@ -357,7 +359,7 @@ export default function TopNavbar({
           >
             <AppsIcon />
           </button>
-          {showApps && <AppsDropdown onClose={() => setShowApps(false)} />}
+          {showApps && <AppsDropdown onClose={() => setShowApps(false)} onOpenAdmin={onOpenAdmin} />}
         </div>
 
         {/* Profile avatar */}

@@ -14,6 +14,12 @@ export const getDMMessages = (userId, before = null) => {
 export const sendDMMessage = (userId, content, parentMessageId = null, attachments = []) =>
   api.post(`/api/dm/${userId}/messages`, { content, parent_message_id: parentMessageId, attachments }).then(r => r.data);
 
+export const editDMMessage = (userId, msgId, content) =>
+  api.patch(`/api/dm/${userId}/messages/${msgId}`, { content }).then(r => r.data);
+
+export const deleteDMMessage = (userId, msgId) =>
+  api.delete(`/api/dm/${userId}/messages/${msgId}`).then(r => r.data);
+
 export const updateMyProfile = (name) =>
   api.patch('/api/users/me', { name }).then(r => r.data);
 

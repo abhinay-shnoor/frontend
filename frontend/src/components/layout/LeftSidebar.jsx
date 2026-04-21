@@ -63,20 +63,17 @@ function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
 
 export default function LeftSidebar({
   isOpen, onSelectSpace, onSelectDM, activeSpace, activeDM, activeView,
-  onHomeClick, onMentionsClick, onCreateSpace, allSpaces, currentUser,
+  onHomeClick, onMentionsClick, allSpaces, currentUser,
   dmUsers, onLoadMoreDMs, dmHasMore, dmLoadingMore, onCloseMobile, className = '',
+  unreadMentions = 0,
 }) {
-  const { onlineUsers } = useSocket();
+  const { userPresence } = useSocket();
   const [shortcutsOpen, setShortcutsOpen] = useState(true);
   const [dmOpen,        setDmOpen]        = useState(false);
   const [spacesOpen,    setSpacesOpen]    = useState(false);
-  const [showCreateSpace, setShowCreateSpace] = useState(false);
-  const [newSpaceName,  setNewSpaceName]  = useState('');
   const [showNewChat,   setShowNewChat]   = useState(false);
 
-  const handleCreateSpace = () => {
-    if (newSpaceName.trim()) { onCreateSpace(newSpaceName.trim()); setNewSpaceName(''); setShowCreateSpace(false); }
-  };
+
 
   const navItemStyle = (active) => ({
     width: '100%', display: 'flex', alignItems: 'center', gap: 8,
@@ -87,16 +84,18 @@ export default function LeftSidebar({
 
   return (
     <div
-      className={`ws-sidebar ${isOpen ? 'open' : ''} ${className}`}
+      className={`ws-sidebar ${className}`}
       style={{
-        display: 'flex', flexDirection: 'column', width: 220,
-        background: 'var(--ws-sidebar)', borderRight: '0.5px solid var(--ws-border)',
+        display: 'flex', flexDirection: 'column',
+        width: isOpen ? 220 : 0, opacity: isOpen ? 1 : 0,
+        background: 'var(--ws-sidebar)', borderRight: isOpen ? '0.5px solid var(--ws-border)' : 'none',
         flexShrink: 0, height: '100%', overflow: 'hidden',
-        transition: 'width 0.3s ease',
+        transition: 'width 0.3s ease, opacity 0.3s ease, border-right 0.3s ease',
+        whiteSpace: 'nowrap',
       }}
     >
       {/* On mobile, tap outside closes the sidebar */}
-      <div style={{ width: 220, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ width: 220, visibility: isOpen ? 'visible' : 'hidden', display: 'flex', flexDirection: 'column', height: '100%', transition: 'visibility 0.3s ease' }}>
 
         {/* New chat button */}
         <div style={{ padding: '12px 10px 8px' }}>
@@ -120,7 +119,7 @@ export default function LeftSidebar({
         </div>
 
         {showNewChat && (
-          <NewChatPicker dmUsers={dmUsers} onSelectDM={(u) => { onSelectDM(u); onCloseMobile?.(); }} onlineUsers={onlineUsers} onClose={() => setShowNewChat(false)} />
+          <NewChatPicker dmUsers={dmUsers} onSelectDM={(u) => { onSelectDM(u); onCloseMobile?.(); }} onlineUsers={new Set(Object.keys(userPresence || {}))} onClose={() => setShowNewChat(false)} />
         )}
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '2px 6px' }}>
@@ -151,7 +150,12 @@ export default function LeftSidebar({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0V12a10 10 0 1 0-3.92 7.94"/>
                   </svg>
-                  <span style={{ fontSize: 12 }}>Mentions</span>
+                  <span style={{ fontSize: 12, flex: 1 }}>Mentions</span>
+                  {unreadMentions > 0 && (
+                    <span style={{ fontSize: 10, fontWeight: 700, background: '#dc2626', color: '#fff', borderRadius: 10, padding: '1px 5px', flexShrink: 0 }}>
+                      {unreadMentions}
+                    </span>
+                  )}
                 </button>
               </div>
             )}
@@ -166,7 +170,8 @@ export default function LeftSidebar({
             {dmOpen && (
               <div>
                 {(dmUsers || []).map(member => {
-                  const isOnline = onlineUsers.has(member.id);
+                  const presence = userPresence?.[member.id];
+                  const dotColor = presence === 'active' ? '#10B981' : presence === 'dnd' ? '#EF4444' : presence === 'away' ? '#F59E0B' : null;
                   return (
                     <button key={member.id} onClick={() => { onSelectDM?.(member); onCloseMobile?.(); }}
                       style={{ ...navItemStyle(activeDM?.id === member.id), paddingLeft: 10, position: 'relative' }}
@@ -175,7 +180,7 @@ export default function LeftSidebar({
                     >
                       <div style={{ position: 'relative', flexShrink: 0 }}>
                         <Avatar initials={member.initials} color={member.color} size={24} avatarUrl={member.avatar_url} />
-                        {isOnline && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: '#10B981', borderRadius: '50%', border: '1.5px solid var(--ws-sidebar)' }} />}
+                        {dotColor && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: dotColor, borderRadius: '50%', border: '1.5px solid var(--ws-sidebar)' }} />}
                       </div>
                       <span style={{ fontSize: 12, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{member.name}</span>
                       {member.unread > 0 && (
@@ -205,27 +210,7 @@ export default function LeftSidebar({
             </button>
             {spacesOpen && (
               <div style={{ paddingLeft: 14 }}>
-                <button onClick={() => setShowCreateSpace(!showCreateSpace)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 7, background: 'none', border: 'none', cursor: 'pointer' }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-                  </svg>
-                  <span style={{ fontSize: 12, color: '#1a73e8', fontWeight: 500 }}>Create a new space</span>
-                </button>
 
-                {showCreateSpace && (
-                  <div style={{ padding: '4px 6px 6px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <input value={newSpaceName} onChange={e => setNewSpaceName(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleCreateSpace(); }}
-                      placeholder="Space name..."
-                      autoFocus
-                      style={{ width: '100%', padding: '5px 9px', fontSize: 12, border: '0.5px solid var(--ws-border)', borderRadius: 6, outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}
-                    />
-                    <div style={{ display: 'flex', gap: 5 }}>
-                      <button onClick={handleCreateSpace} style={{ padding: '4px 10px', fontSize: 11, background: '#1a73e8', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer' }}>Create</button>
-                      <button onClick={() => { setShowCreateSpace(false); setNewSpaceName(''); }} style={{ padding: '4px 10px', fontSize: 11, background: 'none', color: 'var(--ws-text-muted)', border: '0.5px solid var(--ws-border)', borderRadius: 5, cursor: 'pointer' }}>Cancel</button>
-                    </div>
-                  </div>
-                )}
 
                 {(allSpaces || []).map(space => (
                   <button key={space.id} onClick={() => { onSelectSpace?.(space); onCloseMobile?.(); }}

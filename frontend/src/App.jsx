@@ -21,7 +21,7 @@ import ConversationList from './components/layout/ConversationList.jsx';
 import ChatArea from './components/layout/ChatArea.jsx';
 import RightIconRail from './components/layout/RightIconRail.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
-import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
+import { getAllUsers, getDMMessages, sendDMMessage, editDMMessage, deleteDMMessage } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations } from './api/messages.js';
 
 function ChatApp({ onSignOut, onOpenAdmin }) {
@@ -31,7 +31,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     connected,
     joinSpace, leaveSpace, joinDM,
     onNewMessage, onMessageEdited, onMessageDeleted, onReactionUpdated,
-    onDMJoined, onTypingUpdate, emitTyping, onlineUsers,
+    onDMJoined, onTypingUpdate, emitTyping, userPresence, emitStatus,
     onDMPreviewUpdated, onUserRoleChanged,
   } = useSocket();
 
@@ -62,6 +62,17 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
+  const [unreadMentionsCount, setUnreadMentionsCount] = useState(0);
+
+  useEffect(() => {
+    emitStatus(currentStatus);
+  }, [currentStatus]);
+
+  useEffect(() => {
+    if (activeView === 'mentions') {
+      setUnreadMentionsCount(0);
+    }
+  }, [activeView]);
 
   // Listen for the calendar back button event from CalendarView
   useEffect(() => {
@@ -120,7 +131,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setTypingUsers([]);
     const cleanups = [
       onNewMessage((msg) => {
-        if (msg.space_id !== activeSpace.id) return;
+        if (msg.space_id !== activeSpace.id) {
+          setSpaces(prev => prev.map(s => s.id === msg.space_id ? { ...s, unread: s.unread + 1 } : s));
+          if (msg.content?.includes(`@${currentUser.name}`) || msg.text?.includes(`@${currentUser.name}`)) {
+            setUnreadMentionsCount(c => c + 1);
+          }
+          return;
+        }
+        if (msg.content?.includes(`@${currentUser.name}`) || msg.text?.includes(`@${currentUser.name}`)) {
+          if (activeView !== 'mentions') setUnreadMentionsCount(c => c + 1);
+        }
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, formatMsg(msg)]);
       }),
       onMessageEdited((msg) => {
@@ -152,6 +172,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       onDMJoined(({ conversationId }) => setActiveDMConversationId(conversationId)),
       onNewMessage((msg) => {
         if (!msg.conversation_id) return;
+        if (msg.conversation_id !== activeDMConversationId) {
+          setDmConversations(prev => prev.map(dm => dm.other_user_id === msg.sender_id || dm.conversation_id === msg.conversation_id ? { ...dm, unread: (dm.unread || 0) + 1 } : dm));
+          if (msg.content?.includes(`@${currentUser.name}`) || msg.text?.includes(`@${currentUser.name}`)) {
+            setUnreadMentionsCount(c => c + 1);
+          }
+          return;
+        }
+        if (msg.content?.includes(`@${currentUser.name}`) || msg.text?.includes(`@${currentUser.name}`)) {
+          if (activeView !== 'mentions') setUnreadMentionsCount(c => c + 1);
+        }
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, formatMsg(msg)]);
       }),
       onReactionUpdated(({ messageId, reactions }) => {
@@ -189,11 +219,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const dmUsers = allUsers.filter(u => u.id !== user.id).map(u => ({
     id: u.id, name: u.name, email: u.email, avatar_url: u.avatar_url,
     initials: u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-    color: '#0D9488', online: onlineUsers.has(u.id),
+    color: '#0D9488',
+    unread: dmConversations.find(dm => dm.other_user_id === u.id)?.unread || 0,
   }));
 
   const handleSelectSpace = async (space) => {
     setActiveSpace(space); setActiveDM(null); setActiveView('space');
+    setSpaces(prev => prev.map(s => s.id === space.id ? { ...s, unread: 0 } : s));
     setSpaceMembers([]);
     // Fetch real members for this space so the Members panel works
     try {
@@ -201,7 +233,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       setSpaceMembers(members);
     } catch { setSpaceMembers([]); }
   };
-  const handleSelectDM = (dmUser) => { setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null); };
+  const handleSelectDM = (dmUser) => {
+    setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null);
+    setDmConversations(prev => prev.map(dm => dm.other_user_id === dmUser.id ? { ...dm, unread: 0 } : dm));
+  };
   const handleBackToHome = () => {
     setActiveSpace(null); setActiveDM(null);
     setActiveView('home'); setIsMaximized(false);
@@ -218,9 +253,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
 
   const handleEditMessage = async (msgId, content) => {
-    if (!activeSpace) return;
     try {
-      await editSpaceMessage(activeSpace.id, msgId, content);
+      if (activeView === 'space' && activeSpace) {
+        await editSpaceMessage(activeSpace.id, msgId, content);
+      } else if (activeView === 'dm' && activeDM) {
+        await editDMMessage(activeDM.id, msgId, content);
+      } else {
+        return;
+      }
       setMessages(prev => prev.map(m =>
         m.id === msgId ? { ...m, text: content, is_edited: true } : m
       ));
@@ -231,10 +271,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleDeleteMessage = async (msgId) => {
-    if (!activeSpace) return;
     try {
-      await deleteSpaceMessage(activeSpace.id, msgId);
-      // Remove locally immediately — don't rely on socket
+      if (activeView === 'space' && activeSpace) await deleteSpaceMessage(activeSpace.id, msgId);
+      else if (activeView === 'dm' && activeDM) await deleteDMMessage(activeDM.id, msgId);
+      else return;
+
+      // Remove locally immediately
       setMessages(prev => prev.filter(m => m.id !== msgId));
     } catch { showToast('Failed to delete message', 'error'); }
   };
@@ -302,9 +344,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
             onHomeClick={handleBackToHome}
             onMentionsClick={() => { setActiveSpace(null); setActiveDM(null); setActiveView('mentions'); setIsMaximized(false); }}
             onCreateSpace={() => { }}
-            allSpaces={formattedSpaces}
+            allSpaces={spaces}
             currentUser={currentUser}
             dmUsers={dmUsers}
+            unreadMentions={unreadMentionsCount}
           />
         )}
         {activeView === 'calendar' ? (
@@ -338,6 +381,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
               onToggleMaximize={() => setIsMaximized(prev => !prev)}
               spaceMembers={spaceMembers}
               currentUserId={user.id}
+              allUsers={allUsers}
               onEditMessage={handleEditMessage}
               onDeleteMessage={handleDeleteMessage}
               onAddReaction={handleAddReaction}
