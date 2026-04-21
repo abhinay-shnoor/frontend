@@ -836,9 +836,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   // FIX 2: Build mention-aware user list for @ autocomplete in ChatArea
   // Use spaceMembers when in a space, all dmUsers otherwise
-  const chatAllUsers = activeView === 'space'
-    ? spaceMembers.map(m => ({ id: m.id, name: m.name }))
-    : dmUsers.map(u => ({ id: u.id, name: u.name }));
+  const chatAllUsers = [
+    { id: user.id, name: user.name, avatar_url: user.avatar_url },
+    ...(activeView === 'space'
+      ? spaceMembers.map(m => ({ id: m.id, name: m.name, avatar_url: m.avatar_url }))
+      : dmUsers.map(u => ({ id: u.id, name: u.name, avatar_url: u.avatar_url })))
+  ];
 
   const handleTypingChange = (isTyping) => {
     if (activeView === 'space' && activeSpace) emitTyping('space', activeSpace.id, user.name, isTyping);

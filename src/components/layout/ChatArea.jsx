@@ -80,15 +80,21 @@ function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
 
 function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   const receipts = msg.receipts || [];
-  const sentTime = new Date(msg.created_at).toLocaleString();
+  const createdDate = msg.created_at ? new Date(msg.created_at) : new Date();
+  const sentTime = createdDate.toLocaleString([], {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit'
+  });
 
   const getReceiptDetails = () => {
     return receipts.map(r => {
-      const user = allUsers.find(u => u.id === r.userId) || { name: 'Unknown User' };
+      const u = allUsers.find(user => user.id === r.userId) || { name: 'Unknown User' };
       return {
-        name: user.name,
-        delivered: r.deliveredAt ? new Date(r.deliveredAt).toLocaleString() : 'Pending',
-        seen: r.seenAt ? new Date(r.seenAt).toLocaleString() : 'Not yet'
+        name: u.name,
+        avatar_url: u.avatar_url,
+        delivered: r.deliveredAt ? new Date(r.deliveredAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Pending',
+        deliveredDate: r.deliveredAt ? new Date(r.deliveredAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
+        seen: r.seenAt ? new Date(r.seenAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Not yet',
+        seenDate: r.seenAt ? new Date(r.seenAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
       };
     });
   };
@@ -98,40 +104,61 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000,
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
     }} onClick={onClose}>
       <div style={{
-        background: 'var(--ws-bg)', borderRadius: 16, width: '100%', maxWidth: 400,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)', border: '0.5px solid var(--ws-border)',
-        overflow: 'hidden'
+        background: 'var(--ws-bg)', borderRadius: 24, width: '100%', maxWidth: 420,
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '1px solid var(--ws-border)',
+        overflow: 'hidden', animation: 'modalEntry 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
       }} onClick={e => e.stopPropagation()}>
-        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--ws-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ws-text)' }}>Message Info</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ws-text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+        <style>{`
+          @keyframes modalEntry {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+          }
+        `}</style>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ws-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--ws-surface)' }}>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.02em' }}>Message Info</h3>
+          <button onClick={onClose} style={{ background: 'var(--ws-surface-2)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', fontSize: 14, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        <div style={{ padding: 20, maxHeight: '70vh', overflowY: 'auto' }}>
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Message Content</p>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--ws-text)' }}>{msg.text}</p>
-            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--ws-text-muted)' }}>Sent: {sentTime}</p>
+        
+        <div style={{ padding: 24, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ padding: '16px 20px', background: 'var(--ws-surface-2)', borderRadius: 16, marginBottom: 24 }}>
+             <p style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--ws-text)', lineHeight: 1.6 }}>{msg.text}</p>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ws-text-muted)', fontSize: 13 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Sent: {sentTime}
+             </div>
           </div>
           
-          <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>Receipts</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {details.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>No receipts yet.</p>
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <p style={{ fontSize: 14, color: 'var(--ws-text-muted)', margin: 0 }}>Waiting for recipients...</p>
+              </div>
             ) : details.map((d, i) => (
-              <div key={i} style={{ padding: '10px 14px', background: 'var(--ws-surface-2)', borderRadius: 10 }}>
-                <p style={{ margin: '0 0 6px', fontWeight: 600, fontSize: 13, color: 'var(--ws-text)' }}>{d.name}</p>
-                <div style={{ display: 'flex', gap: 20 }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>Delivered</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ws-text)' }}>{d.delivered}</p>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>Seen</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ws-text)' }}>{d.seen}</p>
+              <div key={i} style={{ display: 'flex', gap: 12 }}>
+                <Avatar initials={initials(d.name)} color="#0D9488" size={40} avatarUrl={d.avatar_url} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: 14, color: 'var(--ws-text)' }}>{d.name}</p>
+                  <div style={{ display: 'flex', gap: 24 }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase' }}>Delivered</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ws-text)' }}>{d.delivered}</p>
+                      {d.deliveredDate && <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>{d.deliveredDate}</p>}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34B7F1" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#34B7F1', textTransform: 'uppercase' }}>Seen</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--ws-text)' }}>{d.seen}</p>
+                      {d.seenDate && <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>{d.seenDate}</p>}
+                    </div>
                   </div>
                 </div>
               </div>
