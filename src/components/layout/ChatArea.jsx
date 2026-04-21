@@ -297,7 +297,7 @@ function MessageBubble({
 
 function ActionBtn({ title, onClick, children }) {
   return (
-    <button title={title} onClick={onClick} style={{
+    <button title={title} onClick={(e) => { e.stopPropagation(); onClick(); }} style={{
       background: 'none', border: 'none', cursor: 'pointer', padding: '4px 7px',
       borderRadius: 5, fontSize: 14, transition: 'background 0.1s', color: 'var(--ws-text)',
     }}
@@ -398,7 +398,8 @@ export default function ChatArea({
   title, description, memberCount, messages, onSend, isSpace,
   activeView, onClose, isMaximized, onToggleMaximize,
   spaceMembers, currentUserId, currentUser, allUsers = [],
-  onEditMessage, typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
+  onEditMessage, onAddReaction, onRemoveReaction,
+  typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
   spaceId,
 }) {
   const [input, setInput] = useState('');

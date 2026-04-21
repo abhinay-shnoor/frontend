@@ -668,18 +668,27 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     return cleanup;
   }, [connected, user.id, spaces]);
 
-  const formatMsg = (m) => ({
-    id: m.id, senderId: m.sender_id, senderName: m.sender_name,
-    initials: (m.sender_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-    color: '#0D9488', avatar_url: m.avatar_url,
-    time: new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-    text: m.content, is_edited: m.is_edited, reactions: m.reactions || [],
-    receipts: m.receipts || [], created_at: m.created_at,
-  });
+  const formatMsg = (m) => {
+    if (!m) return m;
+    // If already formatted, return m (ensure it has common fields)
+    if (m.senderId && m.time) return m;
+
+    return {
+      id: m.id, senderId: m.sender_id, senderName: m.sender_name,
+      initials: (m.sender_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+      color: '#0D9488', avatar_url: m.avatar_url,
+      time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '',
+      text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
+      receipts: m.receipts || [], created_at: m.created_at,
+    };
+  };
 
   const formattedMessages = messages
-    .filter(m => m && (m.content || m.text) && (m.sender_name || m.senderName))
-    .map(m => m.senderId ? m : formatMsg(m));
+    .filter(m => m && (partiallyFormatted(m) || rawMessage(m)))
+    .map(formatMsg);
+
+  function partiallyFormatted(m) { return m.text && m.senderName; }
+  function rawMessage(m) { return m.content && m.sender_name; }
 
   const formattedSpaces = spaces.map(s => ({
     id: s.id, name: s.name,
