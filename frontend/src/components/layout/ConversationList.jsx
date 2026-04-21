@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Avatar from '../ui/Avatar.jsx';
+import { useSocket } from '../../context/SocketContext.jsx';
 
 const formatTime = (ts) => {
   if (!ts) return '';
@@ -19,6 +20,7 @@ export default function ConversationList({
   className = '',
 }) {
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const { userPresence } = useSocket();
 
   const items = [
     ...allSpaces.map(s => ({
@@ -33,7 +35,7 @@ export default function ConversationList({
         ? (dm.last_message_sender_id === currentUserId ? `You: ${dm.last_message}` : dm.last_message)
         : 'No messages yet',
       time: dm.last_message_at, avatar_url: dm.other_user_avatar,
-      initials: initials(dm.other_user_name), isGroup: false, unread: 0,
+      initials: initials(dm.other_user_name), isGroup: false, unread: dm.unread || 0,
     })),
   ].sort((a, b) => {
     if (!a.time) return 1; if (!b.time) return -1;
@@ -72,7 +74,7 @@ export default function ConversationList({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.senderName}</span>
-                  <span style={{ fontSize: 11, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
+                  <span style={{ fontSize: 11, color: 'var(--ws-text-muted)' }}>{formatTime(msg.time)}</span>
                 </div>
                 <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.text}</p>
                 <p style={{ fontSize: 11, color: '#1a73e8', margin: 0 }}>in #{msg.source}</p>
@@ -105,7 +107,10 @@ export default function ConversationList({
             <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>No conversations yet</p>
           </div>
         )}
-        {filtered.map(item => (
+        {filtered.map(item => {
+          const presence = !item.isGroup ? userPresence?.[item.id] : null;
+          const dotColor = presence === 'active' ? '#10B981' : presence === 'dnd' ? '#EF4444' : presence === 'away' ? '#F59E0B' : null;
+          return (
           <button key={`${item.type}-${item.id}`} onClick={() => onSelectConversation(item)}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
@@ -116,15 +121,19 @@ export default function ConversationList({
             onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
             onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
           >
-            {item.isGroup ? (
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)', flexShrink: 0 }}>
-                #{item.initials[0]}
-              </div>
-            ) : item.avatar_url ? (
-              <img src={item.avatar_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-            ) : (
-              <Avatar initials={item.initials} color="#0D9488" size={40} />
-            )}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {item.isGroup ? (
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
+                  #{item.initials[0]}
+                </div>
+              ) : item.avatar_url ? (
+                <img src={item.avatar_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <Avatar initials={item.initials} color="#0D9488" size={40} />
+              )}
+              {dotColor && <div style={{ position: 'absolute', bottom: 1, right: -1, width: 10, height: 10, background: dotColor, borderRadius: '50%', border: '2px solid var(--ws-bg)' }} />}
+            </div>
+            
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 700 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -140,7 +149,7 @@ export default function ConversationList({
               <span style={{ fontSize: 10, fontWeight: 700, background: '#1a73e8', color: '#fff', borderRadius: 10, padding: '2px 6px', flexShrink: 0 }}>{item.unread}</span>
             )}
           </button>
-        ))}
+        )})}
       </div>
     </div>
   );

@@ -27,3 +27,6 @@ export const uploadFile = (file) => {
   form.append('file', file);
   return api.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 };
+
+export const getMentions = () =>
+  api.get(`/api/mentions`).then(r => r.data);

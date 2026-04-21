@@ -22,7 +22,7 @@ import ChatArea from './components/layout/ChatArea.jsx';
 import RightIconRail from './components/layout/RightIconRail.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage, editDMMessage, deleteDMMessage } from './api/users.js';
-import { addReaction, removeReaction, getDMConversations } from './api/messages.js';
+import { addReaction, removeReaction, getDMConversations, getMentions } from './api/messages.js';
 
 function ChatApp({ onSignOut, onOpenAdmin }) {
   const { user, refreshUser } = useAuth();
@@ -57,20 +57,28 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [currentStatus, setCurrentStatus] = useState('active');
+  const [currentStatus, setCurrentStatus] = useState(() => localStorage.getItem('ws_status') || 'active');
   const [isMaximized, setIsMaximized] = useState(false);
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
   const [unreadMentionsCount, setUnreadMentionsCount] = useState(0);
+  const [mentionedMessages, setMentionedMessages] = useState([]);
 
   useEffect(() => {
-    emitStatus(currentStatus);
-  }, [currentStatus]);
+    localStorage.setItem('ws_status', currentStatus);
+    if (connected) emitStatus(currentStatus);
+  }, [currentStatus, connected]);
 
   useEffect(() => {
     if (activeView === 'mentions') {
       setUnreadMentionsCount(0);
+    } else {
+      // Refresh count/mentions when returning from mentions
+      getMentions().then(data => {
+        setMentionedMessages(data.mentions || []);
+        setUnreadMentionsCount(data.unreadMentions || 0);
+      }).catch(() => {});
     }
   }, [activeView]);
 
@@ -89,6 +97,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     getSpaces().then(setSpaces).catch(() => showToast('Failed to load spaces', 'error'));
     getAllUsers().then(setAllUsers).catch(() => { });
     getDMConversations().then(setDmConversations).catch(() => { });
+    getMentions().then(data => {
+      setMentionedMessages(data.mentions || []);
+      setUnreadMentionsCount(data.unreadMentions || 0);
+    }).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -210,7 +222,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     .map(m => m.senderId ? m : formatMsg(m));
 
   const formattedSpaces = spaces.map(s => ({
-    id: s.id, name: s.name, unread: 0,
+    id: s.id, name: s.name, unread: s.unread || 0,
     memberCount: s.member_count, members: [],
     last_message: s.last_message, last_message_at: s.last_message_at,
     last_message_sender: s.last_message_sender,
@@ -363,7 +375,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 }}
                 selectedId={activeSpace?.id || activeDM?.id}
                 navSearchQuery={navSearchQuery}
-                mentionedMessages={[]}
+                mentionedMessages={mentionedMessages}
                 allSpaces={formattedSpaces}
                 dmConversations={dmConversations}
                 currentUserId={user.id}
