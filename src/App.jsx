@@ -430,7 +430,8 @@ import ChatArea from './components/layout/ChatArea.jsx';
 import RightIconRail from './components/layout/RightIconRail.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
-import { addReaction, removeReaction, getDMConversations } from './api/messages.js';
+import { addReaction, removeReaction, getDMConversations, searchMessages } from './api/messages.js';
+import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import api from './api/axios.js';
 
 function ChatApp({ onSignOut, onOpenAdmin }) {
@@ -489,6 +490,28 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   useEffect(() => { activeSpaceRef.current = activeSpace; }, [activeSpace]);
   useEffect(() => { activeDMRef.current    = activeDM;    }, [activeDM]);
 
+  const formatMsg = (m) => {
+    if (!m) return m;
+    // If already formatted, return m (ensure it has common fields)
+    if (m.senderId && m.time) return m;
+
+    return {
+      id: m.id, senderId: m.sender_id, senderName: m.sender_name,
+      initials: (m.sender_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+      color: '#0D9488', avatar_url: m.avatar_url,
+      time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '',
+      text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
+      receipts: m.receipts || [], created_at: m.created_at,
+    };
+  };
+
+  function partiallyFormatted(m) { return m.text && m.senderName; }
+  function rawMessage(m) { return m.content && m.sender_name; }
+
+  const formattedMessages = messages
+    .filter(m => m && (partiallyFormatted(m) || rawMessage(m)))
+    .map(formatMsg);
+
   // Helper: does a message text contain a @mention for the current user?
   const isMentioned = (text) =>
     text && (
@@ -506,6 +529,26 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     window.addEventListener('calendar:back', handleCalendarBack);
     return () => window.removeEventListener('calendar:back', handleCalendarBack);
   }, []);
+
+  // Fetch historical mentions on startup
+  useEffect(() => {
+    if (!user?.name) return;
+    searchMessages(`@${user.name}`)
+      .then(msgs => {
+        const unique = msgs.filter((m, i, self) => self.findIndex(t => t.id === m.id) === i);
+        setMentionedMessages(unique.map(formatMsg).map(m => {
+          // Find source space/dm for the historical mention
+          const s = spaces.find(sp => sp.id === m.space_id);
+          return {
+            ...m,
+            source: s ? s.name : 'Direct Message',
+            sourceId: m.space_id || m.sender_id,
+            sourceType: m.space_id ? 'space' : 'dm'
+          };
+        }));
+      })
+      .catch(() => {});
+  }, [user?.name, spaces.length]);
 
   useEffect(() => {
     getSpaces().then(setSpaces).catch(() => showToast('Failed to load spaces', 'error'));
@@ -667,28 +710,6 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
     return cleanup;
   }, [connected, user.id, spaces]);
-
-  const formatMsg = (m) => {
-    if (!m) return m;
-    // If already formatted, return m (ensure it has common fields)
-    if (m.senderId && m.time) return m;
-
-    return {
-      id: m.id, senderId: m.sender_id, senderName: m.sender_name,
-      initials: (m.sender_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-      color: '#0D9488', avatar_url: m.avatar_url,
-      time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '',
-      text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
-      receipts: m.receipts || [], created_at: m.created_at,
-    };
-  };
-
-  const formattedMessages = messages
-    .filter(m => m && (partiallyFormatted(m) || rawMessage(m)))
-    .map(formatMsg);
-
-  function partiallyFormatted(m) { return m.text && m.senderName; }
-  function rawMessage(m) { return m.content && m.sender_name; }
 
   const formattedSpaces = spaces.map(s => ({
     id: s.id, name: s.name,
@@ -906,29 +927,45 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 unreadCounts={unreadCounts}            // FIX 6
               />
             )}
-            <ChatArea
-              title={chatTitle}
-              memberCount={memberCount}
-              messages={messagesLoading ? [] : formattedMessages}
-              onSend={handleSendMessage}
-              isSpace={activeView === 'space'}
-              activeView={activeView}
-              onClose={handleBackToHome}
-              isMaximized={isMaximized}
-              onToggleMaximize={() => setIsMaximized(prev => !prev)}
-              spaceMembers={spaceMembers}
-              currentUserId={user.id}
-              onEditMessage={handleEditMessage}
-              onAddReaction={handleAddReaction}
-              onRemoveReaction={handleRemoveReaction}
-              typingUsers={typingUsers}
-              messagesLoading={messagesLoading}
-              hasMore={hasMore}
-              onLoadMore={handleLoadMore}
-              onTypingChange={handleTypingChange}
-              spaceId={activeSpace?.id}
-              allUsers={chatAllUsers}   // FIX 2: enables @mention autocomplete
-            />
+            {activeView === 'mentions' ? (
+              <MentionsActivityFeed 
+                mentions={mentionedMessages}
+                onSelectMention={(m) => {
+                  if (m.sourceType === 'space') {
+                    const s = spaces.find(sp => sp.id === m.sourceId);
+                    if (s) handleSelectSpace(s);
+                  } else {
+                    const d = allUsers.find(u => u.id === m.sourceId);
+                    if (d) handleSelectDM(d);
+                  }
+                }}
+                onClose={handleBackToHome}
+              />
+            ) : (
+              <ChatArea
+                title={chatTitle}
+                memberCount={memberCount}
+                messages={messagesLoading ? [] : formattedMessages}
+                onSend={handleSendMessage}
+                isSpace={activeView === 'space'}
+                activeView={activeView}
+                onClose={handleBackToHome}
+                isMaximized={isMaximized}
+                onToggleMaximize={() => setIsMaximized(prev => !prev)}
+                spaceMembers={spaceMembers}
+                currentUserId={user.id}
+                onEditMessage={handleEditMessage}
+                onAddReaction={handleAddReaction}
+                onRemoveReaction={handleRemoveReaction}
+                typingUsers={typingUsers}
+                messagesLoading={messagesLoading}
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+                onTypingChange={handleTypingChange}
+                spaceId={activeSpace?.id}
+                allUsers={chatAllUsers}   // FIX 2: enables @mention autocomplete
+              />
+            )}
           </>
         )}
         {activeView !== 'calendar' && (
