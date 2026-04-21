@@ -307,6 +307,61 @@ exports.sendDMMessage = async (req, res) => {
   }
 };
 
+exports.editDMMessage = async (req, res) => {
+  const { userId: otherUserId, msgId } = req.params;
+  const currentUserId = req.user.id;
+  const { content } = req.body;
+  if (!content?.trim()) return res.status(400).json({ message: 'Content cannot be empty' });
+  const clean = xss(content.trim());
+  try {
+    const a = currentUserId < otherUserId ? currentUserId : otherUserId;
+    const b = currentUserId < otherUserId ? otherUserId  : currentUserId;
+    const convResult = await pool.query(`SELECT id FROM direct_conversations WHERE user_one_id=$1 AND user_two_id=$2`, [a, b]);
+    if (!convResult.rows.length) return res.status(404).json({ message: 'Conversation not found' });
+    const conversationId = convResult.rows[0].id;
+
+    const result = await pool.query(
+      `UPDATE messages
+       SET content = $1, is_edited = true, updated_at = NOW()
+       WHERE id = $2 AND conversation_id = $3 AND sender_id = $4
+       RETURNING id, content, is_edited, updated_at, sender_id`,
+      [clean, msgId, conversationId, currentUserId]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ message: 'Message not found or permission denied' });
+    }
+    const message = { ...result.rows[0], conversation_id: conversationId };
+    req.app.get('io').to(`dm:${conversationId}`).emit('message:edited', message);
+    res.json(message);
+  } catch (err) {
+    console.error('editDMMessage error:', err);
+    res.status(500).json({ message: 'Failed to edit message' });
+  }
+};
+
+exports.deleteDMMessage = async (req, res) => {
+  const { userId: otherUserId, msgId } = req.params;
+  const currentUserId = req.user.id;
+  try {
+    const a = currentUserId < otherUserId ? currentUserId : otherUserId;
+    const b = currentUserId < otherUserId ? otherUserId  : currentUserId;
+    const convResult = await pool.query(`SELECT id FROM direct_conversations WHERE user_one_id=$1 AND user_two_id=$2`, [a, b]);
+    if (!convResult.rows.length) return res.status(404).json({ message: 'Conversation not found' });
+    const conversationId = convResult.rows[0].id;
+
+    const check = await pool.query(`SELECT sender_id FROM messages WHERE id=$1 AND conversation_id=$2`, [msgId, conversationId]);
+    if (!check.rows.length) return res.status(404).json({ message: 'Message not found' });
+    if (check.rows[0].sender_id !== currentUserId) return res.status(403).json({ message: 'You can only delete your own messages' });
+    
+    await pool.query(`DELETE FROM messages WHERE id=$1`, [msgId]);
+    req.app.get('io').to(`dm:${conversationId}`).emit('message:deleted', { messageId: msgId, conversationId });
+    res.json({ messageId: msgId });
+  } catch (err) {
+    console.error('deleteDMMessage error:', err);
+    res.status(500).json({ message: 'Failed to delete message' });
+  }
+};
+
 exports.getDMConversations = async (req, res) => {
   const userId = req.user.id;
   try {
@@ -320,7 +375,8 @@ exports.getDMConversations = async (req, res) => {
         lm.content    AS last_message,
         lm.created_at AS last_message_at,
         lm.sender_id  AS last_message_sender_id,
-        su.name       AS last_message_sender_name
+        su.name       AS last_message_sender_name,
+        (SELECT COUNT(*) FROM messages m LEFT JOIN user_dm_reads udr ON udr.conversation_id = dc.id AND udr.user_id = $1 WHERE m.conversation_id = dc.id AND m.sender_id != $1 AND (udr.last_read_at IS NULL OR m.created_at > udr.last_read_at))::int AS unread
       FROM direct_conversations dc
       JOIN users ou ON ou.id = CASE WHEN dc.user_one_id=$1 THEN dc.user_two_id ELSE dc.user_one_id END
       LEFT JOIN LATERAL (
@@ -335,5 +391,39 @@ exports.getDMConversations = async (req, res) => {
   } catch (err) {
     console.error('getDMConversations error:', err);
     res.status(500).json({ message: 'Failed to fetch DM conversations' });
+  }
+};
+
+exports.getMentions = async (req, res) => {
+  const userId = req.user.id;
+  const userName = req.user.name;
+  try {
+    const result = await pool.query(`
+      SELECT 
+        m.id AS id, 
+        m.content AS text, 
+        m.created_at AS time, 
+        m.sender_id, 
+        u.name AS "senderName",
+        s.name AS source, 
+        s.id AS "sourceId", 
+        'space' AS "sourceType",
+        (usr.last_read_at IS NULL OR m.created_at > usr.last_read_at) AS is_unread
+      FROM messages m
+      JOIN users u ON u.id = m.sender_id
+      JOIN spaces s ON s.id = m.space_id
+      LEFT JOIN user_space_reads usr ON usr.space_id = m.space_id AND usr.user_id = $1
+      WHERE m.content ILIKE $2
+      ORDER BY m.created_at DESC 
+      LIMIT 50
+    `, [userId, `%@${userName}%`]);
+    
+    const mentions = result.rows;
+    const unreadMentions = mentions.filter(m => m.is_unread).length;
+    
+    res.json({ mentions, unreadMentions });
+  } catch (err) {
+    console.error('getMentions error:', err);
+    res.status(500).json({ message: 'Failed to fetch mentions' });
   }
 };

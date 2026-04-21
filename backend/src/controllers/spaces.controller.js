@@ -13,7 +13,8 @@ const getSpaces = async (req, res) => {
           u.name AS created_by_name,
           lm.content    AS last_message,
           lm.created_at AS last_message_at,
-          lu.name       AS last_message_sender
+          lu.name       AS last_message_sender,
+          (SELECT COUNT(*) FROM messages m LEFT JOIN user_space_reads usr ON usr.space_id = s.id AND usr.user_id = $1 WHERE m.space_id = s.id AND m.sender_id != $1 AND (usr.last_read_at IS NULL OR m.created_at > usr.last_read_at))::int AS unread
         FROM spaces s
         LEFT JOIN space_members sm ON sm.space_id = s.id
         LEFT JOIN users u  ON u.id  = s.created_by
@@ -32,7 +33,8 @@ const getSpaces = async (req, res) => {
           u.name AS created_by_name,
           lm.content    AS last_message,
           lm.created_at AS last_message_at,
-          lu.name       AS last_message_sender
+          lu.name       AS last_message_sender,
+          (SELECT COUNT(*) FROM messages m LEFT JOIN user_space_reads usr ON usr.space_id = s.id AND usr.user_id = $1 WHERE m.space_id = s.id AND m.sender_id != $1 AND (usr.last_read_at IS NULL OR m.created_at > usr.last_read_at))::int AS unread
         FROM spaces s
         JOIN space_members my_mem ON my_mem.space_id = s.id AND my_mem.user_id = $1
         LEFT JOIN space_members sm ON sm.space_id = s.id

@@ -17,7 +17,11 @@ router.delete('/messages/:msgId/reactions',  requireAuth, c.removeReaction);
 
 router.get('/dm/:userId/messages',           requireAuth, c.getDMMessages);
 router.post('/dm/:userId/messages',          requireAuth, c.sendDMMessage);
+router.patch('/dm/:userId/messages/:msgId',  requireAuth, c.editDMMessage);
+router.delete('/dm/:userId/messages/:msgId', requireAuth, c.deleteDMMessage);
 
 router.post('/upload', requireAuth, c.uploadMiddleware, c.uploadAttachment);
+
+router.get('/mentions', requireAuth, c.getMentions);
 
 module.exports = router;

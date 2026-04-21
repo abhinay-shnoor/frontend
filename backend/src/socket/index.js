@@ -1,9 +1,15 @@
 const pool = require('../config/db');
 
-// userId → Set<socketId>  — handles multiple open tabs per user
-const onlineUsers = new Map();
+// userId → { status: string, sockets: Set<socketId> }
+const userPresence = new Map();
 
-const getOnlineUserIds = () => Array.from(onlineUsers.keys());
+const getPresenceMap = () => {
+  const map = {};
+  for (const [uid, data] of userPresence.entries()) {
+    map[uid] = data.status;
+  }
+  return map;
+};
 
 const socketHandler = (io) => {
   io.on('connection', async (socket) => {
@@ -14,9 +20,19 @@ const socketHandler = (io) => {
     // DM preview updates, read receipt confirmations
     socket.join(`user:${userId}`);
 
-    if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
-    onlineUsers.get(userId).add(socket.id);
-    io.emit('users:online', getOnlineUserIds());
+    if (!userPresence.has(userId)) {
+      userPresence.set(userId, { status: 'active', sockets: new Set() });
+    }
+    userPresence.get(userId).sockets.add(socket.id);
+    io.emit('users:presence', getPresenceMap());
+
+    // Listen for manual status updates
+    socket.on('status:update', (status) => {
+      if (userPresence.has(userId)) {
+        userPresence.get(userId).status = status;
+        io.emit('users:presence', getPresenceMap());
+      }
+    });
 
     // Auto-join every existing DM room so this user receives real-time DM
     // messages even for conversations they haven't explicitly opened today
@@ -51,9 +67,9 @@ const socketHandler = (io) => {
             [a, b]
           );
           // Join the other user's live sockets into this new room immediately
-          const otherSockets = onlineUsers.get(otherUserId);
-          if (otherSockets) {
-            otherSockets.forEach((sid) =>
+          const otherUser = userPresence.get(otherUserId);
+          if (otherUser && otherUser.sockets) {
+            otherUser.sockets.forEach((sid) =>
               io.sockets.sockets.get(sid)?.join(`dm:${conv.rows[0].id}`)
             );
           }
@@ -120,12 +136,12 @@ const socketHandler = (io) => {
 
     socket.on('disconnect', () => {
       Object.values(typingTimers).forEach(clearTimeout);
-      const sockets = onlineUsers.get(userId);
-      if (sockets) {
-        sockets.delete(socket.id);
-        if (!sockets.size) onlineUsers.delete(userId);
+      const userData = userPresence.get(userId);
+      if (userData) {
+        userData.sockets.delete(socket.id);
+        if (userData.sockets.size === 0) userPresence.delete(userId);
       }
-      io.emit('users:online', getOnlineUserIds());
+      io.emit('users:presence', getPresenceMap());
     });
   });
 };
