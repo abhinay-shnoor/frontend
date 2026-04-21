@@ -369,8 +369,10 @@ function LoadingSkeleton() {
   );
 }
 
-function MentionDropdown({ users, search, onSelect }) {
-  const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6);
+function MentionDropdown({ users, search, onSelect, currentUserId }) {
+  // De-duplicate users by ID and filter out the current user
+  const uniqueUsers = Array.from(new Map((users || []).filter(u => u.id !== currentUserId).map(u => [u.id, u])).values());
+  const filtered = uniqueUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6);
   if (!filtered.length) return null;
   return (
     <div style={{
@@ -719,7 +721,12 @@ export default function ChatArea({
 
         <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>
           {showMentionDropdown && (
-            <MentionDropdown users={allUsers} search={mentionSearch} onSelect={handleMentionSelect} />
+            <MentionDropdown 
+              users={allUsers} 
+              search={mentionSearch} 
+              onSelect={handleMentionSelect} 
+              currentUserId={currentUserId} 
+            />
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: 12, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
