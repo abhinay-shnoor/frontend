@@ -49,6 +49,8 @@ export function SocketProvider({ children }) {
   const leaveCurrentDM = (conversationId) => emit('leave_dm', conversationId);
 
   const emitStatus = (status) => emit('status:update', status);
+  const markDelivered = (data) => emit('mark:delivered', data);
+  const markSeen = (data) => emit('mark:seen', data);
 
   const emitTyping = (roomType, roomId, userName, isTyping) => {
     const event = isTyping ? 'typing:start' : 'typing:stop';
@@ -60,6 +62,7 @@ export function SocketProvider({ children }) {
   const onMessageEdited = (cb) => on('message:edited', cb);
   const onMessageDeleted = (cb) => on('message:deleted', cb);
   const onReactionUpdated = (cb) => on('reaction:updated', cb);
+  const onReceiptUpdated = (cb) => on('receipt:updated', cb);
   const onDMJoined = (cb) => on('dm:joined', cb);
   const onTypingUpdate = (cb) => on('typing:update', cb);
 
@@ -74,8 +77,9 @@ export function SocketProvider({ children }) {
     <SocketContext.Provider value={{
       connected, userPresence,
       joinSpace, leaveSpace, joinDM, leaveCurrentDM, emitTyping, emitStatus,
+      markDelivered, markSeen,
       onNewMessage, onMessageEdited, onMessageDeleted,
-      onReactionUpdated, onDMJoined, onTypingUpdate,
+      onReactionUpdated, onReceiptUpdated, onDMJoined, onTypingUpdate,
       onDMPreviewUpdated, onUserRoleChanged,
     }}>
       {children}

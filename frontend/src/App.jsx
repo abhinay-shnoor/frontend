@@ -30,7 +30,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const {
     connected,
     joinSpace, leaveSpace, joinDM,
-    onNewMessage, onMessageEdited, onMessageDeleted, onReactionUpdated,
+    onNewMessage, onMessageEdited, onMessageDeleted, onReactionUpdated, onReceiptUpdated,
     onDMJoined, onTypingUpdate, emitTyping, userPresence, emitStatus,
     onDMPreviewUpdated, onUserRoleChanged,
   } = useSocket();
@@ -157,7 +157,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }),
       onMessageEdited((msg) => {
         if (msg.space_id !== activeSpace.id) return;
-        setMessages(prev => prev.map(m => m.id === msg.id ? { ...formatMsg(msg), reactions: m.reactions } : m));
+        setMessages(prev => prev.map(m => m.id === msg.id ? formatMsg(msg) : m));
       }),
       onMessageDeleted(({ messageId, spaceId }) => {
         if (spaceId !== activeSpace.id) return;
@@ -165,6 +165,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }),
       onReactionUpdated(({ messageId, reactions }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
+      }),
+      onReceiptUpdated(({ messageId, receipts }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
       }),
       onTypingUpdate(({ userId: uid, userName, isTyping }) => {
         if (uid === user.id) return;
@@ -196,8 +199,19 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         }
         setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, formatMsg(msg)]);
       }),
+      onMessageEdited((msg) => {
+        if (!msg.conversation_id || msg.conversation_id !== activeDMConversationId) return;
+        setMessages(prev => prev.map(m => m.id === msg.id ? { ...formatMsg(msg) } : m));
+      }),
+      onMessageDeleted(({ messageId, conversationId }) => {
+        if (conversationId !== activeDMConversationId) return;
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      }),
       onReactionUpdated(({ messageId, reactions }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
+      }),
+      onReceiptUpdated(({ messageId, receipts }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
       }),
       onTypingUpdate(({ userId: uid, userName, isTyping }) => {
         if (uid === user.id) return;
@@ -215,6 +229,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     color: '#0D9488', avatar_url: m.avatar_url,
     time: new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     text: m.content, is_edited: m.is_edited, reactions: m.reactions || [],
+    receipts: m.receipts || [],
   });
 
   const formattedMessages = messages

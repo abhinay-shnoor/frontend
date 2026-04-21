@@ -91,13 +91,6 @@ export default function ConversationList({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
         <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12, color: 'var(--ws-text-muted)' }}>Unread</span>
-          <button onClick={() => setUnreadOnly(!unreadOnly)} style={{
-            position: 'relative', width: 34, height: 18, borderRadius: 9, border: 'none', cursor: 'pointer',
-            background: unreadOnly ? '#1a73e8' : 'var(--ws-border)', transition: 'background 0.2s', padding: 0,
-          }}>
-            <span style={{ position: 'absolute', top: 2, width: 14, height: 14, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: unreadOnly ? 18 : 2 }} />
-          </button>
         </div>
       </div>
 

@@ -183,9 +183,6 @@ export default function LeftSidebar({
                         {dotColor && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: dotColor, borderRadius: '50%', border: '1.5px solid var(--ws-sidebar)' }} />}
                       </div>
                       <span style={{ fontSize: 12, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{member.name}</span>
-                      {member.unread > 0 && (
-                        <span style={{ fontSize: 10, fontWeight: 700, background: '#1a73e8', color: '#fff', borderRadius: 10, padding: '1px 5px', flexShrink: 0 }}>{member.unread}</span>
-                      )}
                     </button>
                   );
                 })}
@@ -222,9 +219,6 @@ export default function LeftSidebar({
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{space.name}</span>
-                    {space.unread > 0 && (
-                      <span style={{ fontSize: 10, fontWeight: 700, background: '#1a73e8', color: '#fff', borderRadius: 10, padding: '1px 5px', flexShrink: 0 }}>{space.unread}</span>
-                    )}
                   </button>
                 ))}
               </div>

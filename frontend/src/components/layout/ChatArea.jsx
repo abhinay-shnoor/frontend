@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile } from '../../api/messages.js';
+import { useSocket } from '../../context/SocketContext.jsx';
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -43,10 +44,85 @@ function AttachmentPreview({ attachments }) {
   );
 }
 
+function ReceiptTicks({ receipts, isOwn }) {
+  if (!isOwn) return null;
+  const isSeen = (receipts || []).some(r => r.seenAt);
+  const isDelivered = (receipts || []).some(r => r.deliveredAt);
+  
+  const color = isSeen ? '#34B7F1' : 'var(--ws-text-muted)';
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, position: 'relative', bottom: -1 }}>
+      {isDelivered || isSeen ? (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 12l5 5L20 4" />
+          <path d="M7 12l5 5L22 4" style={{ transform: 'translateX(-4px)' }} />
+        </svg>
+      ) : (
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function MessageInfoModal({ msg, users, onClose }) {
+  const receipts = msg.receipts || [];
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <div style={{ width: 320, background: 'var(--ws-bg)', borderRadius: 12, padding: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, color: 'var(--ws-text)' }}>Message Info</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--ws-text-muted)' }}>✕</button>
+        </div>
+        <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+          <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sent at: {msg.time}</p>
+          <div style={{ borderTop: '0.5px solid var(--ws-border)', paddingTop: 12 }}>
+            <h4 style={{ fontSize: 13, margin: '0 0 10px', color: 'var(--ws-text)' }}>Read by</h4>
+            {receipts.filter(r => r.seenAt).length === 0 ? <p style={{ fontSize: 12, color: 'var(--ws-text-muted)' }}>No one yet</p> : 
+              receipts.filter(r => r.seenAt).map(r => {
+                const u = users.find(u => u.id === r.userId);
+                return (
+                  <div key={r.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Avatar initials={initials(u?.name || 'U')} size={24} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, margin: 0, color: 'var(--ws-text)' }}>{u?.name || 'Unknown'}</p>
+                      <p style={{ fontSize: 11, margin: 0, color: '#34B7F1' }}>{new Date(r.seenAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
+                );
+              })
+            }
+          </div>
+          <div style={{ borderTop: '0.5px solid var(--ws-border)', paddingTop: 12, marginTop: 12 }}>
+            <h4 style={{ fontSize: 13, margin: '0 0 10px', color: 'var(--ws-text)' }}>Delivered to</h4>
+            {receipts.filter(r => r.deliveredAt).length === 0 ? <p style={{ fontSize: 12, color: 'var(--ws-text-muted)' }}>No one yet</p> : 
+              receipts.filter(r => r.deliveredAt).map(r => {
+                const u = users.find(u => u.id === r.userId);
+                return (
+                  <div key={r.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Avatar initials={initials(u?.name || 'U')} size={24} />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, margin: 0, color: 'var(--ws-text)' }}>{u?.name || 'Unknown'}</p>
+                      <p style={{ fontSize: 11, margin: 0, color: 'var(--ws-text-muted)' }}>{new Date(r.deliveredAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
+                );
+              })
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageBubble({
   msg, currentUserId, onEdit, onDelete, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  isDeleting, onDeleteConfirm, onDeleteCancel, onReply,
+  isDeleting, onDeleteConfirm, onDeleteCancel, onReply, onShowInfo,
+  allUsers,
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -129,6 +205,9 @@ function MessageBubble({
                 : <span key={i}>{part}</span>
             )}
             <AttachmentPreview attachments={msg.attachments} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: isOwn ? -4 : 0 }}>
+              <ReceiptTicks receipts={msg.receipts} isOwn={isOwn} />
+            </div>
           </div>
         )}
 
@@ -196,6 +275,11 @@ function MessageBubble({
                 <ActionBtn title="Delete" onClick={() => onDelete(msg.id)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </ActionBtn>
+                <ActionBtn title="Info" onClick={() => onShowInfo(msg)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                   </svg>
                 </ActionBtn>
               </>
@@ -322,6 +406,9 @@ export default function ChatArea({
   const [editContent, setEditContent] = useState('');
   const [deletingId, setDeletingId] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [infoModalMsg, setInfoModalMsg] = useState(null);
+  
+  const { markDelivered, markSeen } = useSocket();
   // Reply-to state
   const [replyingTo, setReplyingTo] = useState(null);
   // @mention autocomplete
@@ -350,6 +437,42 @@ export default function ChatArea({
   useEffect(() => {
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, []);
+
+  // Seen/Delivered Receipt Logic
+  const observerRef = useRef(null);
+  const seenMessages = useRef(new Set());
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const msgId = entry.target.getAttribute('data-msg-id');
+          const isOwn = entry.target.getAttribute('data-is-own') === 'true';
+          if (!isOwn && !seenMessages.current.has(msgId)) {
+            const msg = messages.find(m => m.id === msgId);
+            const myReceipt = msg?.receipts?.find(r => r.userId === currentUserId);
+            if (!myReceipt?.seenAt) {
+              markSeen({ messageId: msgId, spaceId, conversationId: activeView === 'dm' ? messages[0]?.conversation_id : null });
+              seenMessages.current.add(msgId);
+            }
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+    return () => observerRef.current?.disconnect();
+  }, [messages, spaceId, activeView, currentUserId]);
+
+  useEffect(() => {
+    // Mark messages as delivered when loaded
+    messages.forEach(msg => {
+      if (msg.senderId !== currentUserId) {
+        const myReceipt = msg.receipts?.find(r => r.userId === currentUserId);
+        if (!myReceipt?.deliveredAt) {
+          markDelivered({ messageId: msg.id, spaceId, conversationId: activeView === 'dm' ? msg.conversation_id : null });
+        }
+      }
+    });
+  }, [messages, spaceId, activeView, currentUserId]);
 
   const handleInputChange = (val) => {
     setInput(val);
@@ -514,20 +637,24 @@ const handleEditSave = async () => {
               </div>
 
               {messages.map(msg => (
-                <MessageBubble key={msg.id} msg={msg} currentUserId={currentUserId}
-                  onEdit={(id, text) => { setEditingId(id); setEditContent(text); setDeletingId(null); }}
-                  onDelete={(id) => { setDeletingId(id); setEditingId(null); }}
-                  onReact={onAddReaction} onRemoveReact={onRemoveReaction}
-                  onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
-                  isEditing={editingId === msg.id}
-                  editContent={editingId === msg.id ? editContent : ''}
-                  onEditChange={setEditContent}
-                  onEditSave={handleEditSave}
-                  onEditCancel={() => { setEditingId(null); setEditContent(''); }}
-                  isDeleting={deletingId === msg.id}
-                  onDeleteConfirm={handleDeleteConfirm}
-                  onDeleteCancel={() => setDeletingId(null)}
-                />
+                <div key={msg.id} data-msg-id={msg.id} data-is-own={msg.senderId === currentUserId} ref={el => { if (el) observerRef.current?.observe(el); }}>
+                  <MessageBubble msg={msg} currentUserId={currentUserId}
+                    allUsers={allUsers}
+                    onEdit={(id, text) => { setEditingId(id); setEditContent(text); setDeletingId(null); }}
+                    onDelete={(id) => { setDeletingId(id); setEditingId(null); }}
+                    onReact={onAddReaction} onRemoveReact={onRemoveReaction}
+                    onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
+                    onShowInfo={setInfoModalMsg}
+                    isEditing={editingId === msg.id}
+                    editContent={editingId === msg.id ? editContent : ''}
+                    onEditChange={setEditContent}
+                    onEditSave={handleEditSave}
+                    onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+                    isDeleting={deletingId === msg.id}
+                    onDeleteConfirm={handleDeleteConfirm}
+                    onDeleteCancel={() => setDeletingId(null)}
+                  />
+                </div>
               ))}
               <div ref={bottomRef} />
             </>
@@ -643,6 +770,7 @@ const handleEditSave = async () => {
           </div>
         </div>
       )}
+      {infoModalMsg && <MessageInfoModal msg={infoModalMsg} users={allUsers} onClose={() => setInfoModalMsg(null)} />}
     </div>
   );
 }
