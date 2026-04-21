@@ -542,7 +542,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           return {
             ...m,
             source: s ? s.name : 'Direct Message',
-            sourceId: m.space_id || m.sender_id,
+            sourceId: m.space_id || m.senderId,
             sourceType: m.space_id ? 'space' : 'dm'
           };
         }));
@@ -696,7 +696,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           ...formatted,
           source: msg.space_id
             ? (spaces.find(s => s.id === msg.space_id)?.name || 'space')
-            : activeDMRef.current?.name || 'DM',
+            : 'Direct Message',
           sourceId: msg.space_id || msg.sender_id,
           sourceType: msg.space_id ? 'space' : 'dm',
         };

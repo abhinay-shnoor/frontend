@@ -62,7 +62,7 @@ export default function MentionsActivityFeed({ mentions, onSelectMention, onClos
                     <p style={{ fontSize: 14, color: 'var(--ws-text)', margin: '0 0 10px', lineHeight: 1.5 }}>{msg.text}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', background: 'var(--ws-surface-2)', padding: '2px 8px', borderRadius: 4 }}>
-                        {msg.sourceType === 'space' ? `#${msg.source}` : `DM with ${msg.source}`}
+                        {msg.sourceType === 'space' ? `#${msg.source}` : 'Direct Message'}
                       </span>
                       <span style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600 }}>Click to view conversation →</span>
                     </div>
