@@ -16,16 +16,14 @@ const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperC
 export default function ConversationList({
   activeView, onSelectConversation, selectedId,
   navSearchQuery, mentionedMessages, allSpaces, dmConversations, currentUserId,
-  className = '',
+  unreadCounts = {}, className = '',
 }) {
-  const [unreadOnly, setUnreadOnly] = useState(false);
-
   const items = [
     ...allSpaces.map(s => ({
       id: s.id, type: 'space', name: s.name,
       preview: s.last_message_sender ? `${s.last_message_sender}: ${s.last_message}` : 'No messages yet',
       time: s.last_message_at || s.created_at, isGroup: true,
-      initials: s.name.substring(0, 2).toUpperCase(), unread: s.unread || 0,
+      initials: s.name.substring(0, 2).toUpperCase(), unread: unreadCounts[`space_${s.id}`] || 0,
     })),
     ...(dmConversations || []).map(dm => ({
       id: dm.other_user_id, type: 'dm', name: dm.other_user_name,
@@ -33,14 +31,14 @@ export default function ConversationList({
         ? (dm.last_message_sender_id === currentUserId ? `You: ${dm.last_message}` : dm.last_message)
         : 'No messages yet',
       time: dm.last_message_at, avatar_url: dm.other_user_avatar,
-      initials: initials(dm.other_user_name), isGroup: false, unread: 0,
+      initials: initials(dm.other_user_name), isGroup: false, unread: unreadCounts[`dm_${dm.other_user_id}`] || 0,
     })),
   ].sort((a, b) => {
     if (!a.time) return 1; if (!b.time) return -1;
     return new Date(b.time) - new Date(a.time);
   });
 
-  let filtered = unreadOnly ? items.filter(i => i.unread > 0) : items;
+  let filtered = items;
   if (navSearchQuery?.trim()) {
     const q = navSearchQuery.toLowerCase();
     filtered = filtered.filter(i => i.name.toLowerCase().includes(q) || i.preview?.toLowerCase().includes(q));
@@ -88,15 +86,6 @@ export default function ConversationList({
     <div className={className} style={{ display: 'flex', flexDirection: 'column', width: 360, borderRight: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
         <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12, color: 'var(--ws-text-muted)' }}>Unread</span>
-          <button onClick={() => setUnreadOnly(!unreadOnly)} style={{
-            position: 'relative', width: 34, height: 18, borderRadius: 9, border: 'none', cursor: 'pointer',
-            background: unreadOnly ? '#1a73e8' : 'var(--ws-border)', transition: 'background 0.2s', padding: 0,
-          }}>
-            <span style={{ position: 'absolute', top: 2, width: 14, height: 14, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.2s', left: unreadOnly ? 18 : 2 }} />
-          </button>
-        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -116,29 +105,42 @@ export default function ConversationList({
             onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
             onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
           >
-            {item.isGroup ? (
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)', flexShrink: 0 }}>
-                #{item.initials[0]}
-              </div>
-            ) : item.avatar_url ? (
-              <img src={item.avatar_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-            ) : (
-              <Avatar initials={item.initials} color="#0D9488" size={40} />
-            )}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {item.isGroup ? (
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
+                  #{item.initials[0]}
+                </div>
+              ) : item.avatar_url ? (
+                <img src={item.avatar_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <Avatar initials={item.initials} color="#0D9488" size={40} />
+              )}
+              {item.unread > 0 && (
+                <div style={{
+                  position: 'absolute', top: -5, right: -5,
+                  minWidth: 18, height: 18, borderRadius: 9,
+                  background: '#ea4335', color: '#fff', fontSize: 10, fontWeight: 800,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '0 4px', border: '2px solid var(--ws-bg)',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  animation: 'popBadge 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                }}>
+                  <style>{`@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }`}</style>
+                  {item.unread > 99 ? '99+' : item.unread}
+                </div>
+              )}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 700 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 800 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.isGroup ? `#${item.name}` : item.name}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', flexShrink: 0, marginLeft: 6 }}>{formatTime(item.time)}</span>
+                <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatTime(item.time)}</span>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 500 : 400 }}>
+              <p style={{ fontSize: 12, color: item.unread > 0 ? 'var(--ws-text)' : 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 600 : 400 }}>
                 {item.preview}
               </p>
             </div>
-            {item.unread > 0 && (
-              <span style={{ fontSize: 10, fontWeight: 700, background: '#1a73e8', color: '#fff', borderRadius: 10, padding: '2px 6px', flexShrink: 0 }}>{item.unread}</span>
-            )}
           </button>
         ))}
       </div>

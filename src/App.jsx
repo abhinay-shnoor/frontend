@@ -903,6 +903,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 allSpaces={formattedSpaces}
                 dmConversations={dmConversations}
                 currentUserId={user.id}
+                unreadCounts={unreadCounts}            // FIX 6
               />
             )}
             <ChatArea

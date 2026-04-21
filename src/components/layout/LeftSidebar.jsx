@@ -414,9 +414,14 @@ export default function LeftSidebar({
                   {/* Badge showing unread mention count */}
                   {unreadMentions > 0 && (
                     <span style={{
-                      fontSize: 10, fontWeight: 700, background: '#ea4335', color: '#fff',
-                      borderRadius: 10, padding: '1px 5px', flexShrink: 0,
+                      fontSize: 10, fontWeight: 800, background: '#ea4335', color: '#fff',
+                      minWidth: 18, height: 18, borderRadius: 9,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '0 4px', flexShrink: 0,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                      animation: 'popBadge 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
                     }}>
+                      <style>{`@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }`}</style>
                       {unreadMentions}
                     </span>
                   )}
