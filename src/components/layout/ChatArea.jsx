@@ -80,7 +80,16 @@ function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
 
 function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   const receipts = msg.receipts || [];
-  const createdDate = msg.created_at ? new Date(msg.created_at) : new Date();
+  
+  // Helper to ensure database timestamps are treated as UTC if they lack a timezone
+  const parseUTC = (d) => {
+    if (!d) return null;
+    if (typeof d !== 'string') return new Date(d);
+    const hasTZ = d.includes('Z') || d.includes('+') || (d.includes('-') && d.split('-').length > 3);
+    return new Date(hasTZ ? d : `${d.replace(' ', 'T')}Z`);
+  };
+
+  const createdDate = msg.created_at ? parseUTC(msg.created_at) : new Date();
   const sentTime = createdDate.toLocaleString([], {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit'
   });
@@ -88,13 +97,15 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   const getReceiptDetails = () => {
     return receipts.map(r => {
       const u = allUsers.find(user => user.id === r.userId) || { name: 'Unknown User' };
+      const dDate = parseUTC(r.deliveredAt);
+      const sDate = parseUTC(r.seenAt);
       return {
         name: u.name,
         avatar_url: u.avatar_url,
-        delivered: r.deliveredAt ? new Date(r.deliveredAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Pending',
-        deliveredDate: r.deliveredAt ? new Date(r.deliveredAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
-        seen: r.seenAt ? new Date(r.seenAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Not yet',
-        seenDate: r.seenAt ? new Date(r.seenAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
+        delivered: dDate ? dDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Pending',
+        deliveredDate: dDate ? dDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
+        seen: sDate ? sDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Not yet',
+        seenDate: sDate ? sDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) : null,
       };
     });
   };
@@ -241,7 +252,9 @@ function MessageBubble({
               fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word',
               cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              boxShadow: isOwn ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              border: isOwn ? '1px solid var(--ws-border)' : 'none',
             }}
           >
             <div>
