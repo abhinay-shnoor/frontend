@@ -162,6 +162,15 @@ export function SocketProvider({ children }) {
   const onTypingUpdate     = (cb) => on('typing:update',      cb);
   const onDMPreviewUpdated = (cb) => on('dm:preview_updated', cb);
   const onUserRoleChanged  = (cb) => on('user:role_changed',  cb);
+  const onReceiptUpdated   = (cb) => on('receipt:updated',   cb);
+
+  // Mark message as delivered
+  const emitMarkDelivered = ({ messageId, spaceId, conversationId }) =>
+    emit('mark:delivered', { messageId, spaceId, conversationId });
+
+  // Mark message as seen
+  const emitMarkSeen = ({ messageId, spaceId, conversationId }) =>
+    emit('mark:seen', { messageId, spaceId, conversationId });
 
   // FIX 4: Helper to get a display status for a user
   // Returns: 'online' | 'away' | 'dnd' | 'offline'
@@ -190,7 +199,8 @@ export function SocketProvider({ children }) {
       joinSpace, leaveSpace, joinDM, leaveCurrentDM, emitTyping,
       onNewMessage, onMessageEdited, onMessageDeleted,
       onReactionUpdated, onDMJoined, onTypingUpdate,
-      onDMPreviewUpdated, onUserRoleChanged,
+      onDMPreviewUpdated, onUserRoleChanged, onReceiptUpdated,
+      emitMarkDelivered, emitMarkSeen,
     }}>
       {children}
     </SocketContext.Provider>

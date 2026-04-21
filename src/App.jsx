@@ -433,13 +433,6 @@ import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations } from './api/messages.js';
 import api from './api/axios.js';
 
-// ─── DM message helpers (edit / delete) ─────────────────────────────────────
-// These call the DM messages endpoints; add matching routes on the backend if missing.
-const editDMMessage   = (msgId, content) =>
-  api.patch(`/api/dm/messages/${msgId}`, { content }).then(r => r.data);
-const deleteDMMessage = (msgId) =>
-  api.delete(`/api/dm/messages/${msgId}`).then(r => r.data);
-
 function ChatApp({ onSignOut, onOpenAdmin }) {
   const { user, refreshUser } = useAuth();
   const { showToast } = useToast();
@@ -449,6 +442,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     onNewMessage, onMessageEdited, onMessageDeleted, onReactionUpdated,
     onDMJoined, onTypingUpdate, emitTyping, onlineUsers,
     onDMPreviewUpdated, onUserRoleChanged,
+    onReceiptUpdated, emitMarkDelivered, emitMarkSeen,
   } = useSocket();
 
   const currentUser = {
@@ -583,6 +577,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           ? (prev.includes(userName) ? prev : [...prev, userName])
           : prev.filter(n => n !== userName));
       }),
+      onReceiptUpdated(({ messageId, receipts }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
+      }),
     ];
     return () => { leaveSpace(activeSpace.id); cleanups.forEach(fn => fn?.()); };
   }, [activeSpace, activeView]);
@@ -605,6 +602,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         setTypingUsers(prev => isTyping
           ? (prev.includes(userName) ? prev : [...prev, userName])
           : prev.filter(n => n !== userName));
+      }),
+      onReceiptUpdated(({ messageId, receipts }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
       }),
     ];
     return () => cleanups.forEach(fn => fn?.());
@@ -674,6 +674,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     color: '#0D9488', avatar_url: m.avatar_url,
     time: new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
     text: m.content, is_edited: m.is_edited, reactions: m.reactions || [],
+    receipts: m.receipts || [], created_at: m.created_at,
   });
 
   const formattedMessages = messages
@@ -739,8 +740,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     try {
       if (activeView === 'space' && activeSpace) {
         await editSpaceMessage(activeSpace.id, msgId, content);
-      } else if (activeView === 'dm') {
-        await editDMMessage(msgId, content);
+      } else if (activeView === 'dm' && activeDM) {
+        await api.patch(`/api/dm/${activeDM.id}/messages/${msgId}`, { content });
       } else {
         return;
       }
@@ -759,8 +760,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     try {
       if (activeView === 'space' && activeSpace) {
         await deleteSpaceMessage(activeSpace.id, msgId);
-      } else if (activeView === 'dm') {
-        await deleteDMMessage(msgId);
+      } else if (activeView === 'dm' && activeDM) {
+        await api.delete(`/api/dm/${activeDM.id}/messages/${msgId}`);
       } else {
         return;
       }
@@ -793,10 +794,33 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to load more messages', 'error'); }
   };
 
-  const handleTypingChange = (isTyping) => {
-    if (activeView === 'space' && activeSpace) emitTyping('space', activeSpace.id, user.name, isTyping);
-    else if (activeView === 'dm' && activeDMConversationId) emitTyping('dm', activeDMConversationId, user.name, isTyping);
-  };
+// ─── Mark as Delivered/Seen effects ───────────────────────────────────────
+  useEffect(() => {
+    if (!connected || !messages.length) return;
+    
+    messages.forEach(msg => {
+      // If I am NOT the sender, mark as delivered if not already
+      if (msg.senderId !== user.id) {
+        const myReceipt = msg.receipts?.find(r => r.userId === user.id);
+        if (!myReceipt || !myReceipt.deliveredAt) {
+          emitMarkDelivered({
+            messageId: msg.id,
+            spaceId: activeSpace?.id,
+            conversationId: activeDMConversationId
+          });
+        }
+        
+        // If this is the active view, also mark as seen
+        if (!myReceipt || !myReceipt.seenAt) {
+          emitMarkSeen({
+            messageId: msg.id,
+            spaceId: activeSpace?.id,
+            conversationId: activeDMConversationId
+          });
+        }
+      }
+    });
+  }, [messages.length, activeSpace?.id, activeDMConversationId, connected]);
 
   const chatTitle    = activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || '';
   const memberCount  = activeView === 'space' && activeSpace ? activeSpace.memberCount : null;
@@ -806,6 +830,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const chatAllUsers = activeView === 'space'
     ? spaceMembers.map(m => ({ id: m.id, name: m.name }))
     : dmUsers.map(u => ({ id: u.id, name: u.name }));
+
+  const handleTypingChange = (isTyping) => {
+    if (activeView === 'space' && activeSpace) emitTyping('space', activeSpace.id, user.name, isTyping);
+    else if (activeView === 'dm' && activeDMConversationId) emitTyping('dm', activeDMConversationId, user.name, isTyping);
+  };
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-white">
@@ -877,7 +906,6 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
               spaceMembers={spaceMembers}
               currentUserId={user.id}
               onEditMessage={handleEditMessage}
-              onDeleteMessage={handleDeleteMessage}
               onAddReaction={handleAddReaction}
               onRemoveReaction={handleRemoveReaction}
               typingUsers={typingUsers}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile } from '../../api/messages.js';
@@ -43,10 +43,110 @@ function AttachmentPreview({ attachments }) {
   );
 }
 
+function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
+  if (!isOwn) return null;
+  const receipts = msg.receipts || [];
+  
+  // Delivered: any receipt with deliveredAt
+  const delivered = receipts.some(r => r.deliveredAt);
+  
+  // Seen: 
+  // - DM: other person's seenAt is set
+  // - Space: receipts.length (excluding sender) == totalMembers - 1
+  let seen = false;
+  if (isSpace) {
+    seen = receipts.filter(r => r.seenAt).length >= (totalMembers - 1) && (totalMembers > 1);
+  } else {
+    seen = receipts.some(r => r.seenAt);
+  }
+
+  const tickColor = seen ? '#34B7F1' : 'var(--ws-text-muted)'; // blue for seen, gray for delivered/sent
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, transform: 'translateY(2px)' }}>
+      {delivered ? (
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
+          <path d="M0.5 5.5L3.5 8.5L10.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M5.5 5.5L8.5 8.5L15.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: -4 }}/>
+        </svg>
+      ) : (
+        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+          <path d="M1 4.5L4 7.5L10 1.5" stroke="var(--ws-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function MessageInfoModal({ msg, onClose, allUsers = [] }) {
+  const receipts = msg.receipts || [];
+  const sentTime = new Date(msg.created_at).toLocaleString();
+
+  const getReceiptDetails = () => {
+    return receipts.map(r => {
+      const user = allUsers.find(u => u.id === r.userId) || { name: 'Unknown User' };
+      return {
+        name: user.name,
+        delivered: r.deliveredAt ? new Date(r.deliveredAt).toLocaleString() : 'Pending',
+        seen: r.seenAt ? new Date(r.seenAt).toLocaleString() : 'Not yet'
+      };
+    });
+  };
+
+  const details = getReceiptDetails();
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000,
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--ws-bg)', borderRadius: 16, width: '100%', maxWidth: 400,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)', border: '0.5px solid var(--ws-border)',
+        overflow: 'hidden'
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--ws-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ws-text)' }}>Message Info</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ws-text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+        </div>
+        <div style={{ padding: 20, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Message Content</p>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ws-text)' }}>{msg.text}</p>
+            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--ws-text-muted)' }}>Sent: {sentTime}</p>
+          </div>
+          
+          <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>Receipts</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {details.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>No receipts yet.</p>
+            ) : details.map((d, i) => (
+              <div key={i} style={{ padding: '10px 14px', background: 'var(--ws-surface-2)', borderRadius: 10 }}>
+                <p style={{ margin: '0 0 6px', fontWeight: 600, fontSize: 13, color: 'var(--ws-text)' }}>{d.name}</p>
+                <div style={{ display: 'flex', gap: 20 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>Delivered</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ws-text)' }}>{d.delivered}</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 10, color: 'var(--ws-text-muted)' }}>Seen</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ws-text)' }}>{d.seen}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageBubble({
-  msg, currentUserId, onEdit, onDelete, onReact, onRemoveReact,
+  msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  isDeleting, onDeleteConfirm, onDeleteCancel, onReply,
+  totalMembers, isSpace, onShowInfo
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -62,7 +162,6 @@ function MessageBubble({
         alignItems: 'flex-end', gap: 8, padding: '2px 16px', position: 'relative',
       }}
     >
-      {/* Avatar — only shown for other people's messages */}
       {!isOwn && (
         <div style={{ flexShrink: 0, marginBottom: 4 }}>
           {msg.avatar_url
@@ -73,14 +172,12 @@ function MessageBubble({
       )}
 
       <div style={{ maxWidth: 'min(72%, 600px)', position: 'relative' }}>
-        {/* Sender name + timestamp */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
           {!isOwn && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.senderName}</span>}
           <span style={{ fontSize: 10, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
           {msg.is_edited && <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
         </div>
 
-        {/* Parent message preview for replies */}
         {msg.parentContent && (
           <div style={{
             borderLeft: '3px solid #0D9488',
@@ -95,7 +192,6 @@ function MessageBubble({
           </div>
         )}
 
-        {/* Message bubble */}
         {isEditing ? (
           <div>
             <textarea value={editContent} onChange={e => onEditChange(e.target.value)} autoFocus
@@ -107,33 +203,35 @@ function MessageBubble({
               <button onClick={onEditCancel} style={{ fontSize: 12, padding: '4px 10px', background: 'none', color: 'var(--ws-text-muted)', border: '0.5px solid var(--ws-border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
-        ) : isDeleting ? (
-          <div style={{ background: 'rgba(239,68,68,0.1)', border: '0.5px solid rgba(239,68,68,0.3)', borderRadius: 12, padding: '8px 12px' }}>
-            <p style={{ fontSize: 13, color: '#dc2626', margin: '0 0 8px' }}>Delete this message?</p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={onDeleteConfirm} style={{ fontSize: 12, padding: '4px 10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Delete</button>
-              <button onClick={onDeleteCancel} style={{ fontSize: 12, padding: '4px 10px', background: 'none', color: 'var(--ws-text-muted)', border: '0.5px solid var(--ws-border)', borderRadius: 6, cursor: 'pointer' }}>Cancel</button>
-            </div>
-          </div>
         ) : (
-          <div style={{
-            background: isOwn ? 'var(--ws-bubble-own)' : 'var(--ws-bubble-other)',
-            color: isOwn ? 'var(--ws-bubble-own-text)' : 'var(--ws-bubble-other-text)',
-            padding: '8px 12px',
-            borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-            fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word',
-          }}>
-            {(msg.text || '').split(/(@[\w ]+)/).map((part, i) =>
-              part.startsWith('@')
-                ? <span key={i} style={{ fontWeight: 600, opacity: 0.9 }}>{part}</span>
-                : <span key={i}>{part}</span>
-            )}
+          <div 
+            onClick={() => onShowInfo(msg)}
+            style={{
+              background: isOwn ? 'var(--ws-bubble-own)' : 'var(--ws-bubble-other)',
+              color: isOwn ? 'var(--ws-bubble-own-text)' : 'var(--ws-bubble-other-text)',
+              padding: '8px 12px',
+              borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+              fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <div>
+              {(msg.text || '').split(/(@[\w ]+)/).map((part, i) =>
+                part.startsWith('@')
+                  ? <span key={i} style={{ fontWeight: 600, opacity: 0.9 }}>{part}</span>
+                  : <span key={i}>{part}</span>
+              )}
+            </div>
             <AttachmentPreview attachments={msg.attachments} />
+            <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
+               <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
+            </div>
           </div>
         )}
 
-        {/* Reactions */}
-        {reactions.length > 0 && !isEditing && !isDeleting && (
+        {reactions.length > 0 && !isEditing && (
           <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap', justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
             {reactions.map(r => {
               const iMine = r.userIds.includes(currentUserId);
@@ -156,8 +254,7 @@ function MessageBubble({
           </div>
         )}
 
-        {/* Thread reply count */}
-        {msg.replyCount > 0 && !isEditing && !isDeleting && (
+        {msg.replyCount > 0 && !isEditing && (
           <button style={{
             marginTop: 4, fontSize: 11, color: '#1a73e8', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
             display: 'block', textAlign: isOwn ? 'right' : 'left',
@@ -166,39 +263,30 @@ function MessageBubble({
           </button>
         )}
 
-        {/* Action bar — floats above bubble on hover */}
-        {hovered && !isEditing && !isDeleting && (
+        {hovered && !isEditing && (
           <div style={{
             position: 'absolute', right: 20, top: 4,
-            display: 'flex', gap: 2, background: '#fff',
-            border: '1px solid #e5e7eb', borderRadius: 8,
+            display: 'flex', gap: 2, background: 'var(--ws-bg)',
+            border: '1px solid var(--ws-border)', borderRadius: 8,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 2,
+            zIndex: 10
           }}>
-            <div style={{ position: 'relative' }}>
-              <ActionBtn title="React" onClick={() => setShowPicker(prev => !prev)}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
+            <ActionBtn title="React" onClick={() => setShowPicker(prev => !prev)}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
+              </svg>
+            </ActionBtn>
+            {showPicker && (
+              <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 4, zIndex: 100 }}>
+                <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
+              </div>
+            )}
+            {isOwn && (
+              <ActionBtn title="Edit" onClick={() => onEdit(msg.id, msg.text)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
               </ActionBtn>
-              {showPicker && (
-                <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 4, zIndex: 100 }}>
-                  <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
-                </div>
-              )}
-            </div>
-            {isOwn && (
-              <>
-                <ActionBtn title="Edit" onClick={() => onEdit(msg.id, msg.text)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </ActionBtn>
-                <ActionBtn title="Delete" onClick={() => onDelete(msg.id)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </ActionBtn>
-              </>
             )}
           </div>
         )}
@@ -241,7 +329,6 @@ function LoadingSkeleton() {
   );
 }
 
-// @mention autocomplete dropdown shown above the input
 function MentionDropdown({ users, search, onSelect }) {
   const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase())).slice(0, 6);
   if (!filtered.length) return null;
@@ -271,7 +358,6 @@ function MentionDropdown({ users, search, onSelect }) {
   );
 }
 
-// Search results panel
 function SearchResultsPanel({ results, onClose, onJump, loading }) {
   return (
     <div style={{
@@ -312,8 +398,7 @@ export default function ChatArea({
   title, description, memberCount, messages, onSend, isSpace,
   activeView, onClose, isMaximized, onToggleMaximize,
   spaceMembers, currentUserId, currentUser, allUsers = [],
-  onEditMessage, onDeleteMessage, onAddReaction, onRemoveReaction,
-  typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
+  onEditMessage, typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
   spaceId,
 }) {
   const [input, setInput] = useState('');
@@ -324,17 +409,14 @@ export default function ChatArea({
   const [showMembers, setShowMembers] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
-  const [deletingId, setDeletingId] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  // Reply-to state
   const [replyingTo, setReplyingTo] = useState(null);
-  // @mention autocomplete
   const [mentionSearch, setMentionSearch] = useState('');
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionStartPos, setMentionStartPos] = useState(-1);
-  // File attachment
-  const [pendingFiles, setPendingFiles] = useState([]); // [{url, name, type, size}]
+  const [pendingFiles, setPendingFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [infoMessage, setInfoMessage] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -347,7 +429,7 @@ export default function ChatArea({
   }, [messages.length]);
 
   useEffect(() => {
-    setShowMembers(false); setEditingId(null); setDeletingId(null);
+    setShowMembers(false); setEditingId(null);
     setReplyingTo(null); setInput(''); setPendingFiles([]);
     if (typingTimerRef.current) { clearTimeout(typingTimerRef.current); onTypingChange?.(false); }
   }, [title]);
@@ -356,7 +438,6 @@ export default function ChatArea({
     return () => { if (typingTimerRef.current) clearTimeout(typingTimerRef.current); };
   }, []);
 
-  // Run search when query changes (debounced 350ms)
   useEffect(() => {
     if (!showSearch || !searchQuery.trim()) { setSearchResults([]); return; }
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -373,7 +454,6 @@ export default function ChatArea({
 
   const handleInputChange = (val) => {
     setInput(val);
-    // @mention detection
     const lastAt = val.lastIndexOf('@');
     if (lastAt !== -1) {
       const afterAt = val.slice(lastAt + 1);
@@ -388,7 +468,6 @@ export default function ChatArea({
       setShowMentionDropdown(false);
       setMentionStartPos(-1);
     }
-    // Typing indicator
     onTypingChange?.(true);
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => onTypingChange?.(false), 2000);
@@ -428,20 +507,12 @@ export default function ChatArea({
     inputRef.current?.focus();
   };
 
-const handleEditSave = async () => {
+  const handleEditSave = async () => {
     if (!editContent.trim() || !editingId) return;
     try {
       await onEditMessage(editingId, editContent.trim());
       setEditingId(null); setEditContent('');
-    } catch {
-      // Keep textarea open so user knows it failed
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deletingId) return;
-    await onDeleteMessage(deletingId);
-    setDeletingId(null);
+    } catch { }
   };
 
   const handleLoadMore = async () => {
@@ -472,7 +543,6 @@ const handleEditSave = async () => {
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden', position: 'relative' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ws-bg)', height: '100%', overflow: 'hidden' }}>
 
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0, background: 'var(--ws-bg)' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -520,7 +590,6 @@ const handleEditSave = async () => {
           </div>
         </div>
 
-        {/* Inline search bar */}
         {showSearch && (
           <div style={{ padding: '8px 16px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
             <input
@@ -533,17 +602,15 @@ const handleEditSave = async () => {
           </div>
         )}
 
-        {/* Search results overlay */}
         {showSearch && (searchQuery.trim() || searchLoading) && (
           <SearchResultsPanel
             results={searchResults}
             loading={searchLoading}
             onClose={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
-            onJump={(r) => { setShowSearch(false); setSearchQuery(''); /* jump to message handled in parent */ }}
+            onJump={(r) => { setShowSearch(false); setSearchQuery(''); }}
           />
         )}
 
-        {/* Message list */}
         <div style={{ flex: 1, overflowY: 'auto', paddingTop: 8 }}>
           {messagesLoading ? <LoadingSkeleton /> : (
             <>
@@ -562,8 +629,7 @@ const handleEditSave = async () => {
 
               {messages.map(msg => (
                 <MessageBubble key={msg.id} msg={msg} currentUserId={currentUserId}
-                  onEdit={(id, text) => { setEditingId(id); setEditContent(text); setDeletingId(null); }}
-                  onDelete={(id) => { setDeletingId(id); setEditingId(null); }}
+                  onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
                   onReact={onAddReaction} onRemoveReact={onRemoveReaction}
                   onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
                   isEditing={editingId === msg.id}
@@ -571,9 +637,9 @@ const handleEditSave = async () => {
                   onEditChange={setEditContent}
                   onEditSave={handleEditSave}
                   onEditCancel={() => { setEditingId(null); setEditContent(''); }}
-                  isDeleting={deletingId === msg.id}
-                  onDeleteConfirm={handleDeleteConfirm}
-                  onDeleteCancel={() => setDeletingId(null)}
+                  totalMembers={isSpace ? memberCount : 2}
+                  isSpace={isSpace}
+                  onShowInfo={setInfoMessage}
                 />
               ))}
               <div ref={bottomRef} />
@@ -581,14 +647,12 @@ const handleEditSave = async () => {
           )}
         </div>
 
-        {/* Typing indicator */}
         {typingUsers?.length > 0 && (
           <div style={{ padding: '2px 16px 4px', fontSize: 11, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>
             {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.join(', ')} are typing...`}
           </div>
         )}
 
-        {/* Pending file previews */}
         {pendingFiles.length > 0 && (
           <div style={{ padding: '6px 16px', borderTop: '0.5px solid var(--ws-border)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {pendingFiles.map((f, i) => (
@@ -602,7 +666,6 @@ const handleEditSave = async () => {
           </div>
         )}
 
-        {/* Reply preview bar */}
         {replyingTo && (
           <div style={{ padding: '6px 16px', borderTop: '0.5px solid var(--ws-border)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-surface)' }}>
             <div style={{ flex: 1, borderLeft: '3px solid #0D9488', paddingLeft: 8 }}>
@@ -613,17 +676,12 @@ const handleEditSave = async () => {
           </div>
         )}
 
-        {/* Input */}
         <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>
-          {/* @mention dropdown */}
           {showMentionDropdown && (
             <MentionDropdown users={allUsers} search={mentionSearch} onSelect={handleMentionSelect} />
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: 12, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}
-            onFocus={() => { }} onBlur={() => { }}
-          >
-            {/* File attachment button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: 12, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingFile}
@@ -649,7 +707,6 @@ const handleEditSave = async () => {
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
                 if (e.key === 'Escape') { setShowMentionDropdown(false); setReplyingTo(null); }
-                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {/* mention nav - future */ }
               }}
               placeholder={`Message ${isSpace ? '#' : ''}${title}...`}
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
@@ -670,7 +727,6 @@ const handleEditSave = async () => {
         </div>
       </div>
 
-      {/* Members side panel */}
       {showMembers && isSpace && (
         <div style={{ width: 240, borderLeft: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', height: 57, borderBottom: '0.5px solid var(--ws-border)' }}>
@@ -689,6 +745,14 @@ const handleEditSave = async () => {
             ))}
           </div>
         </div>
+      )}
+
+      {infoMessage && (
+        <MessageInfoModal 
+          msg={infoMessage} 
+          onClose={() => setInfoMessage(null)} 
+          allUsers={allUsers} 
+        />
       )}
     </div>
   );
