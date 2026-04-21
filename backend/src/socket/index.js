@@ -134,6 +134,44 @@ const socketHandler = (io) => {
       }
     });
 
+    socket.on('mark:delivered', async ({ messageId, spaceId, conversationId }) => {
+      try {
+        await pool.query(
+          `INSERT INTO message_receipts (message_id, user_id, delivered_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (message_id, user_id) DO UPDATE SET delivered_at = COALESCE(message_receipts.delivered_at, NOW())`,
+          [messageId, userId]
+        );
+        const room = spaceId ? `space:${spaceId}` : `dm:${conversationId}`;
+        const receipts = await pool.query(
+          `SELECT user_id AS "userId", delivered_at AS "deliveredAt", seen_at AS "seenAt" FROM message_receipts WHERE message_id = $1`,
+          [messageId]
+        );
+        io.to(room).emit('receipt:updated', { messageId, receipts: receipts.rows });
+      } catch (err) {
+        console.error('mark:delivered error:', err);
+      }
+    });
+
+    socket.on('mark:seen', async ({ messageId, spaceId, conversationId }) => {
+      try {
+        await pool.query(
+          `INSERT INTO message_receipts (message_id, user_id, seen_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (message_id, user_id) DO UPDATE SET seen_at = COALESCE(message_receipts.seen_at, NOW())`,
+          [messageId, userId]
+        );
+        const room = spaceId ? `space:${spaceId}` : `dm:${conversationId}`;
+        const receipts = await pool.query(
+          `SELECT user_id AS "userId", delivered_at AS "deliveredAt", seen_at AS "seenAt" FROM message_receipts WHERE message_id = $1`,
+          [messageId]
+        );
+        io.to(room).emit('receipt:updated', { messageId, receipts: receipts.rows });
+      } catch (err) {
+        console.error('mark:seen error:', err);
+      }
+    });
+
     socket.on('disconnect', () => {
       Object.values(typingTimers).forEach(clearTimeout);
       const userData = userPresence.get(userId);

@@ -34,7 +34,12 @@ const MSG_SELECT = `
         json_build_object('emoji', mr.emoji, 'userId', mr.user_id, 'userName', ru.name)
       ) FILTER (WHERE mr.id IS NOT NULL),
       '[]'::json
-    ) AS reactions
+    ) AS reactions,
+    COALESCE(
+      (SELECT json_agg(json_build_object('userId', user_id, 'deliveredAt', delivered_at, 'seenAt', seen_at))
+       FROM message_receipts WHERE message_id = m.id),
+      '[]'::json
+    ) AS receipts
   FROM messages m
   JOIN  users u  ON u.id  = m.sender_id
   LEFT JOIN messages pm ON pm.id = m.parent_message_id
@@ -148,7 +153,8 @@ exports.editSpaceMessage = async (req, res) => {
     if (!result.rows.length) {
       return res.status(404).json({ message: 'Message not found or permission denied' });
     }
-    const message = { ...result.rows[0], space_id: spaceId };
+    const fullMessageResult = await fetchById(msgId);
+    const message = { ...fullMessageResult.rows[0], space_id: spaceId };
     req.app.get('io').to(`space:${spaceId}`).emit('message:edited', message);
     res.json(message);
   } catch (err) {
@@ -330,7 +336,8 @@ exports.editDMMessage = async (req, res) => {
     if (!result.rows.length) {
       return res.status(404).json({ message: 'Message not found or permission denied' });
     }
-    const message = { ...result.rows[0], conversation_id: conversationId };
+    const fullMessageResult = await fetchById(msgId);
+    const message = { ...fullMessageResult.rows[0], conversation_id: conversationId };
     req.app.get('io').to(`dm:${conversationId}`).emit('message:edited', message);
     res.json(message);
   } catch (err) {
