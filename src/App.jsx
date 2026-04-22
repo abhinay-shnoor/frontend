@@ -522,7 +522,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   // Request notification permissions on mount
   useEffect(() => {
-    requestNotificationPermission();
+    console.log('Notification permission status:', Notification.permission);
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      requestNotificationPermission().then(granted => {
+        console.log('Notification permission granted:', granted);
+        if (granted) showToast('Notifications enabled!', 'success');
+      });
+    }
   }, []);
 
   // Listen for calendar back button event
@@ -719,12 +725,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const isTabFocused = document.visibilityState === 'visible' && document.hasFocus();
 
       if ((!isCurrentSpace && !isCurrentDM) || !isTabFocused) {
+        console.log('Triggering notification for:', msg.sender_name);
         showNotification(msg.sender_name, {
           body: msg.content || msg.text || 'New message received',
           icon: msg.avatar_url || '/shnoor-logo.png',
           tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}`,
           renotify: true,
           onClick: () => {
+            console.log('Notification clicked, redirecting...');
             if (msg.space_id) {
               const space = spaces.find(s => s.id === msg.space_id);
               if (space) handleSelectSpace(space);
@@ -734,6 +742,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
             }
           }
         });
+      } else {
+        console.log('Notification skipped: tab focused or in same conversation');
       }
     });
 
