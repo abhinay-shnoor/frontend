@@ -22,13 +22,19 @@ export const showNotification = (title, options = {}) => {
   }
 
   const notification = new Notification(title, {
-    icon: '/shnoor-logo.png', // Fallback icon
+    icon: options.icon || '/shnoor-logo.png',
+    badge: '/shnoor-logo.png',
+    silent: false,
     ...options,
   });
 
   notification.onclick = (event) => {
     event.preventDefault();
     window.focus();
+    // Some browsers require explicit focus on the parent/opener
+    if (window.opener) {
+      window.opener.focus();
+    }
     if (options.onClick) {
       options.onClick();
     }

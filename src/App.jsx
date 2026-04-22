@@ -719,9 +719,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const isTabFocused = document.visibilityState === 'visible' && document.hasFocus();
 
       if ((!isCurrentSpace && !isCurrentDM) || !isTabFocused) {
-        showNotification(`New message from ${msg.sender_name}`, {
-          body: msg.content || msg.text || '',
+        showNotification(msg.sender_name, {
+          body: msg.content || msg.text || 'New message received',
+          icon: msg.avatar_url || '/shnoor-logo.png',
           tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}`,
+          renotify: true,
           onClick: () => {
             if (msg.space_id) {
               const space = spaces.find(s => s.id === msg.space_id);
