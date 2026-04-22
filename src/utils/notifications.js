@@ -25,6 +25,8 @@ export const showNotification = (title, options = {}) => {
     icon: options.icon || '/shnoor-logo.png',
     badge: '/shnoor-logo.png',
     silent: false,
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
     ...options,
   });
 
