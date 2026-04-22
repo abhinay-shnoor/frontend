@@ -838,6 +838,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to delete message', 'error'); }
   };
 
+  const handleHideMessage = async (msgId) => {
+    try {
+      await api.post(`/api/messages/${msgId}/hide`);
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+    } catch { showToast('Failed to hide message', 'error'); }
+  };
+
   const handleAddReaction = async (msgId, emoji) => {
     try {
       const result = await addReaction(msgId, emoji);
@@ -994,6 +1001,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 spaceMembers={spaceMembers}
                 currentUserId={user.id}
                 onEditMessage={handleEditMessage}
+                onDeleteMessage={handleDeleteMessage}
+                onHideMessage={handleHideMessage}
                 onAddReaction={handleAddReaction}
                 onRemoveReaction={handleRemoveReaction}
                 typingUsers={typingUsers}

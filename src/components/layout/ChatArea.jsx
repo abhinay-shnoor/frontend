@@ -181,20 +181,91 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   );
 }
 
+function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit }) {
+  const [showDeleteSub, setShowDeleteSub] = useState(false);
+
+  return (
+    <div style={{
+      position: 'fixed', top: y, left: x, zIndex: 1000,
+      background: 'var(--ws-bg)', border: '1px solid var(--ws-border)',
+      borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+      padding: '6px 0', minWidth: 160,
+      animation: 'menuEntry 0.15s ease-out'
+    }} onClick={e => e.stopPropagation()}>
+      <style>{`
+        @keyframes menuEntry {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .menu-item {
+          display: flex; alignItems: center; gap: 10px;
+          width: 100%; padding: 8px 14px;
+          background: none; border: none;
+          color: var(--ws-text); font-size: 13px;
+          cursor: pointer; text-align: left;
+          transition: background 0.1s;
+        }
+        .menu-item:hover { background: var(--ws-hover); }
+        .menu-item svg { color: var(--ws-text-muted); }
+      `}</style>
+      
+      {!showDeleteSub ? (
+        <>
+          <button className="menu-item" onClick={onInfo}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Message Info
+          </button>
+          <button className="menu-item" onClick={onEmojis}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            Emojis
+          </button>
+          <button className="menu-item" onClick={() => setShowDeleteSub(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            Delete
+          </button>
+          {isOwn && (
+            <button className="menu-item" onClick={onEdit}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <button className="menu-item" onClick={() => setShowDeleteSub(false)} style={{ color: 'var(--ws-text-muted)', fontSize: 11, fontWeight: 700 }}>
+            ← BACK
+          </button>
+          <button className="menu-item" onClick={onDeleteForMe}>Delete for me</button>
+          {isOwn && <button className="menu-item" onClick={onDeleteForEveryone} style={{ color: '#ef4444' }}>Delete for everyone</button>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  totalMembers, isSpace, onShowInfo
+  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [menuPos, setMenuPos] = useState(null);
+  
   const isOwn = msg.senderId === currentUserId;
   const reactions = groupReactions(msg.reactions);
+
+  const handleOpenMenu = (e) => {
+    e.preventDefault();
+    setMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const closeMenu = () => setMenuPos(null);
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setShowPicker(false); }}
+      onMouseLeave={() => { setHovered(false); setShowPicker(false); closeMenu(); }}
       style={{
         display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row',
         alignItems: 'flex-end', gap: 8, padding: '2px 16px', position: 'relative',
@@ -243,7 +314,7 @@ function MessageBubble({
           </div>
         ) : (
           <div 
-            onClick={() => onShowInfo(msg)}
+            onClick={handleOpenMenu}
             style={{
               background: isOwn ? 'var(--ws-bubble-own)' : 'var(--ws-bubble-other)',
               color: isOwn ? 'var(--ws-bubble-own-text)' : 'var(--ws-bubble-other-text)',
@@ -255,7 +326,10 @@ function MessageBubble({
               flexDirection: 'column',
               boxShadow: isOwn ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
               border: isOwn ? '1px solid var(--ws-border)' : 'none',
+              transition: 'transform 0.1s',
             }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.01)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
           >
             <div>
               {(msg.text || '').split(/(@[\w ]+)/).map((part, i) =>
@@ -268,6 +342,24 @@ function MessageBubble({
             <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
                <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
             </div>
+          </div>
+        )}
+
+        {menuPos && !isEditing && (
+          <MessageContextMenu 
+            x={menuPos.x} y={menuPos.y} isOwn={isOwn} 
+            onClose={closeMenu}
+            onInfo={() => { onShowInfo(msg); closeMenu(); }}
+            onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
+            onDeleteForMe={() => { onHideMessage(msg.id); closeMenu(); }}
+            onDeleteForEveryone={() => { onDeleteMessage(msg.id); closeMenu(); }}
+            onEmojis={() => { setShowPicker(true); closeMenu(); }}
+          />
+        )}
+
+        {showPicker && (
+          <div style={{ position: 'absolute', bottom: '100%', right: isOwn ? 0 : 'auto', left: isOwn ? 'auto' : 0, marginBottom: 4, zIndex: 100 }}>
+            <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
           </div>
         )}
 
@@ -301,34 +393,6 @@ function MessageBubble({
           }}>
             {msg.replyCount} {msg.replyCount === 1 ? 'reply' : 'replies'}
           </button>
-        )}
-
-        {hovered && !isEditing && (
-          <div style={{
-            position: 'absolute', right: 20, top: 4,
-            display: 'flex', gap: 2, background: 'var(--ws-bg)',
-            border: '1px solid var(--ws-border)', borderRadius: 8,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: 2,
-            zIndex: 10
-          }}>
-            <ActionBtn title="React" onClick={() => setShowPicker(prev => !prev)}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" />
-              </svg>
-            </ActionBtn>
-            {showPicker && (
-              <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 4, zIndex: 100 }}>
-                <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
-              </div>
-            )}
-            {isOwn && (
-              <ActionBtn title="Edit" onClick={() => onEdit(msg.id, msg.text)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </ActionBtn>
-            )}
-          </div>
         )}
       </div>
     </div>
@@ -440,7 +504,7 @@ export default function ChatArea({
   title, description, memberCount, messages, onSend, isSpace,
   activeView, onClose, isMaximized, onToggleMaximize,
   spaceMembers, currentUserId, currentUser, allUsers = [],
-  onEditMessage, onAddReaction, onRemoveReaction,
+  onEditMessage, onDeleteMessage, onHideMessage, onAddReaction, onRemoveReaction,
   typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
   spaceId,
 }) {
@@ -683,6 +747,8 @@ export default function ChatArea({
                   totalMembers={isSpace ? memberCount : 2}
                   isSpace={isSpace}
                   onShowInfo={setInfoMessage}
+                  onDeleteMessage={onDeleteMessage}
+                  onHideMessage={onHideMessage}
                 />
               ))}
               <div ref={bottomRef} />
