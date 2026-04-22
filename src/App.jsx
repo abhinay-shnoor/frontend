@@ -433,6 +433,7 @@ import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations, searchMessages } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import api from './api/axios.js';
+import { requestNotificationPermission, showNotification } from './utils/notifications.js';
 
 function ChatApp({ onSignOut, onOpenAdmin }) {
   const { user, refreshUser } = useAuth();
@@ -518,6 +519,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       text.toLowerCase().includes(`@${user.name.toLowerCase()}`) ||
       text.includes(`@${user.name}`)
     );
+
+  // Request notification permissions on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   // Listen for calendar back button event
   useEffect(() => {
@@ -706,10 +712,31 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           setUnreadMentions(prev => prev + 1);
         }
       }
+
+      // ── Desktop Notifications ──
+      const isCurrentSpace = activeViewRef.current === 'space' && activeSpaceRef.current?.id === msg.space_id;
+      const isCurrentDM = activeViewRef.current === 'dm' && activeDMRef.current?.id === msg.sender_id;
+      const isTabFocused = document.visibilityState === 'visible' && document.hasFocus();
+
+      if ((!isCurrentSpace && !isCurrentDM) || !isTabFocused) {
+        showNotification(`New message from ${msg.sender_name}`, {
+          body: msg.content || msg.text || '',
+          tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}`,
+          onClick: () => {
+            if (msg.space_id) {
+              const space = spaces.find(s => s.id === msg.space_id);
+              if (space) handleSelectSpace(space);
+            } else if (msg.sender_id) {
+              const dmUser = allUsers.find(u => u.id === msg.sender_id);
+              if (dmUser) handleSelectDM(dmUser);
+            }
+          }
+        });
+      }
     });
 
     return cleanup;
-  }, [connected, user.id, spaces]);
+  }, [connected, user.id, spaces, allUsers]);
 
   const formattedSpaces = spaces.map(s => ({
     id: s.id, name: s.name,
