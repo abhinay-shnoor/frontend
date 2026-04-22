@@ -652,6 +652,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       onReactionUpdated(({ messageId, reactions }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
       }),
+      onMessageEdited((msg) => {
+        if (!msg.conversation_id) return;
+        setMessages(prev => prev.map(m => m.id === msg.id ? { ...formatMsg(msg), reactions: m.reactions } : m));
+      }),
+      onMessageDeleted(({ messageId, conversationId }) => {
+        if (!conversationId) return;
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+      }),
       onTypingUpdate(({ userId: uid, userName, isTyping }) => {
         if (uid === user.id) return;
         setTypingUsers(prev => isTyping
