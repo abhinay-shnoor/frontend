@@ -183,10 +183,19 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
 
 function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit }) {
   const [showDeleteSub, setShowDeleteSub] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
 
   return (
-    <div style={{
-      position: 'fixed', top: y, left: x, zIndex: 1000,
+    <div ref={ref} style={{
+      position: 'fixed', top: Math.min(y, window.innerHeight - 200), left: Math.min(x, window.innerWidth - 180), zIndex: 1000,
       background: 'var(--ws-bg)', border: '1px solid var(--ws-border)',
       borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
       padding: '6px 0', minWidth: 160,
@@ -251,6 +260,7 @@ function MessageBubble({
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [menuPos, setMenuPos] = useState(null);
+  const [pickerPos, setPickerPos] = useState(null);
   
   const isOwn = msg.senderId === currentUserId;
   const reactions = groupReactions(msg.reactions);
@@ -265,7 +275,7 @@ function MessageBubble({
   return (
     <div
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setShowPicker(false); closeMenu(); }}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row',
         alignItems: 'flex-end', gap: 8, padding: '2px 16px', position: 'relative',
@@ -353,12 +363,12 @@ function MessageBubble({
             onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
             onDeleteForMe={() => { onHideMessage(msg.id); closeMenu(); }}
             onDeleteForEveryone={() => { onDeleteMessage(msg.id); closeMenu(); }}
-            onEmojis={() => { setShowPicker(true); closeMenu(); }}
+            onEmojis={() => { setPickerPos(menuPos); setShowPicker(true); closeMenu(); }}
           />
         )}
 
-        {showPicker && (
-          <div style={{ position: 'absolute', bottom: '100%', right: isOwn ? 0 : 'auto', left: isOwn ? 'auto' : 0, marginBottom: 4, zIndex: 100 }}>
+        {showPicker && pickerPos && (
+          <div style={{ position: 'fixed', top: Math.min(pickerPos.y, window.innerHeight - 350), left: Math.min(pickerPos.x, window.innerWidth - 300), zIndex: 1001 }}>
             <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
           </div>
         )}
