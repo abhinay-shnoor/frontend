@@ -181,7 +181,79 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   );
 }
 
-function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit }) {
+function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
+  const [search, setSearch] = useState('');
+  
+  const allDestinations = [
+    ...spaces.map(s => ({ id: s.id, type: 'space', name: s.name, initials: s.name.substring(0, 2).toUpperCase() })),
+    ...dmUsers.map(u => ({ id: u.id, type: 'dm', name: u.name, initials: u.initials, avatar_url: u.avatar_url }))
+  ].filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000,
+      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--ws-bg)', borderRadius: 24, width: '100%', maxWidth: 400,
+        boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '1px solid var(--ws-border)',
+        overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '80vh',
+        animation: 'modalEntry 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+      }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ws-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--ws-surface)' }}>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.02em' }}>Forward Message</h3>
+          <button onClick={onClose} style={{ background: 'var(--ws-surface-2)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', fontSize: 14, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+        
+        <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--ws-border)' }}>
+          <div style={{ position: 'relative' }}>
+            <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ws-text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input 
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search spaces or people..."
+              autoFocus
+              style={{ width: '100%', padding: '10px 12px 10px 36px', borderRadius: 12, border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+          {allDestinations.map(d => (
+            <button key={`${d.type}-${d.id}`} onClick={() => { onForward(d); onClose(); }} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+              background: 'none', border: 'none', borderRadius: 16, cursor: 'pointer', textAlign: 'left',
+              transition: 'all 0.1s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              {d.type === 'space' ? (
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: 'var(--ws-text-muted)' }}>
+                  #{d.initials[0]}
+                </div>
+              ) : (
+                <Avatar initials={d.initials} avatarUrl={d.avatar_url} size={40} color="#0D9488" />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.type === 'space' ? `#${d.name}` : d.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.02em', fontWeight: 600 }}>{d.type === 'space' ? 'Space' : 'Direct Message'}</div>
+              </div>
+              <div style={{ background: 'rgba(13,148,136,0.1)', padding: '6px 14px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#0D9488' }}>Forward</div>
+            </button>
+          ))}
+          {allDestinations.length === 0 && (
+            <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: 'var(--ws-text-muted)', margin: 0 }}>No results found</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward }) {
   const [showDeleteSub, setShowDeleteSub] = useState(false);
   const ref = useRef(null);
 
@@ -238,6 +310,10 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
               Edit
             </button>
           )}
+          <button className="menu-item" onClick={onForward}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+            Forward
+          </button>
         </>
       ) : (
         <>
@@ -255,7 +331,7 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
 function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage
+  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -364,6 +440,7 @@ function MessageBubble({
             onDeleteForMe={() => { onHideMessage(msg.id); closeMenu(); }}
             onDeleteForEveryone={() => { onDeleteMessage(msg.id); closeMenu(); }}
             onEmojis={() => { setPickerPos(menuPos); setShowPicker(true); closeMenu(); }}
+            onForward={() => { onForward(msg); closeMenu(); }}
           />
         )}
 
@@ -516,7 +593,7 @@ export default function ChatArea({
   spaceMembers, currentUserId, currentUser, allUsers = [],
   onEditMessage, onDeleteMessage, onHideMessage, onAddReaction, onRemoveReaction,
   typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
-  spaceId,
+  spaceId, allSpaces = [], dmUsers = [], onForwardMessage
 }) {
   const [input, setInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -534,6 +611,7 @@ export default function ChatArea({
   const [pendingFiles, setPendingFiles] = useState([]);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [infoMessage, setInfoMessage] = useState(null);
+  const [forwardMessage, setForwardMessage] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -759,6 +837,7 @@ export default function ChatArea({
                   onShowInfo={setInfoMessage}
                   onDeleteMessage={onDeleteMessage}
                   onHideMessage={onHideMessage}
+                  onForward={setForwardMessage}
                 />
               ))}
               <div ref={bottomRef} />
@@ -793,6 +872,17 @@ export default function ChatArea({
             </div>
             <button onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 18 }}>✕</button>
           </div>
+        )}
+
+        {infoMessage && <MessageInfoModal msg={infoMessage} onClose={() => setInfoMessage(null)} allUsers={allUsers} />}
+
+        {forwardMessage && (
+           <ForwardModal 
+             spaces={allSpaces} 
+             dmUsers={dmUsers} 
+             onClose={() => setForwardMessage(null)} 
+             onForward={(target) => onForwardMessage(target, forwardMessage)} 
+           />
         )}
 
         <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>

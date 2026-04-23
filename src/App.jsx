@@ -878,6 +878,19 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to load more messages', 'error'); }
   };
 
+  const handleForwardMessage = async (target, message) => {
+    try {
+      if (target.type === 'space') {
+        await sendSpaceMessage(target.id, message.text, null, message.attachments);
+      } else {
+        await sendDMMessage(target.id, message.text, null, message.attachments);
+      }
+      showToast('Message forwarded!', 'success');
+    } catch {
+      showToast('Failed to forward message', 'error');
+    }
+  };
+
 // ─── Mark as Delivered/Seen effects ───────────────────────────────────────
   useEffect(() => {
     if (!connected || !messages.length) return;
@@ -1020,6 +1033,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 onTypingChange={handleTypingChange}
                 spaceId={activeSpace?.id}
                 allUsers={chatAllUsers}   // FIX 2: enables @mention autocomplete
+                allSpaces={formattedSpaces}
+                dmUsers={dmUsers}
+                onForwardMessage={handleForwardMessage}
               />
             )}
           </>
