@@ -253,7 +253,7 @@ function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
   );
 }
 
-function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward }) {
+function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply }) {
   const [showDeleteSub, setShowDeleteSub] = useState(false);
   const ref = useRef(null);
 
@@ -310,6 +310,10 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
               Edit
             </button>
           )}
+          <button className="menu-item" onClick={onReply}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17L4 12L9 7"/><path d="M20 18V14C20 12.3431 18.6569 11 17 11H5"/></svg>
+            Reply
+          </button>
           <button className="menu-item" onClick={onForward}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
             Forward
@@ -331,7 +335,7 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
 function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward
+  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -447,6 +451,7 @@ function MessageBubble({
             onDeleteForEveryone={() => { onDeleteMessage(msg.id); closeMenu(); }}
             onEmojis={() => { setPickerPos(menuPos); setShowPicker(true); closeMenu(); }}
             onForward={() => { onForward(msg); closeMenu(); }}
+            onReply={() => { onReply(msg); closeMenu(); }}
           />
         )}
 
@@ -618,6 +623,7 @@ export default function ChatArea({
   const [uploadingFile, setUploadingFile] = useState(false);
   const [infoMessage, setInfoMessage] = useState(null);
   const [forwardMessage, setForwardMessage] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -870,15 +876,22 @@ export default function ChatArea({
           </div>
         )}
 
-        {replyingTo && (
-          <div style={{ padding: '6px 16px', borderTop: '0.5px solid var(--ws-border)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-surface)' }}>
-            <div style={{ flex: 1, borderLeft: '3px solid #0D9488', paddingLeft: 8 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#0D9488', margin: 0 }}>Replying to {replyingTo.senderName}</p>
-              <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 400 }}>{replyingTo.text}</p>
-            </div>
-            <button onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 18 }}>✕</button>
-          </div>
-        )}
+           {replyingTo && (
+             <div style={{
+               background: 'var(--ws-surface)', padding: '10px 16px', borderRadius: '16px 16px 0 0',
+               border: '1px solid var(--ws-border)', borderBottom: 'none',
+               display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.2s ease-out'
+             }}>
+               <style>{`
+                 @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+               `}</style>
+               <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
+                 <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
+                 <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyingTo.text}</div>
+               </div>
+               <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
+             </div>
+           )}
 
         {infoMessage && <MessageInfoModal msg={infoMessage} onClose={() => setInfoMessage(null)} allUsers={allUsers} />}
 
@@ -901,7 +914,7 @@ export default function ChatArea({
             />
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: 12, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: replyingTo ? '0 0 16px 16px' : 16, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingFile}

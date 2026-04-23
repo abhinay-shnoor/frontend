@@ -504,6 +504,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
       receipts: m.receipts || [], created_at: m.created_at,
       is_forwarded: m.is_forwarded,
+      parentMessageId: m.parent_message_id,
+      parentContent: m.parent_content,
+      parentSenderName: m.parent_sender_name,
     };
   };
 
