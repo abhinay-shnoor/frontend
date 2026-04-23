@@ -233,7 +233,34 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   useEffect(() => {
     if (!connected || !user?.id) return;
     const cleanup = onNewMessage((msg) => {
+      const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
+      const createdAt = msg.created_at || new Date().toISOString();
+
+      if (msg.space_id) {
+        setSpaces(prev => prev.map(s => 
+          s.id === msg.space_id ? {
+            ...s,
+            last_message: content,
+            last_message_at: createdAt,
+            last_message_sender: msg.sender_name
+          } : s
+        ));
+      }
+
+      if (msg.conversation_id) {
+        setDmConversations(prev => prev.map(d => 
+          d.conversation_id === msg.conversation_id ? {
+            ...d,
+            last_message: content,
+            last_message_at: createdAt,
+            last_message_sender_id: msg.sender_id,
+            last_message_sender_name: msg.sender_name
+          } : d
+        ));
+      }
+
       if (msg.sender_id === user.id) return;
+
       if (msg.space_id) {
         if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id !== msg.space_id) {
           setUnreadCounts(prev => ({ ...prev, [`space_${msg.space_id}`]: (prev[`space_${msg.space_id}`] || 0) + 1 }));
@@ -244,7 +271,6 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           setUnreadCounts(prev => ({ ...prev, [`dm_${msg.sender_id}`]: (prev[`dm_${msg.sender_id}`] || 0) + 1 }));
         }
       }
-      const content = msg.content || msg.text || '';
       if (isMentioned(content)) {
         const formatted = formatMsg(msg);
         setMentionedMessages(prev => [{ ...formatted, source: msg.space_id ? (spaces.find(s => s.id === msg.space_id)?.name || 'space') : 'Direct Message', sourceId: msg.space_id || msg.sender_id, sourceType: msg.space_id ? 'space' : 'dm' }, ...prev]);
