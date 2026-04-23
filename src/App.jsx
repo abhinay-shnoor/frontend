@@ -295,13 +295,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }
       
       if (result) {
-        const formatted = { 
-          ...result, 
-          text: result.content, 
-          senderName: result.sender_name || user?.name, 
-          time: new Date(result.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-        };
-        setMessages(prev => [...prev, formatted]);
+        const formatted = formatMsg(result);
+        setMessages(prev => prev.find(m => m.id === result.id) ? prev : [...prev, formatted]);
       }
     } catch (err) { 
       console.error('handleSendMessage error:', err);
