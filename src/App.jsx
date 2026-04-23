@@ -287,9 +287,26 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const handleSendMessage = async (text, parentMessageId = null, attachments = []) => {
     if (!text.trim() && !attachments.length) return;
     try {
-      if (activeView === 'space' && activeSpace) await sendSpaceMessage(activeSpace.id, text, parentMessageId, attachments);
-      else if (activeView === 'dm' && activeDM) await sendDMMessage(activeDM.id, text, parentMessageId, attachments);
-    } catch { showToast('Failed to send message', 'error'); }
+      let result;
+      if (activeView === 'space' && activeSpace) {
+        result = await sendSpaceMessage(activeSpace.id, text, parentMessageId, attachments);
+      } else if (activeView === 'dm' && activeDM) {
+        result = await sendDMMessage(activeDM.id, text, parentMessageId, attachments);
+      }
+      
+      if (result) {
+        const formatted = { 
+          ...result, 
+          text: result.content, 
+          senderName: result.sender_name || user?.name, 
+          time: new Date(result.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        };
+        setMessages(prev => [...prev, formatted]);
+      }
+    } catch (err) { 
+      console.error('handleSendMessage error:', err);
+      showToast('Failed to send message', 'error'); 
+    }
   };
 
   const handleEditMessage = async (msgId, content) => {
