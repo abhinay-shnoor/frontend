@@ -503,6 +503,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       time: m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '',
       text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
       receipts: m.receipts || [], created_at: m.created_at,
+      is_forwarded: m.is_forwarded,
     };
   };
 
@@ -881,9 +882,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const handleForwardMessage = async (target, message) => {
     try {
       if (target.type === 'space') {
-        await sendSpaceMessage(target.id, message.text, null, message.attachments);
+        await sendSpaceMessage(target.id, message.text, null, message.attachments, true);
       } else {
-        await sendDMMessage(target.id, message.text, null, message.attachments);
+        await sendDMMessage(target.id, message.text, null, message.attachments, true);
       }
       showToast('Message forwarded!', 'success');
     } catch {

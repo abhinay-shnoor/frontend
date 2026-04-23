@@ -11,8 +11,8 @@ export const getDMMessages = (userId, before = null) => {
   return api.get(`/api/dm/${userId}/messages${params}`).then(r => r.data);
 };
 
-export const sendDMMessage = (userId, content, parentMessageId = null, attachments = []) =>
-  api.post(`/api/dm/${userId}/messages`, { content, parent_message_id: parentMessageId, attachments }).then(r => r.data);
+export const sendDMMessage = (userId, content, parentMessageId = null, attachments = [], isForwarded = false) =>
+  api.post(`/api/dm/${userId}/messages`, { content, parent_message_id: parentMessageId, attachments, is_forwarded: isForwarded }).then(r => r.data);
 
 export const updateMyProfile = (name) =>
   api.patch('/api/users/me', { name }).then(r => r.data);

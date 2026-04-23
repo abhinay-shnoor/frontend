@@ -371,6 +371,12 @@ function MessageBubble({
           {!isOwn && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.senderName}</span>}
           <span style={{ fontSize: 10, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
           {msg.is_edited && <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
+          {msg.is_forwarded && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic', opacity: 0.8 }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+              Forwarded
+            </span>
+          )}
         </div>
 
         {msg.parentContent && (

@@ -17,8 +17,8 @@ export const getSpaceMessages = (spaceId, before = null) => {
   return api.get(`/api/spaces/${spaceId}/messages${params}`).then(r => r.data);
 };
 
-export const sendSpaceMessage = (spaceId, content, parentMessageId = null, attachments = []) =>
-  api.post(`/api/spaces/${spaceId}/messages`, { content, parent_message_id: parentMessageId, attachments }).then(r => r.data);
+export const sendSpaceMessage = (spaceId, content, parentMessageId = null, attachments = [], isForwarded = false) =>
+  api.post(`/api/spaces/${spaceId}/messages`, { content, parent_message_id: parentMessageId, attachments, is_forwarded: isForwarded }).then(r => r.data);
 
 export const editSpaceMessage = (spaceId, msgId, content) =>
   api.patch(`/api/spaces/${spaceId}/messages/${msgId}`, { content }).then(r => r.data);
