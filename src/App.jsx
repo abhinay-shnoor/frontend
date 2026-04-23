@@ -808,11 +808,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setUnreadMentions(0); // reset badge
   };
 
-  const handleSendMessage = async (text) => {
-    if (!text.trim()) return;
+  const handleSendMessage = async (text, parentMessageId = null, attachments = []) => {
+    if (!text.trim() && !attachments.length) return;
     try {
-      if (activeView === 'space' && activeSpace) await sendSpaceMessage(activeSpace.id, text);
-      else if (activeView === 'dm' && activeDM) await sendDMMessage(activeDM.id, text);
+      if (activeView === 'space' && activeSpace) await sendSpaceMessage(activeSpace.id, text, parentMessageId, attachments);
+      else if (activeView === 'dm' && activeDM) await sendDMMessage(activeDM.id, text, parentMessageId, attachments);
     } catch { showToast('Failed to send message', 'error'); }
   };
 
