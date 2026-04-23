@@ -760,7 +760,10 @@ export default function ChatArea({
     try {
       const result = await uploadFile(file);
       setPendingFiles(prev => [...prev, result]);
-    } catch { alert('File upload failed. Check Cloudinary credentials in .env'); }
+    } catch (err) { 
+      console.error('Upload error:', err);
+      alert('File upload failed. The server might be restarting or there is a connection issue. Please try again in a moment.'); 
+    }
     setUploadingFile(false);
     e.target.value = '';
   };
