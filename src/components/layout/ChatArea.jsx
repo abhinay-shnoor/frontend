@@ -562,39 +562,65 @@ function MentionDropdown({ users, search, onSelect, currentUserId }) {
   );
 }
 
-function SearchResultsPanel({ results, onClose, onJump, loading }) {
+function SearchResultsPanel({ results, query, onSelectResult, onClose, loading, isSpace, dmPartnerName }) {
   return (
     <div style={{
       position: 'absolute', top: 57, left: 0, right: 0, bottom: 0, zIndex: 30,
       background: 'var(--ws-bg)', borderTop: '0.5px solid var(--ws-border)', overflowY: 'auto',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '0.5px solid var(--ws-border)' }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>{loading ? 'Searching...' : `${results.length} result${results.length !== 1 ? 's' : ''}`}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)' }}>
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>
+          {loading ? 'Searching history...' : `${results.length} result${results.length !== 1 ? 's' : ''}`}
+        </span>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 16 }}>✕</button>
       </div>
       {!loading && results.length === 0 && (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-muted)', fontSize: 14 }}>No messages found</div>
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ws-text-muted)', fontSize: 14 }}>
+          No messages found in this {isSpace ? 'space' : 'conversation'}.
+        </div>
       )}
       {results.map(r => (
-        <button key={r.id} onClick={() => onJump(r)} style={{
-          width: '100%', display: 'flex', gap: 10, padding: '12px 20px',
+        <button key={r.id} onClick={() => onSelectResult(r)} style={{
+          width: '100%', display: 'flex', gap: 12, padding: '14px 20px',
           background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-          borderBottom: '0.5px solid var(--ws-border)',
+          borderBottom: '0.5px solid var(--ws-border)', transition: 'background 0.2s'
         }}
           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
           <Avatar initials={initials(r.sender_name)} color="#0D9488" size={36} avatarUrl={r.avatar_url} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)' }}>{r.sender_name}</span>
-              <span style={{ fontSize: 11, color: 'var(--ws-text-muted)' }}>in #{r.space_name}</span>
+              <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400 }}>
+                {isSpace ? `in #${r.space_name || ''}` : `in DM with ${dmPartnerName || ''}`}
+              </span>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.content}</p>
+            <p style={{ fontSize: 13, color: 'var(--ws-text)', margin: 0, lineHeight: 1.5 }}>
+              <Highlight text={r.content} highlight={query} />
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginTop: 4 }}>
+              {new Date(r.created_at).toLocaleString()}
+            </p>
           </div>
         </button>
       ))}
     </div>
+  );
+}
+
+function Highlight({ text = '', highlight = '' }) {
+  if (!highlight.trim()) return text;
+  const safeHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${safeHighlight})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) => 
+        part.toLowerCase() === highlight.toLowerCase() 
+          ? <mark key={i} style={{ background: '#fef08a', color: '#854d0e', borderRadius: 2, padding: '0 2px' }}>{part}</mark>
+          : <span key={i}>{part}</span>
+      )}
+    </>
   );
 }
 
@@ -604,7 +630,8 @@ export default function ChatArea({
   spaceMembers, currentUserId, currentUser, allUsers = [],
   onEditMessage, onDeleteMessage, onHideMessage, onAddReaction, onRemoveReaction,
   typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
-  spaceId, allSpaces = [], dmUsers = [], onForwardMessage
+  spaceId, allSpaces = [], dmUsers = [], onForwardMessage,
+  highlightMessageId, dmConversationId
 }) {
   const [input, setInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -630,10 +657,23 @@ export default function ChatArea({
   const typingTimerRef = useRef(null);
   const fileInputRef = useRef(null);
   const searchTimerRef = useRef(null);
+  const messageRefs = useRef({});
 
   useEffect(() => {
-    if (!loadingMore) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+    if (!loadingMore && !highlightMessageId) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length, loadingMore, highlightMessageId]);
+
+  useEffect(() => {
+    if (highlightMessageId && messageRefs.current[highlightMessageId]) {
+      messageRefs.current[highlightMessageId].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const el = messageRefs.current[highlightMessageId];
+      el.style.transition = 'background 0.5s';
+      el.style.background = 'rgba(254, 240, 138, 0.4)';
+      setTimeout(() => { el.style.background = 'none'; }, 2000);
+    }
+  }, [highlightMessageId, messages]);
 
   useEffect(() => {
     setShowMembers(false); setEditingId(null);
@@ -651,13 +691,13 @@ export default function ChatArea({
     setSearchLoading(true);
     searchTimerRef.current = setTimeout(async () => {
       try {
-        const results = await searchMessages(searchQuery.trim(), spaceId || null);
+        const results = await searchMessages(searchQuery.trim(), spaceId || null, dmConversationId || null);
         setSearchResults(results);
       } catch { }
       setSearchLoading(false);
     }, 350);
     return () => clearTimeout(searchTimerRef.current);
-  }, [searchQuery, showSearch, spaceId]);
+  }, [searchQuery, showSearch, spaceId, dmConversationId]);
 
   const handleInputChange = (val) => {
     setInput(val);
@@ -812,9 +852,22 @@ export default function ChatArea({
         {showSearch && (searchQuery.trim() || searchLoading) && (
           <SearchResultsPanel
             results={searchResults}
+            query={searchQuery}
             loading={searchLoading}
+            onSelectResult={(r) => {
+              const el = messageRefs.current[r.id];
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.transition = 'background 0.5s';
+                el.style.background = 'rgba(254, 240, 138, 0.4)';
+                setTimeout(() => { el.style.background = 'none'; }, 2000);
+              }
+              setShowSearch(false);
+              setSearchQuery('');
+            }}
             onClose={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
-            onJump={(r) => { setShowSearch(false); setSearchQuery(''); }}
+            isSpace={isSpace}
+            dmPartnerName={title}
           />
         )}
 
@@ -835,22 +888,24 @@ export default function ChatArea({
               </div>
 
               {messages.map(msg => (
-                <MessageBubble key={msg.id} msg={msg} currentUserId={currentUserId}
-                  onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
-                  onReact={onAddReaction} onRemoveReact={onRemoveReaction}
-                  onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
-                  isEditing={editingId === msg.id}
-                  editContent={editingId === msg.id ? editContent : ''}
-                  onEditChange={setEditContent}
-                  onEditSave={handleEditSave}
-                  onEditCancel={() => { setEditingId(null); setEditContent(''); }}
-                  totalMembers={isSpace ? memberCount : 2}
-                  isSpace={isSpace}
-                  onShowInfo={setInfoMessage}
-                  onDeleteMessage={onDeleteMessage}
-                  onHideMessage={onHideMessage}
-                  onForward={setForwardMessage}
-                />
+                <div key={msg.id} ref={el => messageRefs.current[msg.id] = el}>
+                  <MessageBubble msg={msg} currentUserId={currentUserId}
+                    onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
+                    onReact={onAddReaction} onRemoveReact={onRemoveReaction}
+                    onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
+                    isEditing={editingId === msg.id}
+                    editContent={editingId === msg.id ? editContent : ''}
+                    onEditChange={setEditContent}
+                    onEditSave={handleEditSave}
+                    onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+                    totalMembers={isSpace ? memberCount : 2}
+                    isSpace={isSpace}
+                    onShowInfo={setInfoMessage}
+                    onDeleteMessage={onDeleteMessage}
+                    onHideMessage={onHideMessage}
+                    onForward={setForwardMessage}
+                  />
+                </div>
               ))}
               <div ref={bottomRef} />
             </>

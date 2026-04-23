@@ -6,11 +6,11 @@ export const addReaction = (msgId, emoji) =>
 export const removeReaction = (msgId, emoji) =>
   api.delete(`/api/messages/${msgId}/reactions`, { data: { emoji } }).then(r => r.data);
 
-export const searchMessages = (q, spaceId = null) => {
-  const params = spaceId
-    ? `?q=${encodeURIComponent(q)}&spaceId=${spaceId}`
-    : `?q=${encodeURIComponent(q)}`;
-  return api.get(`/api/search${params}`).then(r => r.data);
+export const searchMessages = (q, spaceId = null, conversationId = null) => {
+  let url = `/api/search?q=${encodeURIComponent(q)}`;
+  if (spaceId) url += `&spaceId=${spaceId}`;
+  if (conversationId) url += `&conversationId=${conversationId}`;
+  return api.get(url).then(r => r.data);
 };
 
 // cursor = ISO timestamp of the oldest conversation for pagination

@@ -20,6 +20,7 @@ import LeftSidebar from './components/layout/LeftSidebar.jsx';
 import ConversationList from './components/layout/ConversationList.jsx';
 import ChatArea from './components/layout/ChatArea.jsx';
 import RightIconRail from './components/layout/RightIconRail.jsx';
+import GlobalSearch from './components/features/GlobalSearch.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations, searchMessages } from './api/messages.js';
@@ -66,6 +67,21 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
+  const [highlightMessageId, setHighlightMessageId] = useState(null);
+
+  const handleSelectSearchResult = (msg) => {
+    if (msg.chat_type === 'space') {
+      const space = spaces.find(s => s.id === msg.space_id);
+      if (space) handleSelectSpace(space);
+    } else if (msg.chat_type === 'dm') {
+      const partner = allUsers.find(u => u.id === msg.dm_partner_id);
+      if (partner) handleSelectDM(partner);
+    }
+    setHighlightMessageId(msg.id);
+    setNavSearchQuery('');
+    // Clear highlight after some time
+    setTimeout(() => setHighlightMessageId(null), 3000);
+  };
 
   const [unreadCounts, setUnreadCounts] = useState({});
   const [mentionedMessages, setMentionedMessages] = useState([]);
@@ -355,6 +371,15 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         onOpenChat={() => { setActiveSpace(null); setActiveDM(null); setActiveView('home'); }}
         activeView={activeView}
       />
+      {navSearchQuery && (
+        <GlobalSearch 
+          query={navSearchQuery} 
+          onClose={() => setNavSearchQuery('')} 
+          onSelectResult={handleSelectSearchResult} 
+          spaceId={activeView === 'space' ? activeSpace?.id : null}
+          conversationId={activeView === 'dm' ? activeDMConversationId : null}
+        />
+      )}
       <div className="flex flex-1 overflow-hidden">
         {activeView !== 'calendar' && (
           <LeftSidebar
@@ -407,6 +432,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 spaceId={activeSpace?.id} allUsers={[{ id: user?.id, name: user?.name }, ...dmUsers]}
                 allSpaces={formattedSpaces} dmUsers={dmUsers}
                 onForwardMessage={handleForwardMessage}
+                highlightMessageId={highlightMessageId}
+                dmConversationId={activeDMConversationId}
               />
             )}
           </>
