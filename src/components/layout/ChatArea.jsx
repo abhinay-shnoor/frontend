@@ -39,11 +39,13 @@ function AttachmentPreview({ attachments: rawAttachments }) {
         return (
           <div key={i} style={{ marginBottom: 6 }}>
             {isImage ? (
-              <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block' }} 
-                   onClick={() => window.open(a.url, '_blank')} />
+              <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} 
+                   onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
-              <a href={a.url} target="_blank" rel="noreferrer" style={{ 
-                color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px' 
+              <a href={a.url} target="_blank" rel="noreferrer" 
+                 onClick={(e) => e.stopPropagation()}
+                 style={{ 
+                color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
               }}>
                 📎 View Attachment: {a.name || 'File'}
               </a>
