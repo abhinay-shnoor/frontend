@@ -42,12 +42,12 @@ function AttachmentPreview({ attachments: rawAttachments }) {
               <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} 
                    onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
-              <a href={a.url} target="_blank" rel="noreferrer" 
+              <a href={a.url && a.url.includes('cloudinary.com') && !a.url.includes('/raw/upload/') ? a.url.replace('/upload/', '/upload/fl_attachment/') : a.url} download={a.name || 'attachment'} target="_blank" rel="noreferrer" 
                  onClick={(e) => e.stopPropagation()}
                  style={{ 
                 color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
               }}>
-                📎 View Attachment: {a.name || 'File'}
+                📎 Download Attachment: {a.name || 'File'}
               </a>
             )}
           </div>
