@@ -16,7 +16,16 @@ const groupReactions = (reactions) => {
   return Object.values(g);
 };
 
-function AttachmentPreview({ attachments }) {
+function AttachmentPreview({ attachments: rawAttachments }) {
+  let attachments = rawAttachments;
+  if (typeof rawAttachments === 'string') {
+    try {
+      attachments = JSON.parse(rawAttachments);
+    } catch {
+      return null;
+    }
+  }
+
   if (!attachments || !attachments.length) return null;
   
   return (

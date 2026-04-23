@@ -108,6 +108,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       parentMessageId: m.parent_message_id || m.parentMessageId,
       parentContent: m.parent_content || m.parentContent,
       parentSenderName: m.parent_sender_name || m.parentSenderName,
+      attachments: m.attachments || [],
     };
   };
 
