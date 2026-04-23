@@ -387,12 +387,12 @@ function MessageBubble({
           <div style={{
             borderLeft: '3px solid #0D9488',
             padding: '4px 8px', marginBottom: 4,
-            background: isOwn ? 'rgba(255,255,255,0.12)' : 'var(--ws-surface-2)',
+            background: 'var(--ws-surface-2)',
             borderRadius: '0 6px 6px 0', fontSize: 12,
-            color: isOwn ? 'rgba(255,255,255,0.8)' : 'var(--ws-text-muted)',
+            color: 'var(--ws-text-muted)',
             maxWidth: 280,
           }}>
-            <div style={{ fontWeight: 600, marginBottom: 2, fontSize: 11 }}>↩ {msg.parentSenderName}</div>
+            <div style={{ fontWeight: 600, marginBottom: 2, fontSize: 11, color: '#0D9488' }}>↩ {msg.parentSenderName}</div>
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.parentContent}</div>
           </div>
         )}
