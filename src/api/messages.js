@@ -27,3 +27,7 @@ export const uploadFile = (file) => {
   form.append('file', file);
   return api.post('/api/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data);
 };
+
+// Fetch mentions for the current user
+export const getMentions = () =>
+  api.get('/api/mentions').then(r => r.data);

@@ -17,7 +17,7 @@ export default function MentionsActivityFeed({ mentions, onSelectMention, onClos
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 18 }}>✕</button>
       </div>
 
-      <div style={{ style: { flex: 1, overflowY: 'auto', padding: '20px 24px' }, className: 'custom-scrollbar' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }} className="custom-scrollbar">
         {!mentions?.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>

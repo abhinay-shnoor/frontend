@@ -23,7 +23,7 @@ import RightIconRail from './components/layout/RightIconRail.jsx';
 import GlobalSearch from './components/features/GlobalSearch.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
-import { addReaction, removeReaction, getDMConversations, searchMessages } from './api/messages.js';
+import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import api from './api/axios.js';
 import { requestNotificationPermission, showNotification } from './utils/notifications.js';
@@ -109,14 +109,23 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       parentContent: m.parent_content || m.parentContent,
       parentSenderName: m.parent_sender_name || m.parentSenderName,
       attachments: m.attachments || [],
+      source: m.source,
+      sourceId: m.sourceId,
+      sourceType: m.sourceType,
     };
+
   };
 
-  const isMentioned = (text) =>
-    text && user?.name && (
-      text.toLowerCase().includes(`@${user.name.toLowerCase()}`) ||
-      text.includes(`@${user.name}`)
+  const isMentioned = (text, isSpace) => {
+    if (!text) return false;
+    const name = user?.name || '';
+    const firstName = name.split(' ')[0];
+    return (
+      (name && (text.toLowerCase().includes(`@${name.toLowerCase()}`) || text.includes(`@${name}`))) ||
+      (firstName && (text.toLowerCase().includes(`@${firstName.toLowerCase()}`))) ||
+      (isSpace && (text.toLowerCase().includes('@all') || text.toLowerCase().includes('@everyone')))
     );
+  };
 
   useEffect(() => {
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -135,6 +144,18 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     getAllUsers().then(setAllUsers).catch(() => {});
     getDMConversations().then(setDmConversations).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      getMentions().then(data => {
+        if (data?.mentions) {
+          setMentionedMessages(data.mentions.map(formatMsg));
+          setUnreadMentions(data.unreadMentions || 0);
+        }
+      }).catch(err => console.error('Failed to fetch mentions:', err));
+    }
+  }, [user?.id]);
+
 
   useEffect(() => {
     if (!connected) return;
@@ -272,7 +293,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           setUnreadCounts(prev => ({ ...prev, [`dm_${msg.sender_id}`]: (prev[`dm_${msg.sender_id}`] || 0) + 1 }));
         }
       }
-      if (isMentioned(content)) {
+      if (isMentioned(content, !!msg.space_id)) {
         const formatted = formatMsg(msg);
         setMentionedMessages(prev => [{ ...formatted, source: msg.space_id ? (spaces.find(s => s.id === msg.space_id)?.name || 'space') : 'Direct Message', sourceId: msg.space_id || msg.sender_id, sourceType: msg.space_id ? 'space' : 'dm' }, ...prev]);
         if (activeViewRef.current !== 'mentions') setUnreadMentions(prev => prev + 1);
