@@ -34,19 +34,32 @@ function AttachmentPreview({ attachments: rawAttachments }) {
         if (!a) return <div key={i} style={{color:'red'}}>Empty attachment object</div>;
         if (!a.url) return <div key={i} style={{color:'orange'}}>⚠️ Attachment Data Missing</div>;
         
-        const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/');
+        // Exclude PDFs from being treated as images even if they have an image mimetype
+        const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
+        const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
         
+        const downloadUrl = a.url && a.url.includes('cloudinary.com') && !a.url.includes('/raw/upload/') 
+          ? a.url.replace('/upload/', '/upload/fl_attachment/') 
+          : a.url;
+
         return (
           <div key={i} style={{ marginBottom: 6 }}>
             {isImage ? (
               <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} 
                    onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
-              <a href={a.url && a.url.includes('cloudinary.com') && !a.url.includes('/raw/upload/') ? a.url.replace('/upload/', '/upload/fl_attachment/') : a.url} download={a.name || 'attachment'} target="_blank" rel="noreferrer" 
-                 onClick={(e) => e.stopPropagation()}
-                 style={{ 
-                color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
-              }}>
+              <a 
+                href={downloadUrl} 
+                download={a.name || 'attachment'} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // By removing target="_blank" and ensuring fl_attachment is present,
+                  // the browser should download the file in the current tab if headers allow.
+                }}
+                style={{ 
+                  color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
+                }}
+              >
                 📎 Download Attachment: {a.name || 'File'}
               </a>
             )}
