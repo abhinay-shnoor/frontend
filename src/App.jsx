@@ -808,6 +808,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setUnreadMentions(0); // reset badge
   };
 
+  // Main message sending handler supporting replies and attachments
   const handleSendMessage = async (text, parentMessageId = null, attachments = []) => {
     if (!text.trim() && !attachments.length) return;
     try {

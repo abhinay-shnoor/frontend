@@ -46,10 +46,10 @@ function AttachmentPreview({ attachments }) {
 function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
   if (!isOwn) return null;
   const receipts = msg.receipts || [];
-  
+
   // Delivered: any receipt with deliveredAt
   const delivered = receipts.some(r => r.deliveredAt);
-  
+
   // Seen: 
   // - DM: other person's seenAt is set
   // - Space: receipts.length (excluding sender) == totalMembers - 1
@@ -66,12 +66,12 @@ function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
     <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, transform: 'translateY(2px)' }}>
       {delivered ? (
         <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
-          <path d="M0.5 5.5L3.5 8.5L10.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M5.5 5.5L8.5 8.5L15.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: -4 }}/>
+          <path d="M0.5 5.5L3.5 8.5L10.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5.5 5.5L8.5 8.5L15.5 1.5" stroke={tickColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: -4 }} />
         </svg>
       ) : (
         <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-          <path d="M1 4.5L4 7.5L10 1.5" stroke="var(--ws-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1 4.5L4 7.5L10 1.5" stroke="var(--ws-text-muted)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}
     </div>
@@ -80,7 +80,7 @@ function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
 
 function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   const receipts = msg.receipts || [];
-  
+
   // Helper to ensure database timestamps are treated as UTC if they lack a timezone
   const parseUTC = (d) => {
     if (!d) return null;
@@ -133,16 +133,16 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.02em' }}>Message Info</h3>
           <button onClick={onClose} style={{ background: 'var(--ws-surface-2)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', fontSize: 14, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        
+
         <div style={{ padding: 24, maxHeight: '70vh', overflowY: 'auto' }}>
           <div style={{ padding: '16px 20px', background: 'var(--ws-surface-2)', borderRadius: 16, marginBottom: 24 }}>
-             <p style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--ws-text)', lineHeight: 1.6 }}>{msg.text}</p>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ws-text-muted)', fontSize: 13 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Sent: {sentTime}
-             </div>
+            <p style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--ws-text)', lineHeight: 1.6 }}>{msg.text}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ws-text-muted)', fontSize: 13 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              Sent: {sentTime}
+            </div>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {details.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -156,7 +156,7 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
                   <div style={{ display: 'flex', gap: 24 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" /></svg>
                         <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase' }}>Delivered</span>
                       </div>
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--ws-text)' }}>{d.delivered}</p>
@@ -164,7 +164,7 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34B7F1" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34B7F1" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" /></svg>
                         <span style={{ fontSize: 11, fontWeight: 600, color: '#34B7F1', textTransform: 'uppercase' }}>Seen</span>
                       </div>
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--ws-text)' }}>{d.seen}</p>
@@ -183,7 +183,7 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
 
 function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
   const [search, setSearch] = useState('');
-  
+
   const allDestinations = [
     ...spaces.map(s => ({ id: s.id, type: 'space', name: s.name, initials: s.name.substring(0, 2).toUpperCase() })),
     ...dmUsers.map(u => ({ id: u.id, type: 'dm', name: u.name, initials: u.initials, avatar_url: u.avatar_url }))
@@ -205,11 +205,11 @@ function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.02em' }}>Forward Message</h3>
           <button onClick={onClose} style={{ background: 'var(--ws-surface-2)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', fontSize: 14, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
-        
+
         <div style={{ padding: '16px 20px', borderBottom: '0.5px solid var(--ws-border)' }}>
           <div style={{ position: 'relative' }}>
-            <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ws-text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input 
+            <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ws-text-muted)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search spaces or people..."
               autoFocus
@@ -289,33 +289,33 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
         .menu-item:hover { background: var(--ws-hover); }
         .menu-item svg { color: var(--ws-text-muted); }
       `}</style>
-      
+
       {!showDeleteSub ? (
         <>
           <button className="menu-item" onClick={onInfo}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
             Message Info
           </button>
           <button className="menu-item" onClick={onEmojis}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
             Emojis
           </button>
           <button className="menu-item" onClick={() => setShowDeleteSub(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
             Delete
           </button>
           {isOwn && (
             <button className="menu-item" onClick={onEdit}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
               Edit
             </button>
           )}
           <button className="menu-item" onClick={onReply}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17L4 12L9 7"/><path d="M20 18V14C20 12.3431 18.6569 11 17 11H5"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 17L4 12L9 7" /><path d="M20 18V14C20 12.3431 18.6569 11 17 11H5" /></svg>
             Reply
           </button>
           <button className="menu-item" onClick={onForward}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5" /><path d="M4 4v7a4 4 0 0 0 4 4h12" /></svg>
             Forward
           </button>
         </>
@@ -341,7 +341,7 @@ function MessageBubble({
   const [showPicker, setShowPicker] = useState(false);
   const [menuPos, setMenuPos] = useState(null);
   const [pickerPos, setPickerPos] = useState(null);
-  
+
   const isOwn = msg.senderId === currentUserId;
   const reactions = groupReactions(msg.reactions);
 
@@ -377,7 +377,7 @@ function MessageBubble({
           {msg.is_edited && <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
           {msg.is_forwarded && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic', opacity: 0.8 }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5" /><path d="M4 4v7a4 4 0 0 0 4 4h12" /></svg>
               Forwarded
             </span>
           )}
@@ -409,7 +409,7 @@ function MessageBubble({
             </div>
           </div>
         ) : (
-          <div 
+          <div
             onClick={handleOpenMenu}
             style={{
               background: isOwn ? 'var(--ws-bubble-own)' : 'var(--ws-bubble-other)',
@@ -436,14 +436,14 @@ function MessageBubble({
             </div>
             <AttachmentPreview attachments={msg.attachments} />
             <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
-               <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
+              <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
             </div>
           </div>
         )}
 
         {menuPos && !isEditing && (
-          <MessageContextMenu 
-            x={menuPos.x} y={menuPos.y} isOwn={isOwn} 
+          <MessageContextMenu
+            x={menuPos.x} y={menuPos.y} isOwn={isOwn}
             onClose={closeMenu}
             onInfo={() => { onShowInfo(msg); closeMenu(); }}
             onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
@@ -623,7 +623,7 @@ export default function ChatArea({
   const [uploadingFile, setUploadingFile] = useState(false);
   const [infoMessage, setInfoMessage] = useState(null);
   const [forwardMessage, setForwardMessage] = useState(null);
-  const [replyingTo, setReplyingTo] = useState(null);
+  //const [replyingTo, setReplyingTo] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -876,41 +876,41 @@ export default function ChatArea({
           </div>
         )}
 
-           {replyingTo && (
-             <div style={{
-               background: 'var(--ws-surface)', padding: '10px 16px', borderRadius: '16px 16px 0 0',
-               border: '1px solid var(--ws-border)', borderBottom: 'none',
-               display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.2s ease-out'
-             }}>
-               <style>{`
+        {replyingTo && (
+          <div style={{
+            background: 'var(--ws-surface)', padding: '10px 16px', borderRadius: '16px 16px 0 0',
+            border: '1px solid var(--ws-border)', borderBottom: 'none',
+            display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.2s ease-out'
+          }}>
+            <style>{`
                  @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
                `}</style>
-               <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
-                 <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
-                 <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyingTo.text}</div>
-               </div>
-               <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
-             </div>
-           )}
+            <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
+              <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyingTo.text}</div>
+            </div>
+            <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
+          </div>
+        )}
 
         {infoMessage && <MessageInfoModal msg={infoMessage} onClose={() => setInfoMessage(null)} allUsers={allUsers} />}
 
         {forwardMessage && (
-           <ForwardModal 
-             spaces={allSpaces} 
-             dmUsers={dmUsers} 
-             onClose={() => setForwardMessage(null)} 
-             onForward={(target) => onForwardMessage(target, forwardMessage)} 
-           />
+          <ForwardModal
+            spaces={allSpaces}
+            dmUsers={dmUsers}
+            onClose={() => setForwardMessage(null)}
+            onForward={(target) => onForwardMessage(target, forwardMessage)}
+          />
         )}
 
         <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>
           {showMentionDropdown && (
-            <MentionDropdown 
-              users={allUsers} 
-              search={mentionSearch} 
-              onSelect={handleMentionSelect} 
-              currentUserId={currentUserId} 
+            <MentionDropdown
+              users={allUsers}
+              search={mentionSearch}
+              onSelect={handleMentionSelect}
+              currentUserId={currentUserId}
             />
           )}
 
@@ -981,10 +981,10 @@ export default function ChatArea({
       )}
 
       {infoMessage && (
-        <MessageInfoModal 
-          msg={infoMessage} 
-          onClose={() => setInfoMessage(null)} 
-          allUsers={allUsers} 
+        <MessageInfoModal
+          msg={infoMessage}
+          onClose={() => setInfoMessage(null)}
+          allUsers={allUsers}
         />
       )}
     </div>
