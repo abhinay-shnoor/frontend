@@ -28,19 +28,19 @@ function AttachmentPreview({ attachments: rawAttachments }) {
 
   if (!attachments || !attachments.length) return null;
   
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   return (
     <div style={{ marginTop: 8, padding: 8, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
       {attachments.map((a, i) => {
         if (!a) return <div key={i} style={{color:'red'}}>Empty attachment object</div>;
         if (!a.url) return <div key={i} style={{color:'orange'}}>⚠️ Attachment Data Missing</div>;
         
-        // Exclude PDFs from being treated as images even if they have an image mimetype
         const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
         const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
         
-        const downloadUrl = a.url && a.url.includes('cloudinary.com') && !a.url.includes('/raw/upload/') 
-          ? a.url.replace('/upload/', '/upload/fl_attachment/') 
-          : a.url;
+        // Proxy all downloads through our backend to avoid Cloudinary security blocks and redirects
+        const downloadProxyUrl = `${apiUrl}/api/download?url=${encodeURIComponent(a.url)}&name=${encodeURIComponent(a.name || 'file')}`;
 
         return (
           <div key={i} style={{ marginBottom: 6 }}>
@@ -49,13 +49,9 @@ function AttachmentPreview({ attachments: rawAttachments }) {
                    onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
               <a 
-                href={downloadUrl} 
+                href={downloadProxyUrl} 
                 download={a.name || 'attachment'} 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // By removing target="_blank" and ensuring fl_attachment is present,
-                  // the browser should download the file in the current tab if headers allow.
-                }}
+                onClick={(e) => e.stopPropagation()}
                 style={{ 
                   color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
                 }}
