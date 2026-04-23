@@ -17,25 +17,73 @@ const groupReactions = (reactions) => {
 };
 
 function AttachmentPreview({ attachments }) {
-  if (!attachments?.length) return null;
+  if (!attachments || !attachments.length) return null;
+  
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, width: '100%' }}>
       {attachments.map((a, i) => {
-        const isImage = a.type?.startsWith('image/');
-        return isImage ? (
-          <img key={i} src={a.url} alt={a.name} style={{ maxWidth: 200, maxHeight: 160, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }}
-            onClick={() => window.open(a.url, '_blank')} />
-        ) : (
-          <a key={i} href={a.url} target="_blank" rel="noreferrer" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px',
-            background: 'var(--ws-surface-2)', borderRadius: 8, textDecoration: 'none',
-            fontSize: 12, color: '#1a73e8', border: '0.5px solid var(--ws-border)',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-            {a.name}
+        if (!a || !a.url) return null;
+        
+        // Robust image check
+        const isImage = a.type?.startsWith('image/') || 
+                       /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url);
+        
+        if (isImage) {
+          return (
+            <img 
+              key={i} 
+              src={a.url} 
+              alt={a.name || 'Attachment'} 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: 240, 
+                borderRadius: 12, 
+                objectFit: 'contain', 
+                cursor: 'pointer',
+                border: '1px solid var(--ws-border)',
+                background: '#000'
+              }}
+              onClick={() => window.open(a.url, '_blank')}
+            />
+          );
+        }
+
+        return (
+          <a 
+            key={i} 
+            href={a.url} 
+            target="_blank" 
+            rel="noreferrer" 
+            style={{
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10, 
+              padding: '10px 14px',
+              background: 'rgba(255, 255, 255, 0.9)', 
+              borderRadius: 12, 
+              textDecoration: 'none',
+              fontSize: 13, 
+              color: '#0D9488', 
+              border: '1px solid rgba(13, 148, 136, 0.2)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              transition: 'transform 0.1s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ 
+              width: 32, height: 32, borderRadius: 8, background: '#0D9488', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' 
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                <polyline points="13 2 13 9 20 9" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name || 'File'}</span>
+              <span style={{ fontSize: 11, opacity: 0.7 }}>{a.size ? (a.size / 1024).toFixed(1) + ' KB' : 'Click to view'}</span>
+            </div>
           </a>
         );
       })}
