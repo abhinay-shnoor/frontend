@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
+import VoiceRecorder from '../chat/VoiceRecorder.jsx';
+import VoiceMessagePlayer from '../chat/VoiceMessagePlayer.jsx';
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -16,7 +18,7 @@ const groupReactions = (reactions) => {
   return Object.values(g);
 };
 
-function AttachmentPreview({ attachments: rawAttachments }) {
+function AttachmentPreview({ attachments: rawAttachments, isOwn }) {
   let attachments = rawAttachments;
   if (typeof rawAttachments === 'string') {
     try {
@@ -33,6 +35,18 @@ function AttachmentPreview({ attachments: rawAttachments }) {
       {attachments.map((a, i) => {
         if (!a) return <div key={i} style={{ color: 'red' }}>Empty attachment object</div>;
         if (!a.url) return <div key={i} style={{ color: 'orange' }}>⚠️ Attachment Data Missing</div>;
+
+        // Voice / audio message detection
+        const isAudio = a.type?.startsWith('audio/') || a.isVoice
+          || /\.(webm|ogg|mp3|m4a|wav|mp4)$/i.test(a.url);
+
+        if (isAudio) {
+          return (
+            <div key={i} style={{ marginBottom: 6 }} onClick={e => e.stopPropagation()}>
+              <VoiceMessagePlayer url={a.url} isOwn={isOwn} />
+            </div>
+          );
+        }
 
         const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
         const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
@@ -485,7 +499,7 @@ function MessageBubble({
                   : <span key={i}>{part}</span>
               )}
             </div>
-            <AttachmentPreview attachments={msg.attachments} />
+            <AttachmentPreview attachments={msg.attachments} isOwn={isOwn} />
             <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
               <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
             </div>
@@ -1042,7 +1056,7 @@ export default function ChatArea({
                 </svg>
               )}
             </button>
-            <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv" />
+            <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv,audio/*" />
 
             <input
               ref={inputRef}
@@ -1056,17 +1070,21 @@ export default function ChatArea({
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
             />
 
-            <button onClick={handleSend} disabled={!input.trim() && !pendingFiles.length}
-              style={{
-                width: 32, height: 32, borderRadius: 8, border: 'none',
-                cursor: (input.trim() || pendingFiles.length) ? 'pointer' : 'not-allowed',
-                background: (input.trim() || pendingFiles.length) ? '#0D9488' : 'var(--ws-surface-2)',
-                color: (input.trim() || pendingFiles.length) ? '#fff' : 'var(--ws-text-muted)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
-            </button>
+            {(input.trim() || pendingFiles.length) ? (
+              <button onClick={handleSend}
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: 'none',
+                  cursor: 'pointer',
+                  background: '#0D9488',
+                  color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+              </button>
+            ) : (
+              <VoiceRecorder onSend={onSend} disabled={uploadingFile} />
+            )}
           </div>
         </div>
       </div>
