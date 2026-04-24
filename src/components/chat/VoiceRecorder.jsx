@@ -65,7 +65,7 @@ export default function VoiceRecorder({ onSend, disabled, replyingTo, onReplySen
       setState('recording');
       setDuration(0);
 
-      // Timer to update duration display
+
       timerRef.current = setInterval(() => {
         const elapsed = (Date.now() - startTimeRef.current) / 1000;
         setDuration(elapsed);
@@ -131,7 +131,7 @@ export default function VoiceRecorder({ onSend, disabled, replyingTo, onReplySen
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state !== 'inactive') {
-      recorder.onstop = () => {}; // prevent finishRecording handler
+      recorder.onstop = () => { }; // prevent finishRecording handler
       recorder.stop();
     }
     stopStream();

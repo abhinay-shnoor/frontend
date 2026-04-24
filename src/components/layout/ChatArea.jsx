@@ -400,7 +400,8 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
 function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
-  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply
+  totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
+  onQuoteClick
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -419,6 +420,7 @@ function MessageBubble({
 
   return (
     <div
+      id={`message-${msg.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -449,16 +451,37 @@ function MessageBubble({
         </div>
 
         {(msg.parentContent || msg.parentMessageId) && (
-          <div style={{
-            borderLeft: '3px solid #0D9488',
-            padding: '4px 8px', marginBottom: 4,
-            background: 'var(--ws-surface-2)',
-            borderRadius: '0 6px 6px 0', fontSize: 12,
-            color: 'var(--ws-text-muted)',
-            maxWidth: 280,
-          }}>
+          <div
+            onClick={(e) => { e.stopPropagation(); onQuoteClick(msg.parentMessageId); }}
+            style={{
+              borderLeft: '3px solid #0D9488',
+              padding: '4px 8px', marginBottom: 4,
+              background: 'var(--ws-surface-2)',
+              borderRadius: '0 6px 6px 0', fontSize: 12,
+              color: 'var(--ws-text-muted)',
+              maxWidth: 280,
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}>
             <div style={{ fontWeight: 600, marginBottom: 2, fontSize: 11, color: '#0D9488' }}>↩ {msg.parentSenderName}</div>
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.parentContent || '📎 Attachment'}</div>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+              {(() => {
+                const text = msg.parentContent;
+                let atts = msg.parentAttachments;
+                if (typeof atts === 'string') try { atts = JSON.parse(atts); } catch { atts = []; }
+
+                if (text) return text;
+                if (!atts || !atts.length) return '📎 Attachment';
+
+                const a = atts[0];
+                const isAudio = a.type?.startsWith('audio/') || a.isVoice || /\.(webm|ogg|mp3|m4a|wav|mp4)$/i.test(a.url);
+                const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/'));
+
+                if (isAudio) return <>🎤 Voice message</>;
+                if (isImage) return <>📷 Photo</>;
+                return <>📎 {a.name || 'File'}</>;
+              })()}
+            </div>
           </div>
         )}
 
@@ -724,6 +747,17 @@ export default function ChatArea({
   const searchTimerRef = useRef(null);
   const messageRefs = useRef({});
 
+  const scrollToMessage = (msgId) => {
+    const el = document.getElementById(`message-${msgId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.animation = 'highlightMessage 2s ease-out';
+      setTimeout(() => {
+        if (el) el.style.animation = '';
+      }, 2000);
+    }
+  };
+
   useEffect(() => {
     if (!loadingMore && !highlightMessageId) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -858,6 +892,12 @@ export default function ChatArea({
 
   return (
     <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      <style>{`
+        @keyframes highlightMessage {
+          0% { background: rgba(13, 148, 136, 0.2); }
+          100% { background: transparent; }
+        }
+      `}</style>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ws-bg)', height: '100%', overflow: 'hidden' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0, background: 'var(--ws-bg)' }}>
@@ -925,13 +965,7 @@ export default function ChatArea({
             query={searchQuery}
             loading={searchLoading}
             onSelectResult={(r) => {
-              const el = messageRefs.current[r.id];
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.style.transition = 'background 0.5s';
-                el.style.background = 'rgba(254, 240, 138, 0.4)';
-                setTimeout(() => { el.style.background = 'none'; }, 2000);
-              }
+              scrollToMessage(r.id);
               setShowSearch(false);
               setSearchQuery('');
             }}
@@ -958,10 +992,13 @@ export default function ChatArea({
               </div>
 
               {messages.map(msg => (
-                <div key={msg.id} ref={el => messageRefs.current[msg.id] = el}>
-                  <MessageBubble msg={msg} currentUserId={currentUserId}
+                <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
+                  <MessageBubble
+                    msg={msg}
+                    currentUserId={currentUserId}
                     onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
-                    onReact={onAddReaction} onRemoveReact={onRemoveReaction}
+                    onReact={onAddReaction}
+                    onRemoveReact={onRemoveReaction}
                     onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
                     isEditing={editingId === msg.id}
                     editContent={editingId === msg.id ? editContent : ''}
@@ -974,6 +1011,7 @@ export default function ChatArea({
                     onDeleteMessage={onDeleteMessage}
                     onHideMessage={onHideMessage}
                     onForward={setForwardMessage}
+                    onQuoteClick={scrollToMessage}
                   />
                 </div>
               ))}

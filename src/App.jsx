@@ -107,6 +107,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       is_forwarded: m.is_forwarded,
       parentMessageId: m.parent_message_id || m.parentMessageId,
       parentContent: m.parent_content || m.parentContent,
+      parentAttachments: m.parent_attachments || m.parentAttachments,
       parentSenderName: m.parent_sender_name || m.parentSenderName,
       attachments: m.attachments || [],
       source: m.source,
