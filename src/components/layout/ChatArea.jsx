@@ -55,7 +55,17 @@ function AttachmentPreview({ attachments: rawAttachments }) {
             window.URL.revokeObjectURL(blobUrl);
           } catch (err) {
             console.error('Download failed:', err);
-            alert('Failed to download file. Please try again.');
+            // Try to extract the real error message
+            const status = err?.response?.status;
+            let msg = `Download failed (HTTP ${status || 'unknown'})`;
+            try {
+              if (err?.response?.data instanceof Blob) {
+                msg = await err.response.data.text();
+              } else if (err?.response?.data?.message) {
+                msg = err.response.data.message;
+              }
+            } catch (_) {}
+            alert(msg);
           }
         };
 
