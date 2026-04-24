@@ -565,6 +565,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                   setHighlightMessageId(m.id);
                   setTimeout(() => setHighlightMessageId(null), 3000);
                 }}
+                onDirectMessage={(senderId) => {
+                  const partner = allUsers.find(u => u.id === senderId);
+                  if (partner) handleSelectDM(partner);
+                }}
                 onClose={handleBackToHome}
               />
             ) : activeView === 'starred' ? (
@@ -575,6 +579,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                   else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
                   setHighlightMessageId(m.id);
                   setTimeout(() => setHighlightMessageId(null), 3000);
+                }}
+                onDirectMessage={(senderId) => {
+                  const partner = allUsers.find(u => u.id === senderId);
+                  if (partner) handleSelectDM(partner);
                 }}
                 onUnstar={(id) => handleToggleStar({ id, isStarred: true })}
                 onClose={handleBackToHome}

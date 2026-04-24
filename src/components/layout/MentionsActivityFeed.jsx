@@ -1,6 +1,6 @@
 import Avatar from '../ui/Avatar.jsx';
 
-export default function MentionsActivityFeed({ mentions, onSelectMention, onClose }) {
+export default function MentionsActivityFeed({ mentions, onSelectMention, onClose, onDirectMessage }) {
   const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
@@ -32,7 +32,7 @@ export default function MentionsActivityFeed({ mentions, onSelectMention, onClos
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '20px 24px' }}>
              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Recent interactions</p>
              {mentions.map((msg, i) => (
-                <button key={i}
+                <div key={i}
                   onClick={() => onSelectMention(msg)}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px',
@@ -60,14 +60,35 @@ export default function MentionsActivityFeed({ mentions, onSelectMention, onClos
                       <span style={{ fontSize: 12, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
                     </div>
                     <p style={{ fontSize: 14, color: 'var(--ws-text)', margin: '0 0 10px', lineHeight: 1.5 }}>{msg.text}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', background: 'var(--ws-surface-2)', padding: '2px 8px', borderRadius: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onDirectMessage(msg.senderId); }}
+                        style={{ 
+                          fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', 
+                          background: 'var(--ws-surface-2)', padding: '4px 10px', 
+                          borderRadius: 6, border: 'none', cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--ws-hover)'; e.currentTarget.style.color = 'var(--ws-text)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--ws-surface-2)'; e.currentTarget.style.color = 'var(--ws-text-muted)'; }}
+                      >
                         {msg.sourceType === 'space' ? `#${msg.source}` : 'Direct Message'}
-                      </span>
-                      <span style={{ fontSize: 11, color: '#1a73e8', fontWeight: 600 }}>Click to view conversation →</span>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onSelectMention(msg); }}
+                        style={{ 
+                          fontSize: 11, color: '#1a73e8', fontWeight: 700, 
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          padding: '4px 0', transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline'; e.currentTarget.style.transform = 'translateX(2px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none'; e.currentTarget.style.transform = 'translateX(0)'; }}
+                      >
+                        Click to view conversation →
+                      </button>
                     </div>
                   </div>
-                </button>
+                </div>
              ))}
           </div>
         )}
