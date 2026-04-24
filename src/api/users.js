@@ -7,7 +7,8 @@ export const getAllUsersAdmin = () =>
   api.get('/api/users/admin-all').then(r => r.data);
 
 export const getDMMessages = (userId, before = null) => {
-  const params = before ? `?before=${before}&limit=50` : '?limit=50';
+  const params = before ? `?before=${before}&limit=1000` : '?limit=1000';
+
   return api.get(`/api/dm/${userId}/messages${params}`).then(r => r.data);
 };
 

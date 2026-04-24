@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import Avatar from '../ui/Avatar.jsx';
+import { formatDateLabel, formatTime as formatMsgTime } from '../../utils/dateUtils.js';
 
-const formatTime = (ts) => {
+
+const formatSidebarTime = (ts) => {
   if (!ts) return '';
-  const d = new Date(ts), now = new Date();
-  const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  if (diff === 1) return 'Yesterday';
-  if (diff < 7)  return d.toLocaleDateString([], { weekday: 'short' });
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const label = formatDateLabel(ts);
+  if (label === 'Today') return formatMsgTime(ts);
+  return label;
 };
+
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -135,7 +135,7 @@ export default function ConversationList({
                 <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 800 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.isGroup ? `#${item.name}` : item.name}
                 </span>
-                <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatTime(item.time)}</span>
+                <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
               </div>
               <p style={{ fontSize: 12, color: item.unread > 0 ? 'var(--ws-text)' : 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 600 : 400 }}>
                 {item.preview}

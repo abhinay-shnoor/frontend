@@ -13,7 +13,8 @@ export const updateSpaceDescription = (spaceId, description) =>
   api.patch(`/api/spaces/${spaceId}/description`, { description }).then(r => r.data);
 
 export const getSpaceMessages = (spaceId, before = null) => {
-  const params = before ? `?before=${before}&limit=50` : '?limit=50';
+  const params = before ? `?before=${before}&limit=1000` : '?limit=1000';
+
   return api.get(`/api/spaces/${spaceId}/messages${params}`).then(r => r.data);
 };
 

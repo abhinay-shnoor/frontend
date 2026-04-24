@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchMessages } from '../../api/messages';
 import Avatar from '../ui/Avatar.jsx';
+import { formatDateLabel, formatTime } from '../../utils/dateUtils.js';
+
 
 export default function GlobalSearch({ query, onClose, onSelectResult, spaceId, conversationId }) {
   const [results, setResults] = useState([]);
@@ -92,7 +94,11 @@ export default function GlobalSearch({ query, onClose, onSelectResult, spaceId, 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.sender_name}</span>
               <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400 }}>
-                {formatDate(msg.created_at)}
+                {(() => {
+                  const label = formatDateLabel(msg.created_at);
+                  return label === 'Today' ? formatTime(msg.created_at) : label;
+                })()}
+
               </span>
             </div>
             
@@ -125,13 +131,7 @@ export default function GlobalSearch({ query, onClose, onSelectResult, spaceId, 
   );
 }
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  if (isToday) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-}
+
 
 function Highlight({ text = '', highlight = '' }) {
   if (!highlight.trim()) return text;

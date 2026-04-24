@@ -161,6 +161,7 @@ export function SocketProvider({ children }) {
   const onDMJoined         = (cb) => on('dm:joined',          cb);
   const onTypingUpdate     = (cb) => on('typing:update',      cb);
   const onDMPreviewUpdated = (cb) => on('dm:preview_updated', cb);
+  const onSpacePreviewUpdated = (cb) => on('space:preview_updated', cb);
   const onUserRoleChanged  = (cb) => on('user:role_changed',  cb);
   const onReceiptUpdated   = (cb) => on('receipt:updated',   cb);
 
@@ -199,7 +200,7 @@ export function SocketProvider({ children }) {
       joinSpace, leaveSpace, joinDM, leaveCurrentDM, emitTyping,
       onNewMessage, onMessageEdited, onMessageDeleted,
       onReactionUpdated, onDMJoined, onTypingUpdate,
-      onDMPreviewUpdated, onUserRoleChanged, onReceiptUpdated,
+      onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged, onReceiptUpdated,
       emitMarkDelivered, emitMarkSeen,
     }}>
       {children}

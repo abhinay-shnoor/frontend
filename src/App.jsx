@@ -58,6 +58,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [messages, setMessages] = useState([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [spaceMembers, setSpaceMembers] = useState([]);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
@@ -160,7 +162,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   useEffect(() => {
     if (!connected) return;
-    return onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => { }); });
+    const cleanups = [
+      onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => { }); }),
+      onSpacePreviewUpdated(() => { getSpaces().then(setSpaces).catch(() => { }); })
+    ];
+    return () => cleanups.forEach(fn => fn());
   }, [connected]);
 
   useEffect(() => {
@@ -402,14 +408,17 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   const handleLoadMore = async () => {
     const oldest = messages[0];
-    if (!oldest) return;
+    if (!oldest || loadingMore) return;
+    setLoadingMore(true);
     try {
       let data;
       if (activeView === 'space' && activeSpace) data = await getSpaceMessages(activeSpace.id, oldest.created_at || oldest.time);
       else if (activeView === 'dm' && activeDM) data = await getDMMessages(activeDM.id, oldest.created_at);
       if (data?.messages) { setMessages(prev => [...data.messages.map(formatMsg), ...prev]); setHasMore(data.hasMore || false); }
     } catch { showToast('Failed to load more messages', 'error'); }
+    finally { setLoadingMore(false); }
   };
+
 
   const handleForwardMessage = async (target, message) => {
     try {
@@ -510,7 +519,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 onHideMessage={handleHideMessage} onAddReaction={handleAddReaction}
                 onRemoveReaction={handleRemoveReaction} typingUsers={typingUsers}
                 messagesLoading={messagesLoading} hasMore={hasMore}
+                loadingMore={loadingMore}
                 onLoadMore={handleLoadMore} onTypingChange={handleTypingChange}
+
                 spaceId={activeSpace?.id} allUsers={[{ id: user?.id, name: user?.name }, ...dmUsers]}
                 allSpaces={formattedSpaces} dmUsers={dmUsers}
                 onForwardMessage={handleForwardMessage}

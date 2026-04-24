@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
+import { formatDateLabel } from '../../utils/dateUtils.js';
 import VoiceRecorder from '../chat/VoiceRecorder.jsx';
 import VoiceMessagePlayer from '../chat/VoiceMessagePlayer.jsx';
 
@@ -729,6 +730,31 @@ export default function ChatArea({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const scrollRef = useRef(null);
+  const [isPrepending, setIsPrepending] = useState(false);
+  const [justPrepended, setJustPrepended] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [floatingDate, setFloatingDate] = useState('');
+  const [showFloatingDate, setShowFloatingDate] = useState(false);
+  const prevScrollHeightRef = useRef(0);
+  const scrollTimeoutRef = useRef(null);
+
+  const [, setMidnightRefresh] = useState(0);
+
+  // Re-calculate date labels at midnight to ensure 'Today' becomes 'Yesterday'
+  useEffect(() => {
+    const now = new Date();
+    const night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    const msToMidnight = night.getTime() - now.getTime();
+
+    const timer = setTimeout(() => {
+      setMidnightRefresh(v => v + 1);
+    }, msToMidnight);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const [showMembers, setShowMembers] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
@@ -762,10 +788,70 @@ export default function ChatArea({
   };
 
   useEffect(() => {
-    if (!loadingMore && !highlightMessageId) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setHasScrolledToBottom(false);
+    setFloatingDate('');
+    setShowFloatingDate(false);
+  }, [title, messagesLoading]);
+
+  useLayoutEffect(() => {
+    if (!scrollRef.current || messagesLoading) return;
+
+    if (isPrepending) {
+      const delta = scrollRef.current.scrollHeight - prevScrollHeightRef.current;
+      scrollRef.current.scrollTop = delta;
+      setIsPrepending(false);
+      setJustPrepended(true);
+      setTimeout(() => setJustPrepended(false), 200);
+    } else if (!loadingMore && !highlightMessageId && !isPrepending && !justPrepended) {
+      if (!hasScrolledToBottom) {
+        // Use a small timeout to ensure the browser has finished layout for thousands of pixels
+        const jump = () => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            setHasScrolledToBottom(true);
+          }
+        };
+        jump();
+        requestAnimationFrame(jump); // Second pass to be sure
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
-  }, [messages.length, loadingMore, highlightMessageId]);
+  }, [messages.length, loadingMore, highlightMessageId, isPrepending, justPrepended, hasScrolledToBottom, messagesLoading]);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    
+    // Show floating date
+    setShowFloatingDate(true);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => setShowFloatingDate(false), 1500);
+
+    // Find first visible message's date
+    const containerTop = container.getBoundingClientRect().top;
+    let foundDate = '';
+    for (const m of messages) {
+      const el = messageRefs.current[m.id];
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= containerTop + 100) {
+          foundDate = formatDateLabel(m.created_at);
+        } else {
+          break;
+        }
+      }
+    }
+    if (foundDate) setFloatingDate(foundDate);
+
+    // Infinite scroll: auto-load more messages when reaching the top
+    if (container.scrollTop < 50 && hasMore && !loadingMore && !isPrepending) {
+      onLoadMore();
+      setIsPrepending(true);
+      prevScrollHeightRef.current = container.scrollHeight;
+    }
+  };
+
 
   useEffect(() => {
     if (highlightMessageId && messageRefs.current[highlightMessageId]) {
@@ -871,6 +957,8 @@ export default function ChatArea({
 
   const handleLoadMore = async () => {
     if (!onLoadMore) return;
+    setIsPrepending(true);
+    prevScrollHeightRef.current = scrollRef.current?.scrollHeight || 0;
     setLoadingMore(true);
     await onLoadMore();
     setLoadingMore(false);
@@ -978,46 +1066,97 @@ export default function ChatArea({
           />
         )}
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingTop: 8 }}>
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          style={{ flex: 1, overflowY: 'auto', paddingTop: 8, position: 'relative' }}
+        >
+          {floatingDate && (
+            <div style={{
+              position: 'sticky', top: 8, zIndex: 100,
+              display: 'flex', justifyContent: 'center',
+              pointerEvents: 'none',
+              transition: 'opacity 0.3s ease-in-out',
+              opacity: showFloatingDate ? 1 : 0,
+              width: '100%',
+            }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700,
+                background: 'rgba(255, 255, 255, 0.9)',
+                color: '#4a4a4a',
+                padding: '4px 14px', borderRadius: 20,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,0,0,0.05)',
+              }}>
+                {floatingDate}
+              </span>
+            </div>
+          )}
           {messagesLoading ? <LoadingSkeleton /> : (
             <>
-              {hasMore && (
-                <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                  <button onClick={handleLoadMore} disabled={loadingMore} style={{ fontSize: 12, color: '#1a73e8', background: 'none', border: 'none', cursor: 'pointer' }}>
-                    {loadingMore ? 'Loading...' : 'Load earlier messages'}
-                  </button>
-                </div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 16px 10px' }}>
-                <div style={{ flex: 1, height: '0.5px', background: 'var(--ws-border)' }} />
-                <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontWeight: 500 }}>Today</span>
-                <div style={{ flex: 1, height: '0.5px', background: 'var(--ws-border)' }} />
-              </div>
+              {/* Manual "Load more" button removed for dynamic infinite scroll */}
 
-              {messages.map(msg => (
-                <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
-                  <MessageBubble
-                    msg={msg}
-                    currentUserId={currentUserId}
-                    onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
-                    onReact={onAddReaction}
-                    onRemoveReact={onRemoveReaction}
-                    onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
-                    isEditing={editingId === msg.id}
-                    editContent={editingId === msg.id ? editContent : ''}
-                    onEditChange={setEditContent}
-                    onEditSave={handleEditSave}
-                    onEditCancel={() => { setEditingId(null); setEditContent(''); }}
-                    totalMembers={isSpace ? memberCount : 2}
-                    isSpace={isSpace}
-                    onShowInfo={setInfoMessage}
-                    onDeleteMessage={onDeleteMessage}
-                    onHideMessage={onHideMessage}
-                    onForward={setForwardMessage}
-                    onQuoteClick={scrollToMessage}
-                  />
-                </div>
-              ))}
+
+              {(() => {
+                let lastDate = null;
+                return messages.map(msg => {
+                  const dateStr = msg.created_at;
+                  if (!dateStr) return <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}><MessageBubble msg={msg} currentUserId={currentUserId} /></div>;
+                  
+                  const msgDate = new Date(dateStr).toDateString();
+                  const showDivider = msgDate !== lastDate;
+                  lastDate = msgDate;
+
+                  return (
+                    <React.Fragment key={msg.id}>
+                      {showDivider && (
+                        <div style={{
+                          position: 'sticky', top: 0, zIndex: 10,
+                          display: 'flex', justifyContent: 'center',
+                          padding: '24px 0 16px', pointerEvents: 'none',
+                          background: 'linear-gradient(to bottom, var(--ws-bg) 50%, transparent)'
+                        }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600,
+                            background: 'var(--ws-surface-2)',
+                            color: 'var(--ws-text-muted)',
+                            padding: '4px 12px', borderRadius: 20,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                            pointerEvents: 'auto',
+                            backdropFilter: 'blur(8px)',
+                            border: '0.5px solid var(--ws-border)',
+                          }}>
+                            {formatDateLabel(msg.created_at)}
+                          </span>
+                        </div>
+                      )}
+                      <div id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
+                        <MessageBubble
+                          msg={msg}
+                          currentUserId={currentUserId}
+                          onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
+                          onReact={onAddReaction}
+                          onRemoveReact={onRemoveReaction}
+                          onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
+                          isEditing={editingId === msg.id}
+                          editContent={editingId === msg.id ? editContent : ''}
+                          onEditChange={setEditContent}
+                          onEditSave={handleEditSave}
+                          onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+                          totalMembers={isSpace ? memberCount : 2}
+                          isSpace={isSpace}
+                          onShowInfo={setInfoMessage}
+                          onDeleteMessage={onDeleteMessage}
+                          onHideMessage={onHideMessage}
+                          onForward={setForwardMessage}
+                          onQuoteClick={scrollToMessage}
+                        />
+                      </div>
+                    </React.Fragment>
+                  );
+                });
+              })()}
               <div ref={bottomRef} />
             </>
           )}
