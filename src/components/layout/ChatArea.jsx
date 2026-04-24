@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
@@ -965,7 +965,7 @@ export default function ChatArea({
     setLoadingMore(false);
   };
 
-  if (!title || activeView === 'home' || activeView === 'mentions') {
+  if (activeView === 'home' || activeView === 'mentions' || (!title && !activeView)) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--ws-bg)' }}>
         <svg viewBox="0 0 200 180" fill="none" style={{ width: 160, height: 140, marginBottom: 20, opacity: 0.5 }}>

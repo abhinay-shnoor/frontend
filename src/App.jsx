@@ -177,8 +177,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   useEffect(() => {
     if (activeView === 'space' && activeSpace) {
       setMessagesLoading(true);
+      setActiveDMConversationId(null);
       getSpaceMessages(activeSpace.id)
-        .then(data => { setMessages(data.messages || []); setHasMore(data.hasMore || false); })
+        .then(data => {
+          setMessages(data?.messages || []);
+          setHasMore(data?.hasMore || false);
+        })
         .catch(() => showToast('Failed to load messages', 'error'))
         .finally(() => setMessagesLoading(false));
       setUnreadCounts(prev => ({ ...prev, [`space_${activeSpace.id}`]: 0 }));
@@ -186,15 +190,21 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       setMessagesLoading(true);
       getDMMessages(activeDM.id)
         .then(data => {
-          setMessages(data.messages || []);
-          setHasMore(data.hasMore || false);
-          if (data.conversationId) setActiveDMConversationId(data.conversationId);
+          if (data) {
+            setMessages(data.messages || []);
+            setHasMore(data.hasMore || false);
+            if (data.conversationId) setActiveDMConversationId(data.conversationId);
+          } else {
+            setMessages([]);
+            setHasMore(false);
+          }
         })
         .catch(() => showToast('Failed to load messages', 'error'))
         .finally(() => setMessagesLoading(false));
       setUnreadCounts(prev => ({ ...prev, [`dm_${activeDM.id}`]: 0 }));
     } else {
       setMessages([]); setHasMore(false);
+      setActiveDMConversationId(null);
     }
   }, [activeSpace, activeDM, activeView]);
 
