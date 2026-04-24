@@ -117,14 +117,18 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       text: m.content || m.text, is_edited: m.is_edited, reactions: m.reactions || [],
       receipts: m.receipts || [], created_at: m.created_at,
       is_forwarded: m.is_forwarded,
+      isStarred: !!m.is_starred,
+      spaceId: m.space_id,
+      conversationId: m.conversation_id,
+      dmPartnerId: m.dm_partner_id,
       parentMessageId: m.parent_message_id || m.parentMessageId,
       parentContent: m.parent_content || m.parentContent,
       parentAttachments: m.parent_attachments || m.parentAttachments,
       parentSenderName: m.parent_sender_name || m.parentSenderName,
       attachments: m.attachments || [],
       source: m.source,
-      sourceId: m.sourceId,
-      sourceType: m.sourceType,
+      sourceId: m.sourceId || m.space_id || m.dm_partner_id || m.sender_id,
+      sourceType: m.sourceType || (m.space_id ? 'space' : 'dm'),
     };
 
   };
