@@ -448,7 +448,7 @@ function MessageBubble({
           )}
         </div>
 
-        {msg.parentContent && (
+        {(msg.parentContent || msg.parentMessageId) && (
           <div style={{
             borderLeft: '3px solid #0D9488',
             padding: '4px 8px', marginBottom: 4,
@@ -458,7 +458,7 @@ function MessageBubble({
             maxWidth: 280,
           }}>
             <div style={{ fontWeight: 600, marginBottom: 2, fontSize: 11, color: '#0D9488' }}>↩ {msg.parentSenderName}</div>
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.parentContent}</div>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.parentContent || '📎 Attachment'}</div>
           </div>
         )}
 
@@ -1012,7 +1012,15 @@ export default function ChatArea({
                `}</style>
             <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
-              <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyingTo.text}</div>
+              <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {replyingTo.text || (
+                  replyingTo.attachments?.length
+                    ? (replyingTo.attachments.some(a => a.type?.startsWith('audio/') || a.isVoice) ? '🎤 Voice message'
+                      : replyingTo.attachments.some(a => a.type?.startsWith('image/')) ? '📷 Photo'
+                      : '📎 Attachment')
+                    : '📎 Attachment'
+                )}
+              </div>
             </div>
             <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
           </div>
@@ -1083,7 +1091,7 @@ export default function ChatArea({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
               </button>
             ) : (
-              <VoiceRecorder onSend={onSend} disabled={uploadingFile} />
+              <VoiceRecorder onSend={onSend} disabled={uploadingFile} replyingTo={replyingTo} onReplySent={() => setReplyingTo(null)} />
             )}
           </div>
         </div>

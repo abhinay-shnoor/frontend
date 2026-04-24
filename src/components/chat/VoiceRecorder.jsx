@@ -9,7 +9,7 @@ function formatTime(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function VoiceRecorder({ onSend, disabled }) {
+export default function VoiceRecorder({ onSend, disabled, replyingTo, onReplySent }) {
   const [state, setState] = useState('idle'); // idle | recording | uploading
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState(null);
@@ -114,8 +114,9 @@ export default function VoiceRecorder({ onSend, disabled }) {
 
     try {
       const uploaded = await uploadFile(file);
-      // Send as a message with the voice attachment
-      onSend('', null, [{ ...uploaded, isVoice: true }]);
+      // Send as a message with the voice attachment, including reply context if present
+      onSend('', replyingTo?.id || null, [{ ...uploaded, isVoice: true }]);
+      onReplySent?.();
     } catch (err) {
       console.error('Voice upload error:', err);
       setError('Failed to send voice message. Please try again.');
@@ -124,7 +125,7 @@ export default function VoiceRecorder({ onSend, disabled }) {
     setState('idle');
     setDuration(0);
     chunksRef.current = [];
-  }, [onSend]);
+  }, [onSend, replyingTo, onReplySent]);
 
   const cancelRecording = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
