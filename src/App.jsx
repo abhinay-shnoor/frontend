@@ -19,7 +19,6 @@ import LeftSidebar from './components/layout/LeftSidebar.jsx';
 import ConversationList from './components/layout/ConversationList.jsx';
 import ChatArea from './components/layout/ChatArea.jsx';
 import RightIconRail from './components/layout/RightIconRail.jsx';
-import { ErrorBoundary } from './ErrorBoundary.jsx';
 import GlobalSearch from './components/features/GlobalSearch.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { 
@@ -581,42 +580,40 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 onClose={handleBackToHome}
               />
             ) : (
-              <ErrorBoundary>
-                <ChatArea
-                  title={activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || ''}
-                  isSpace={activeView === 'space'}
-                  messages={messagesLoading ? [] : messages.map(formatMsg)}
-                  onSend={handleSendMessage}
-                  onEdit={handleEditMessage}
-                  onDelete={handleDeleteMessage}
-                  onReact={handleAddReaction}
-                  onRemoveReact={handleRemoveReaction}
-                  onAddReaction={handleAddReaction}
-                  onRemoveReaction={handleRemoveReaction}
-                  onDeleteMessage={handleDeleteMessage}
-                  onHideMessage={handleHideMessage}
-                  onToggleStar={handleToggleStar}
-                  messagesLoading={messagesLoading}
-                  hasMore={hasMore}
-                  onLoadMore={handleLoadMore}
-                  currentUserId={user?.id}
-                  allSpaces={formattedSpaces}
-                  dmUsers={dmUsers}
-                  onForwardMessage={handleForwardMessage}
-                  spaceMembers={spaceMembers}
-                  activeView={activeView}
-                  description={activeSpace?.description}
-                  isMaximized={isMaximized}
-                  onToggleMaximize={() => setIsMaximized(!isMaximized)}
-                  onClose={handleBackToHome}
-                  highlightMessageId={highlightMessageId}
-                  spaceId={activeSpace?.id}
-                  dmConversationId={activeDMConversationId}
-                  typingUsers={typingUsers}
-                  onTypingChange={handleTypingChange}
-                  allUsers={allUsers}
-                />
-              </ErrorBoundary>
+              <ChatArea
+                title={activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || ''}
+                isSpace={activeView === 'space'}
+                messages={messagesLoading ? [] : messages.map(formatMsg)}
+                onSend={handleSendMessage}
+                onEdit={handleEditMessage}
+                onDelete={handleDeleteMessage}
+                onReact={handleAddReaction}
+                onRemoveReact={handleRemoveReaction}
+                onAddReaction={handleAddReaction}
+                onRemoveReaction={handleRemoveReaction}
+                onDeleteMessage={handleDeleteMessage}
+                onHideMessage={handleHideMessage}
+                onToggleStar={handleToggleStar}
+                messagesLoading={messagesLoading}
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+                currentUserId={user?.id}
+                allSpaces={formattedSpaces}
+                dmUsers={dmUsers}
+                onForwardMessage={handleForwardMessage}
+                spaceMembers={spaceMembers}
+                activeView={activeView}
+                description={activeSpace?.description}
+                isMaximized={isMaximized}
+                onToggleMaximize={() => setIsMaximized(!isMaximized)}
+                onClose={handleBackToHome}
+                highlightMessageId={highlightMessageId}
+                spaceId={activeSpace?.id}
+                dmConversationId={activeDMConversationId}
+                typingUsers={typingUsers}
+                onTypingChange={handleTypingChange}
+                allUsers={allUsers}
+              />
             )}
           </>
         )}
