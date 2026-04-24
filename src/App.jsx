@@ -591,6 +591,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 onForwardMessage={handleForwardMessage}
                 spaceMembers={spaceMembers}
                 activeView={activeView}
+                description={activeSpace?.description}
+                isMaximized={isMaximized}
+                onToggleMaximize={() => setIsMaximized(!isMaximized)}
+                onClose={handleBackToHome}
+                highlightMessageId={highlightMessageId}
+                spaceId={activeSpace?.id}
+                dmConversationId={activeDMConversationId}
+                typingUsers={typingUsers}
+                onTypingChange={handleTypingChange}
+                allUsers={allUsers}
               />
             )}
           </>

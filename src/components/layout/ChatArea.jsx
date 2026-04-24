@@ -730,8 +730,11 @@ export default function ChatArea({
   activeView, title, isSpace, messages, onSend, onEdit, onDelete, onReact, onRemoveReact,
   messagesLoading, hasMore, onLoadMore, currentUserId, allSpaces, dmUsers, onForwardMessage,
   spaceMembers, onAddReaction, onRemoveReaction, onDeleteMessage, onHideMessage,
-  onToggleStar
+  onToggleStar, description, isMaximized, onToggleMaximize, onClose,
+  highlightMessageId, spaceId, dmConversationId, typingUsers, onTypingChange, allUsers
 }) {
+  const memberCount = spaceMembers?.length || 0;
+  const [loadingMore, setLoadingMore] = useState(false);
   const [input, setInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -957,7 +960,7 @@ export default function ChatArea({
   const handleEditSave = async () => {
     if (!editContent.trim() || !editingId) return;
     try {
-      await onEditMessage(editingId, editContent.trim());
+      await onEdit(editingId, editContent.trim());
       setEditingId(null); setEditContent('');
     } catch { }
   };
@@ -1003,7 +1006,7 @@ export default function ChatArea({
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               {isSpace && <span style={{ color: 'var(--ws-text-muted)', fontSize: 18, fontWeight: 300 }}>#</span>}
               <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0 }}>{title}</h2>
-              {memberCount && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2 }}>· {memberCount} members</span>}
+              {memberCount > 0 && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2 }}>· {memberCount} members</span>}
             </div>
             {description && (
               <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0, marginTop: 1, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
