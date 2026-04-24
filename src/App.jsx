@@ -36,7 +36,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     joinSpace, leaveSpace, joinDM,
     onNewMessage, onMessageEdited, onMessageDeleted, onReactionUpdated,
     onDMJoined, onTypingUpdate, emitTyping, onlineUsers,
-    onDMPreviewUpdated, onUserRoleChanged,
+    onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged,
     onReceiptUpdated, emitMarkDelivered, emitMarkSeen,
   } = useSocket();
 
