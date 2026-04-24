@@ -66,13 +66,7 @@ function AttachmentPreview({ attachments: rawAttachments }) {
             window.URL.revokeObjectURL(blobUrl);
           } catch (err) {
             console.error('Download failed:', err);
-            const errMsg = err?.message || '';
-            // Only try direct open for Cloudinary/S3 URLs (persistent storage)
-            if (a.url && (a.url.includes('cloudinary.com') || a.url.includes('amazonaws.com'))) {
-              window.open(a.url, '_blank');
-            } else {
-              alert(errMsg || 'This file is no longer available. It may have been removed during a server update.');
-            }
+            alert(err?.message || 'Download failed. Please try again.');
           }
         };
 
