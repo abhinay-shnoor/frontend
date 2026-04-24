@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
-import { searchMessages, uploadFile } from '../../api/messages.js';
+import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -40,7 +40,24 @@ function AttachmentPreview({ attachments: rawAttachments }) {
         const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
 
         // Proxy all downloads through our backend to avoid Cloudinary security blocks and redirects
-        const downloadProxyUrl = `${apiUrl}/api/download?url=${encodeURIComponent(a.url)}&name=${encodeURIComponent(a.name || 'file')}`;
+        const handleDownload = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const response = await downloadAttachment(a.url, a.name);
+            const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.setAttribute('download', a.name || 'attachment');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(blobUrl);
+          } catch (err) {
+            console.error('Download failed:', err);
+            alert('Failed to download file. Please try again.');
+          }
+        };
 
         return (
           <div key={i} style={{ marginBottom: 6 }}>
@@ -49,9 +66,8 @@ function AttachmentPreview({ attachments: rawAttachments }) {
                 onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
               <a
-                href={downloadProxyUrl}
-                download={a.name || 'attachment'}
-                onClick={(e) => e.stopPropagation()}
+                href="#"
+                onClick={handleDownload}
                 style={{
                   color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer'
                 }}

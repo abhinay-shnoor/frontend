@@ -35,3 +35,9 @@ export const getMentions = () =>
 // Mark all mentions as read — persists the timestamp so badge resets after refresh
 export const markMentionsRead = () =>
   api.post('/api/mentions/mark-read').then(r => r.data);
+
+// Authenticated download — axios passes the session cookie automatically
+export const downloadAttachment = (url, name) =>
+  api.get(`/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`, {
+    responseType: 'blob'
+  });
