@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
