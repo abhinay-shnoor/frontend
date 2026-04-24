@@ -316,7 +316,7 @@ function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
 
 export default function LeftSidebar({
   isOpen, onSelectSpace, onSelectDM, activeSpace, activeDM, activeView,
-  onHomeClick, onMentionsClick, onCreateSpace, allSpaces, currentUser,
+  onHomeClick, onMentionsClick, onStarredClick, onCreateSpace, allSpaces, currentUser,
   dmUsers, onLoadMoreDMs, dmHasMore, dmLoadingMore, onCloseMobile, className = '',
   unreadMentions = 0, unreadCounts = {},
 }) {
@@ -425,6 +425,16 @@ export default function LeftSidebar({
                       {unreadMentions}
                     </span>
                   )}
+                </button>
+                <button onClick={() => { onStarredClick?.(); onCloseMobile?.(); }}
+                  style={navItemStyle(activeView === 'starred')}
+                  onMouseEnter={e => { if (activeView !== 'starred') e.currentTarget.style.background = 'var(--ws-hover)'; }}
+                  onMouseLeave={e => { if (activeView !== 'starred') e.currentTarget.style.background = 'none'; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span style={{ fontSize: 12 }}>Starred</span>
                 </button>
               </div>
             )}

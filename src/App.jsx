@@ -23,8 +23,9 @@ import RightIconRail from './components/layout/RightIconRail.jsx';
 import GlobalSearch from './components/features/GlobalSearch.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
-import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions, markMentionsRead } from './api/messages.js';
+import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions, markMentionsRead, starMessage, unstarMessage, getStarredMessages } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
+import StarredMessagesFeed from './components/layout/StarredMessagesFeed.jsx';
 import api from './api/axios.js';
 import { requestNotificationPermission, showNotification } from './utils/notifications.js';
 
@@ -88,6 +89,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [mentionedMessages, setMentionedMessages] = useState([]);
   const [unreadMentions, setUnreadMentions] = useState(0);
+  const [starredMessages, setStarredMessages] = useState([]);
 
   const activeViewRef = useRef(activeView);
   const activeSpaceRef = useRef(activeSpace);
@@ -156,6 +158,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           setUnreadMentions(data.unreadMentions || 0);
         }
       }).catch(err => console.error('Failed to fetch mentions:', err));
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getStarredMessages().then(data => {
+        if (data?.messages) {
+          setStarredMessages(data.messages.map(formatMsg));
+        }
+      }).catch(err => console.error('Failed to fetch starred messages:', err));
     }
   }, [user?.id]);
 
@@ -430,6 +442,22 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
 
+  const handleToggleStar = async (msg) => {
+    try {
+      if (msg.isStarred) {
+        await unstarMessage(msg.id);
+        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isStarred: false } : m));
+        setStarredMessages(prev => prev.filter(m => m.id !== msg.id));
+        showToast('Message unstarred', 'success');
+      } else {
+        await starMessage(msg.id);
+        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, isStarred: true } : m));
+        setStarredMessages(prev => [...prev, { ...msg, isStarred: true }]);
+        showToast('Message starred', 'success');
+      }
+    } catch { showToast('Failed to update star status', 'error'); }
+  };
+
   const handleForwardMessage = async (target, message) => {
     try {
       let result;
@@ -484,12 +512,21 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       <div className="flex flex-1 overflow-hidden">
         {activeView !== 'calendar' && (
           <LeftSidebar
-            isOpen={isSidebarOpen} onSelectSpace={handleSelectSpace} onSelectDM={handleSelectDM}
-            activeSpace={activeSpace} activeDM={activeDM} activeView={activeView}
-            onHomeClick={handleBackToHome} onMentionsClick={handleMentionsClick}
-            onCreateSpace={() => { }} allSpaces={formattedSpaces}
-            currentUser={currentUser} dmUsers={dmUsers}
-            unreadMentions={unreadMentions} unreadCounts={unreadCounts}
+            isOpen={isSidebarOpen}
+            onSelectSpace={handleSelectSpace}
+            onSelectDM={handleSelectDM}
+            activeSpace={activeSpace}
+            activeDM={activeDM}
+            activeView={activeView}
+            onHomeClick={handleBackToHome}
+            onMentionsClick={() => setActiveView('mentions')}
+            onStarredClick={() => setActiveView('starred')}
+            onCreateSpace={handleCreateSpace}
+            allSpaces={formattedSpaces}
+            currentUser={currentUser}
+            dmUsers={dmUsers}
+            unreadMentions={unreadMentions}
+            unreadCounts={unreadCounts}
           />
         )}
         {activeView === 'calendar' ? <CalendarView isSidebarOpen={isSidebarOpen} /> : (
@@ -513,30 +550,47 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 onSelectMention={(m) => {
                   if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
                   else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
+                  setHighlightMessageId(m.id);
+                  setTimeout(() => setHighlightMessageId(null), 3000);
                 }}
+                onClose={handleBackToHome}
+              />
+            ) : activeView === 'starred' ? (
+              <StarredMessagesFeed
+                starredMessages={starredMessages}
+                onSelectMessage={(m) => {
+                  if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
+                  else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
+                  setHighlightMessageId(m.id);
+                  setTimeout(() => setHighlightMessageId(null), 3000);
+                }}
+                onUnstar={(id) => handleToggleStar({ id, isStarred: true })}
                 onClose={handleBackToHome}
               />
             ) : (
               <ChatArea
                 title={activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || ''}
-                memberCount={activeView === 'space' && activeSpace ? activeSpace.memberCount : null}
+                isSpace={activeView === 'space'}
                 messages={messagesLoading ? [] : messages.map(formatMsg)}
-                onSend={handleSendMessage} isSpace={activeView === 'space'}
-                activeView={activeView} onClose={handleBackToHome}
-                isMaximized={isMaximized} onToggleMaximize={() => setIsMaximized(prev => !prev)}
-                spaceMembers={spaceMembers} currentUserId={user?.id}
-                onEditMessage={handleEditMessage} onDeleteMessage={handleDeleteMessage}
-                onHideMessage={handleHideMessage} onAddReaction={handleAddReaction}
-                onRemoveReaction={handleRemoveReaction} typingUsers={typingUsers}
-                messagesLoading={messagesLoading} hasMore={hasMore}
-                loadingMore={loadingMore}
-                onLoadMore={handleLoadMore} onTypingChange={handleTypingChange}
-
-                spaceId={activeSpace?.id} allUsers={[{ id: user?.id, name: user?.name }, ...dmUsers]}
-                allSpaces={formattedSpaces} dmUsers={dmUsers}
+                onSend={handleSendMessage}
+                onEdit={handleEditMessage}
+                onDelete={handleDeleteMessage}
+                onReact={handleAddReaction}
+                onRemoveReact={handleRemoveReaction}
+                onAddReaction={handleAddReaction}
+                onRemoveReaction={handleRemoveReaction}
+                onDeleteMessage={handleDeleteMessage}
+                onHideMessage={handleHideMessage}
+                onToggleStar={handleToggleStar}
+                messagesLoading={messagesLoading}
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+                currentUserId={user?.id}
+                allSpaces={formattedSpaces}
+                dmUsers={dmUsers}
                 onForwardMessage={handleForwardMessage}
-                highlightMessageId={highlightMessageId}
-                dmConversationId={activeDMConversationId}
+                spaceMembers={spaceMembers}
+                activeView={activeView}
               />
             )}
           </>

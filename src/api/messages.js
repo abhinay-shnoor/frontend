@@ -36,6 +36,18 @@ export const getMentions = () =>
 export const markMentionsRead = () =>
   api.post('/api/mentions/mark-read').then(r => r.data);
 
+// Star a message
+export const starMessage = (msgId) =>
+  api.post(`/api/messages/${msgId}/star`).then(r => r.data);
+
+// Unstar a message
+export const unstarMessage = (msgId) =>
+  api.delete(`/api/messages/${msgId}/star`).then(r => r.data);
+
+// Fetch all starred messages for the current user
+export const getStarredMessages = () =>
+  api.get('/api/starred').then(r => r.data);
+
 // Authenticated download — axios passes the session cookie automatically
 export const downloadAttachment = (url, name) =>
   api.get(`/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name || 'file')}`, {

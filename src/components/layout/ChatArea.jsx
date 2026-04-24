@@ -320,7 +320,7 @@ function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
   );
 }
 
-function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply }) {
+function MessageContextMenu({ x, y, isOwn, isStarred, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply, onToggleStar }) {
   const [showDeleteSub, setShowDeleteSub] = useState(false);
   const ref = useRef(null);
 
@@ -387,6 +387,12 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5" /><path d="M4 4v7a4 4 0 0 0 4 4h12" /></svg>
             Forward
           </button>
+          <button className="menu-item" onClick={onToggleStar}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            {isStarred ? 'Unstar' : 'Star'}
+          </button>
         </>
       ) : (
         <>
@@ -405,7 +411,7 @@ function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
   totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
-  onQuoteClick
+  onQuoteClick, onToggleStar
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -427,9 +433,11 @@ function MessageBubble({
       id={`message-${msg.id}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={handleOpenMenu}
       style={{
         display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row',
         alignItems: 'flex-end', gap: 8, padding: '2px 16px', position: 'relative',
+        cursor: 'pointer'
       }}
     >
       {!isOwn && (
@@ -530,21 +538,23 @@ function MessageBubble({
             <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
               <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
             </div>
+               {menuPos && (
+            <MessageContextMenu
+              x={menuPos.x} y={menuPos.y}
+              isOwn={isOwn}
+              isStarred={msg.isStarred}
+              onClose={closeMenu}
+              onInfo={() => { onShowInfo(msg); closeMenu(); }}
+              onDeleteForMe={() => { onDeleteMessage(msg.id, false); closeMenu(); }}
+              onDeleteForEveryone={() => { onDeleteMessage(msg.id, true); closeMenu(); }}
+              onEmojis={() => { setPickerPos({ x: menuPos.x, y: menuPos.y }); closeMenu(); }}
+              onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
+              onReply={() => { onReply(msg); closeMenu(); }}
+              onForward={() => { onForward(msg); closeMenu(); }}
+              onToggleStar={() => { onToggleStar(msg); closeMenu(); }}
+            />
+          )}
           </div>
-        )}
-
-        {menuPos && !isEditing && (
-          <MessageContextMenu
-            x={menuPos.x} y={menuPos.y} isOwn={isOwn}
-            onClose={closeMenu}
-            onInfo={() => { onShowInfo(msg); closeMenu(); }}
-            onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
-            onDeleteForMe={() => { onHideMessage(msg.id); closeMenu(); }}
-            onDeleteForEveryone={() => { onDeleteMessage(msg.id); closeMenu(); }}
-            onEmojis={() => { setPickerPos(menuPos); setShowPicker(true); closeMenu(); }}
-            onForward={() => { onForward(msg); closeMenu(); }}
-            onReply={() => { onReply(msg); closeMenu(); }}
-          />
         )}
 
         {showPicker && pickerPos && (
@@ -717,14 +727,10 @@ function Highlight({ text = '', highlight = '' }) {
 }
 
 export default function ChatArea({
-  title, description, memberCount, messages, onSend, isSpace,
-  activeView, onClose, isMaximized, onToggleMaximize,
-  spaceMembers, currentUserId, currentUser, allUsers = [],
-  onEditMessage, onDeleteMessage, onHideMessage, onAddReaction, onRemoveReaction,
-  typingUsers, messagesLoading, hasMore, loadingMore, onLoadMore, onTypingChange,
-  spaceId, allSpaces = [], dmUsers = [], onForwardMessage,
-
-  highlightMessageId, dmConversationId
+  activeView, title, isSpace, messages, onSend, onEdit, onDelete, onReact, onRemoveReact,
+  messagesLoading, hasMore, onLoadMore, currentUserId, allSpaces, dmUsers, onForwardMessage,
+  spaceMembers, onAddReaction, onRemoveReaction, onDeleteMessage, onHideMessage,
+  onToggleStar
 }) {
   const [input, setInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -1152,6 +1158,7 @@ export default function ChatArea({
                           onHideMessage={onHideMessage}
                           onForward={setForwardMessage}
                           onQuoteClick={scrollToMessage}
+                          onToggleStar={onToggleStar}
                         />
                       </div>
                     </React.Fragment>
