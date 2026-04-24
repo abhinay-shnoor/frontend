@@ -65,12 +65,13 @@ function AttachmentPreview({ attachments: rawAttachments }) {
             link.remove();
             window.URL.revokeObjectURL(blobUrl);
           } catch (err) {
-            console.error('Proxy download failed, trying direct:', err);
-            // Fallback: open the original URL directly in a new tab
-            try {
+            console.error('Download failed:', err);
+            const errMsg = err?.message || '';
+            // Only try direct open for Cloudinary/S3 URLs (persistent storage)
+            if (a.url && (a.url.includes('cloudinary.com') || a.url.includes('amazonaws.com'))) {
               window.open(a.url, '_blank');
-            } catch (_) {
-              alert('Download failed. Please try again.');
+            } else {
+              alert(errMsg || 'This file is no longer available. It may have been removed during a server update.');
             }
           }
         };
