@@ -38,6 +38,7 @@ export const markMentionsRead = () =>
 
 // Authenticated download — axios passes the session cookie automatically
 export const downloadAttachment = (url, name) =>
-  api.get(`/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`, {
-    responseType: 'blob'
+  api.get(`/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name || 'file')}`, {
+    responseType: 'blob',
+    timeout: 60000, // 60s timeout for large files
   });

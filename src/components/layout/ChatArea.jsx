@@ -28,8 +28,6 @@ function AttachmentPreview({ attachments: rawAttachments }) {
 
   if (!attachments || !attachments.length) return null;
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   return (
     <div style={{ marginTop: 8, padding: 8, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
       {attachments.map((a, i) => {
@@ -39,13 +37,26 @@ function AttachmentPreview({ attachments: rawAttachments }) {
         const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
         const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
 
-        // Proxy all downloads through our backend to avoid Cloudinary security blocks and redirects
         const handleDownload = async (e) => {
           e.preventDefault();
           e.stopPropagation();
           try {
-            const response = await downloadAttachment(a.url, a.name);
-            const blobUrl = window.URL.createObjectURL(new Blob([response.data]));
+            const response = await downloadAttachment(a.url, a.name || 'file');
+            const blob = response.data;
+
+            // Check if the backend returned a JSON error disguised as a blob
+            if (blob.size < 1000 && (blob.type === 'application/json' || blob.type?.includes('json'))) {
+              const text = await blob.text();
+              try {
+                const err = JSON.parse(text);
+                throw new Error(err.message || 'Download failed');
+              } catch (parseErr) {
+                if (parseErr.message && parseErr.message !== 'Download failed') throw parseErr;
+                throw new Error(text || 'Download failed');
+              }
+            }
+
+            const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
             link.setAttribute('download', a.name || 'attachment');
@@ -54,23 +65,18 @@ function AttachmentPreview({ attachments: rawAttachments }) {
             link.remove();
             window.URL.revokeObjectURL(blobUrl);
           } catch (err) {
-            console.error('Download failed:', err);
-            // Try to extract the real error message
-            const status = err?.response?.status;
-            let msg = `Download failed (HTTP ${status || 'unknown'})`;
+            console.error('Proxy download failed, trying direct:', err);
+            // Fallback: open the original URL directly in a new tab
             try {
-              if (err?.response?.data instanceof Blob) {
-                msg = await err.response.data.text();
-              } else if (err?.response?.data?.message) {
-                msg = err.response.data.message;
-              }
-            } catch (_) {}
-            alert(msg);
+              window.open(a.url, '_blank');
+            } catch (_) {
+              alert('Download failed. Please try again.');
+            }
           }
         };
 
         return (
-          <div key={i} style={{ marginBottom: 6 }}>
+          <div key={i} style={{ marginBottom: 6 }} onClick={e => e.stopPropagation()}>
             {isImage ? (
               <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }}
                 onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
@@ -79,7 +85,8 @@ function AttachmentPreview({ attachments: rawAttachments }) {
                 href="#"
                 onClick={handleDownload}
                 style={{
-                  color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer'
+                  color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
+                  display: 'inline-block', padding: '4px 0',
                 }}
               >
                 📎 Download Attachment: {a.name || 'File'}
