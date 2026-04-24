@@ -143,8 +143,9 @@ function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
   );
 }
 
-function MessageInfoModal({ msg, onClose, allUsers = [] }) {
+function MessageInfoModal({ msg, onClose, allUsers = [], currentUserId }) {
   const receipts = msg.receipts || [];
+  const filteredReceipts = receipts.filter(r => r.userId !== currentUserId);
 
   // Helper to ensure database timestamps are treated as UTC if they lack a timezone
   const parseUTC = (d) => {
@@ -160,7 +161,7 @@ function MessageInfoModal({ msg, onClose, allUsers = [] }) {
   });
 
   const getReceiptDetails = () => {
-    return receipts.map(r => {
+    return filteredReceipts.map(r => {
       const u = allUsers.find(user => user.id === r.userId) || { name: 'Unknown User' };
       const dDate = parseUTC(r.deliveredAt);
       const sDate = parseUTC(r.seenAt);
@@ -357,10 +358,12 @@ function MessageContextMenu({ x, y, isOwn, onClose, onInfo, onDeleteForMe, onDel
 
       {!showDeleteSub ? (
         <>
-          <button className="menu-item" onClick={onInfo}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-            Message Info
-          </button>
+          {isOwn && (
+            <button className="menu-item" onClick={onInfo}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+              Message Info
+            </button>
+          )}
           <button className="menu-item" onClick={onEmojis}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" y1="9" x2="9.01" y2="9" /><line x1="15" y1="9" x2="15.01" y2="9" /></svg>
             Emojis
@@ -1064,7 +1067,6 @@ export default function ChatArea({
           </div>
         )}
 
-        {infoMessage && <MessageInfoModal msg={infoMessage} onClose={() => setInfoMessage(null)} allUsers={allUsers} />}
 
         {forwardMessage && (
           <ForwardModal
@@ -1160,6 +1162,7 @@ export default function ChatArea({
           msg={infoMessage}
           onClose={() => setInfoMessage(null)}
           allUsers={allUsers}
+          currentUserId={currentUserId}
         />
       )}
     </div>

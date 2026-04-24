@@ -253,36 +253,43 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     return () => cleanups.forEach(fn => fn?.());
   }, [activeDM, activeView, connected]);
 
+  const updateConversationPreviews = (msg) => {
+    if (!msg) return;
+    const content = msg.content || msg.text || (msg.attachments?.length ? (msg.attachments[0].isVoice ? '🎤 Voice message' : '📎 Attachment') : '');
+    const createdAt = msg.created_at || new Date().toISOString();
+
+    if (msg.space_id) {
+      setSpaces(prev => prev.map(s =>
+        s.id === msg.space_id ? {
+          ...s,
+          last_message: content,
+          last_message_at: createdAt,
+          last_message_sender: msg.sender_name
+        } : s
+      ));
+    }
+
+    if (msg.conversation_id) {
+      setDmConversations(prev => prev.map(d =>
+        d.conversation_id === msg.conversation_id ? {
+          ...d,
+          last_message: content,
+          last_message_at: createdAt,
+          last_message_sender_id: msg.sender_id,
+          last_message_sender_name: msg.sender_name
+        } : d
+      ));
+    }
+  };
+
   useEffect(() => {
     if (!connected || !user?.id) return;
     const cleanup = onNewMessage((msg) => {
-      const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
-      const createdAt = msg.created_at || new Date().toISOString();
-
-      if (msg.space_id) {
-        setSpaces(prev => prev.map(s =>
-          s.id === msg.space_id ? {
-            ...s,
-            last_message: content,
-            last_message_at: createdAt,
-            last_message_sender: msg.sender_name
-          } : s
-        ));
-      }
-
-      if (msg.conversation_id) {
-        setDmConversations(prev => prev.map(d =>
-          d.conversation_id === msg.conversation_id ? {
-            ...d,
-            last_message: content,
-            last_message_at: createdAt,
-            last_message_sender_id: msg.sender_id,
-            last_message_sender_name: msg.sender_name
-          } : d
-        ));
-      }
+      updateConversationPreviews(msg);
 
       if (msg.sender_id === user.id) return;
+
+      const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
 
       if (msg.space_id) {
         if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id !== msg.space_id) {
@@ -354,6 +361,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       if (result) {
         const formatted = formatMsg(result);
         setMessages(prev => prev.find(m => m.id === result.id) ? prev : [...prev, formatted]);
+        updateConversationPreviews(result);
       }
     } catch (err) {
       console.error('handleSendMessage error:', err);
@@ -405,8 +413,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   const handleForwardMessage = async (target, message) => {
     try {
-      if (target.type === 'space') await sendSpaceMessage(target.id, message.text, null, message.attachments, true);
-      else await sendDMMessage(target.id, message.text, null, message.attachments, true);
+      let result;
+      if (target.type === 'space') {
+        result = await sendSpaceMessage(target.id, message.text, null, message.attachments, true);
+      } else {
+        result = await sendDMMessage(target.id, message.text, null, message.attachments, true);
+      }
+      if (result) updateConversationPreviews(result);
       showToast('Message forwarded!', 'success');
     } catch { showToast('Failed to forward message', 'error'); }
   };
