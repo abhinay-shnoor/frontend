@@ -43,7 +43,7 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn }) {
         if (isAudio) {
           return (
             <div key={i} style={{ marginBottom: 6 }} onClick={e => e.stopPropagation()}>
-              <VoiceMessagePlayer url={a.url} isOwn={isOwn} />
+              <VoiceMessagePlayer url={a.url} />
             </div>
           );
         }

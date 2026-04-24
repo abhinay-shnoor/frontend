@@ -25,7 +25,7 @@ function generateWaveform(seed, count = 40) {
   return bars;
 }
 
-export default function VoiceMessagePlayer({ url, isOwn }) {
+export default function VoiceMessagePlayer({ url }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -120,12 +120,14 @@ export default function VoiceMessagePlayer({ url, isOwn }) {
         onClick={togglePlay}
         style={{
           width: 36, height: 36, borderRadius: '50%', border: 'none',
-          background: isOwn ? 'rgba(255,255,255,0.2)' : '#0D9488',
+          background: '#0D9488',
           cursor: 'pointer', color: '#fff', display: 'flex',
           alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           transition: 'all 0.15s',
           animation: playing ? 'playerPulse 2s ease-in-out infinite' : 'none',
         }}
+        onMouseEnter={e => e.currentTarget.style.background = '#0f766e'}
+        onMouseLeave={e => e.currentTarget.style.background = '#0D9488'}
       >
         {playing ? (
           // Pause icon
@@ -158,9 +160,7 @@ export default function VoiceMessagePlayer({ url, isOwn }) {
               <div key={i} style={{
                 width: 3, borderRadius: 2, flexShrink: 0,
                 height: `${h * 100}%`,
-                background: isPlayed
-                  ? (isOwn ? 'rgba(255,255,255,0.9)' : '#0D9488')
-                  : (isOwn ? 'rgba(255,255,255,0.3)' : 'var(--ws-border)'),
+                background: isPlayed ? '#0D9488' : '#b0b0b0',
                 transition: 'background 0.15s',
               }} />
             );
@@ -173,7 +173,7 @@ export default function VoiceMessagePlayer({ url, isOwn }) {
         }}>
           <span style={{
             fontSize: 11, fontWeight: 500,
-            color: isOwn ? 'rgba(255,255,255,0.7)' : 'var(--ws-text-muted)',
+            color: '#666',
             fontVariantNumeric: 'tabular-nums',
           }}>
             {playing || currentTime > 0 ? formatTime(currentTime) : formatTime(duration)}
@@ -181,7 +181,7 @@ export default function VoiceMessagePlayer({ url, isOwn }) {
           {/* Voice message icon */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke={isOwn ? 'rgba(255,255,255,0.5)' : 'var(--ws-text-muted)'}
+              stroke="#0D9488"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             >
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
