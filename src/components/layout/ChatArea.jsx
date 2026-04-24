@@ -320,7 +320,7 @@ function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
   );
 }
 
-function MessageContextMenu({ x, y, isOwn, isStarred, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply, onToggleStar }) {
+function MessageContextMenu({ isOwn, isStarred, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply, onToggleStar }) {
   const [showDeleteSub, setShowDeleteSub] = useState(false);
   const ref = useRef(null);
 
@@ -334,7 +334,10 @@ function MessageContextMenu({ x, y, isOwn, isStarred, onClose, onInfo, onDeleteF
 
   return (
     <div ref={ref} style={{
-      position: 'fixed', top: Math.min(y, window.innerHeight - 200), left: Math.min(x, window.innerWidth - 180), zIndex: 1000,
+      position: 'absolute', bottom: 'calc(100% + 5px)', 
+      right: isOwn ? 0 : 'auto', 
+      left: isOwn ? 'auto' : 0,
+      zIndex: 1000,
       background: 'var(--ws-bg)', border: '1px solid var(--ws-border)',
       borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
       padding: '6px 0', minWidth: 160,
@@ -423,10 +426,10 @@ function MessageBubble({
 
   const handleOpenMenu = (e) => {
     e.preventDefault();
-    setMenuPos({ x: e.clientX, y: e.clientY });
+    setMenuPos(true);
   };
 
-  const closeMenu = () => setMenuPos(null);
+  const closeMenu = () => setMenuPos(false);
 
   return (
     <div
@@ -523,6 +526,7 @@ function MessageBubble({
               boxShadow: isOwn ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
               border: isOwn ? '1px solid var(--ws-border)' : 'none',
               transition: 'transform 0.1s',
+              position: 'relative'
             }}
             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.01)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -540,14 +544,13 @@ function MessageBubble({
             </div>
                {menuPos && (
             <MessageContextMenu
-              x={menuPos.x} y={menuPos.y}
               isOwn={isOwn}
               isStarred={msg.isStarred}
               onClose={closeMenu}
               onInfo={() => { onShowInfo(msg); closeMenu(); }}
               onDeleteForMe={() => { onDeleteMessage(msg.id, false); closeMenu(); }}
               onDeleteForEveryone={() => { onDeleteMessage(msg.id, true); closeMenu(); }}
-              onEmojis={() => { setPickerPos({ x: menuPos.x, y: menuPos.y }); closeMenu(); }}
+              onEmojis={() => { setShowPicker(true); closeMenu(); }}
               onEdit={() => { onEdit(msg.id, msg.text); closeMenu(); }}
               onReply={() => { onReply(msg); closeMenu(); }}
               onForward={() => { onForward(msg); closeMenu(); }}
@@ -557,8 +560,8 @@ function MessageBubble({
           </div>
         )}
 
-        {showPicker && pickerPos && (
-          <div style={{ position: 'fixed', top: Math.min(pickerPos.y, window.innerHeight - 350), left: Math.min(pickerPos.x, window.innerWidth - 300), zIndex: 1001 }}>
+        {showPicker && (
+          <div style={{ position: 'absolute', bottom: '100%', left: isOwn ? 'auto' : 0, right: isOwn ? 0 : 'auto', zIndex: 1001, marginBottom: 8 }}>
             <EmojiPicker onSelect={(emoji) => { onReact(msg.id, emoji); setShowPicker(false); }} onClose={() => setShowPicker(false)} />
           </div>
         )}
