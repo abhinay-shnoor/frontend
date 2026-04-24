@@ -721,8 +721,9 @@ export default function ChatArea({
   activeView, onClose, isMaximized, onToggleMaximize,
   spaceMembers, currentUserId, currentUser, allUsers = [],
   onEditMessage, onDeleteMessage, onHideMessage, onAddReaction, onRemoveReaction,
-  typingUsers, messagesLoading, hasMore, onLoadMore, onTypingChange,
+  typingUsers, messagesLoading, hasMore, loadingMore, onLoadMore, onTypingChange,
   spaceId, allSpaces = [], dmUsers = [], onForwardMessage,
+
   highlightMessageId, dmConversationId
 }) {
   const [input, setInput] = useState('');
@@ -758,7 +759,7 @@ export default function ChatArea({
   const [showMembers, setShowMembers] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState('');
-  const [loadingMore, setLoadingMore] = useState(false);
+
   const [replyingTo, setReplyingTo] = useState(null);
   const [mentionSearch, setMentionSearch] = useState('');
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
