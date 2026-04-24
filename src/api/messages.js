@@ -30,4 +30,8 @@ export const uploadFile = (file) => {
 
 // Fetch mentions for the current user
 export const getMentions = () =>
-  api.get('/api/mentions').then(r => r.data);
+  api.get('/api/mentions').then(r => r.data);
+
+// Mark all mentions as read — persists the timestamp so badge resets after refresh
+export const markMentionsRead = () =>
+  api.post('/api/mentions/mark-read').then(r => r.data);

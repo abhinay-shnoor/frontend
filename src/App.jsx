@@ -23,7 +23,7 @@ import RightIconRail from './components/layout/RightIconRail.jsx';
 import GlobalSearch from './components/features/GlobalSearch.jsx';
 import CalendarView from './components/calendar/CalendarView.jsx';
 import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
-import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions } from './api/messages.js';
+import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions, markMentionsRead } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import api from './api/axios.js';
 import { requestNotificationPermission, showNotification } from './utils/notifications.js';
@@ -87,12 +87,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [mentionedMessages, setMentionedMessages] = useState([]);
   const [unreadMentions, setUnreadMentions] = useState(0);
 
-  const activeViewRef   = useRef(activeView);
-  const activeSpaceRef  = useRef(activeSpace);
-  const activeDMRef     = useRef(activeDM);
-  useEffect(() => { activeViewRef.current  = activeView;  }, [activeView]);
+  const activeViewRef = useRef(activeView);
+  const activeSpaceRef = useRef(activeSpace);
+  const activeDMRef = useRef(activeDM);
+  useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
   useEffect(() => { activeSpaceRef.current = activeSpace; }, [activeSpace]);
-  useEffect(() => { activeDMRef.current    = activeDM;    }, [activeDM]);
+  useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
 
   const formatMsg = (m) => {
     if (!m) return m;
@@ -141,8 +141,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   useEffect(() => {
     getSpaces().then(setSpaces).catch(() => showToast('Failed to load spaces', 'error'));
-    getAllUsers().then(setAllUsers).catch(() => {});
-    getDMConversations().then(setDmConversations).catch(() => {});
+    getAllUsers().then(setAllUsers).catch(() => { });
+    getDMConversations().then(setDmConversations).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -159,7 +159,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   useEffect(() => {
     if (!connected) return;
-    return onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => {}); });
+    return onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => { }); });
   }, [connected]);
 
   useEffect(() => {
@@ -259,7 +259,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const createdAt = msg.created_at || new Date().toISOString();
 
       if (msg.space_id) {
-        setSpaces(prev => prev.map(s => 
+        setSpaces(prev => prev.map(s =>
           s.id === msg.space_id ? {
             ...s,
             last_message: content,
@@ -270,7 +270,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }
 
       if (msg.conversation_id) {
-        setDmConversations(prev => prev.map(d => 
+        setDmConversations(prev => prev.map(d =>
           d.conversation_id === msg.conversation_id ? {
             ...d,
             last_message: content,
@@ -330,7 +330,15 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleBackToHome = () => { setActiveSpace(null); setActiveDM(null); setActiveView('home'); setIsMaximized(false); setMessages([]); setTypingUsers([]); setSpaceMembers([]); };
-  const handleMentionsClick = () => { setActiveSpace(null); setActiveDM(null); setActiveView('mentions'); setIsMaximized(false); setUnreadMentions(0); };
+  const handleMentionsClick = () => {
+    setActiveSpace(null);
+    setActiveDM(null);
+    setActiveView('mentions');
+    setIsMaximized(false);
+    setUnreadMentions(0);
+    // Persist "read at NOW()" to the DB so the badge stays at 0 after a page refresh
+    markMentionsRead().catch(err => console.warn('markMentionsRead failed:', err));
+  };
 
   const handleSendMessage = async (text, parentMessageId = null, attachments = []) => {
     if (!text.trim() && !attachments.length) return;
@@ -341,14 +349,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       } else if (activeView === 'dm' && activeDM) {
         result = await sendDMMessage(activeDM.id, text, parentMessageId, attachments);
       }
-      
+
       if (result) {
         const formatted = formatMsg(result);
         setMessages(prev => prev.find(m => m.id === result.id) ? prev : [...prev, formatted]);
       }
-    } catch (err) { 
+    } catch (err) {
       console.error('handleSendMessage error:', err);
-      showToast('Failed to send message', 'error'); 
+      showToast('Failed to send message', 'error');
     }
   };
 
@@ -432,10 +440,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         activeView={activeView}
       />
       {navSearchQuery && (
-        <GlobalSearch 
-          query={navSearchQuery} 
-          onClose={() => setNavSearchQuery('')} 
-          onSelectResult={handleSelectSearchResult} 
+        <GlobalSearch
+          query={navSearchQuery}
+          onClose={() => setNavSearchQuery('')}
+          onSelectResult={handleSelectSearchResult}
           spaceId={activeView === 'space' ? activeSpace?.id : null}
           conversationId={activeView === 'dm' ? activeDMConversationId : null}
         />
@@ -446,7 +454,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
             isOpen={isSidebarOpen} onSelectSpace={handleSelectSpace} onSelectDM={handleSelectDM}
             activeSpace={activeSpace} activeDM={activeDM} activeView={activeView}
             onHomeClick={handleBackToHome} onMentionsClick={handleMentionsClick}
-            onCreateSpace={() => {}} allSpaces={formattedSpaces}
+            onCreateSpace={() => { }} allSpaces={formattedSpaces}
             currentUser={currentUser} dmUsers={dmUsers}
             unreadMentions={unreadMentions} unreadCounts={unreadCounts}
           />
@@ -467,7 +475,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
               />
             )}
             {activeView === 'mentions' ? (
-              <MentionsActivityFeed 
+              <MentionsActivityFeed
                 mentions={mentionedMessages}
                 onSelectMention={(m) => {
                   if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
