@@ -27,33 +27,33 @@ function AttachmentPreview({ attachments: rawAttachments }) {
   }
 
   if (!attachments || !attachments.length) return null;
-  
+
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   return (
     <div style={{ marginTop: 8, padding: 8, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
       {attachments.map((a, i) => {
-        if (!a) return <div key={i} style={{color:'red'}}>Empty attachment object</div>;
-        if (!a.url) return <div key={i} style={{color:'orange'}}>⚠️ Attachment Data Missing</div>;
-        
+        if (!a) return <div key={i} style={{ color: 'red' }}>Empty attachment object</div>;
+        if (!a.url) return <div key={i} style={{ color: 'orange' }}>⚠️ Attachment Data Missing</div>;
+
         const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
         const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
-        
+
         // Proxy all downloads through our backend to avoid Cloudinary security blocks and redirects
         const downloadProxyUrl = `${apiUrl}/api/download?url=${encodeURIComponent(a.url)}&name=${encodeURIComponent(a.name || 'file')}`;
 
         return (
           <div key={i} style={{ marginBottom: 6 }}>
             {isImage ? (
-              <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} 
-                   onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
+              <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }}
+                onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
             ) : (
-              <a 
-                href={downloadProxyUrl} 
-                download={a.name || 'attachment'} 
+              <a
+                href={downloadProxyUrl}
+                download={a.name || 'attachment'}
                 onClick={(e) => e.stopPropagation()}
-                style={{ 
-                  color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer' 
+                style={{
+                  color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer'
                 }}
               >
                 📎 Download Attachment: {a.name || 'File'}
@@ -638,8 +638,8 @@ function Highlight({ text = '', highlight = '' }) {
   const parts = text.split(new RegExp(`(${safeHighlight})`, 'gi'));
   return (
     <>
-      {parts.map((part, i) => 
-        part.toLowerCase() === highlight.toLowerCase() 
+      {parts.map((part, i) =>
+        part.toLowerCase() === highlight.toLowerCase()
           ? <mark key={i} style={{ background: '#fef08a', color: '#854d0e', borderRadius: 2, padding: '0 2px' }}>{part}</mark>
           : <span key={i}>{part}</span>
       )}
@@ -760,9 +760,11 @@ export default function ChatArea({
     try {
       const result = await uploadFile(file);
       setPendingFiles(prev => [...prev, result]);
-    } catch (err) { 
+    } catch (err) {
       console.error('Upload error:', err);
-      alert('File upload failed. The server might be restarting or there is a connection issue. Please try again in a moment.'); 
+      // Show the real server error so it's easier to diagnose
+      const serverMsg = err?.response?.data?.message;
+      alert(serverMsg || 'File upload failed. The server might be restarting or there is a connection issue. Please try again in a moment.');
     }
     setUploadingFile(false);
     e.target.value = '';
