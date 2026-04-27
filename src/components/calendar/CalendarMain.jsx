@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function CalendarMain({ viewMode, onViewModeChange, currentDate, setCurrentDate, tasks, indianHolidays, isMobile }) {
+export default function CalendarMain({ viewMode, onViewModeChange, currentDate, setCurrentDate, tasks, indianHolidays, isMobile, onAddTask }) {
 
   const handlePrev = () => {
     const newDate = new Date(currentDate);
@@ -310,12 +310,29 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
           <button onClick={handleToday} style={{
-            px: 3, py: 1.5, border: '1px solid #dadce0', borderRadius: 6,
+            padding: '0 12px', border: '1px solid #dadce0', borderRadius: 6,
             background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500,
             color: '#3c4043', height: 32, display: 'flex', alignItems: 'center'
           }}>
             Today
           </button>
+
+          {/* FIX: Add Task button specifically for mobile header since sidebar is hidden */}
+          {isMobile && (
+            <button 
+              onClick={onAddTask}
+              style={{
+                width: 32, height: 32, borderRadius: '50%', background: '#e8f0fe',
+                border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#1a73e8'
+              }}
+              title="Add task"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          )}
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <button onClick={handlePrev} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: '50%', color: '#5f6368' }}>

@@ -421,6 +421,7 @@ export default function CalendarView({ isSidebarOpen, isMobile }) {
             tasks={tasks}
             indianHolidays={indianHolidays}
             isMobile={isMobile}
+            onAddTask={() => setIsModalOpen(true)}
           />
         )}
 
