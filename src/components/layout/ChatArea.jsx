@@ -1111,7 +1111,8 @@ export default function ChatArea({
             }}>
               <span style={{
                 fontSize: 11, fontWeight: 700,
-                background: 'rgba(255, 255, 255, 0.9)',
+                background: 'var(--ws-bg)',
+                opacity: 0.9,
                 color: '#4a4a4a',
                 padding: '4px 14px', borderRadius: 20,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',

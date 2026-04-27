@@ -641,7 +641,7 @@ export default function TopNavbar({
   const statusLabel   = currentStatus === 'active' ? 'Active' : currentStatus === 'dnd' ? 'DND' : 'Away';
 
   const navBtn = {
-    width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
     borderRadius: '50%', background: 'none', border: 'none', cursor: 'pointer',
     transition: 'background 0.1s',
   };
