@@ -95,12 +95,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setTimeout(() => setHighlightMessageId(null), 3000);
   };
 
-  useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // Optional: Auto-close sidebar when switching to mobile
-      // if (mobile) setIsSidebarOpen(false);
+      if (mobile) setIsSidebarOpen(false);
+      else setIsSidebarOpen(true);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -648,6 +647,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
               unreadMentions={unreadMentions}
               unreadCounts={unreadCounts}
               isMobile={isMobile}
+              onOpenCalendar={() => {
+                setActiveView('calendar');
+                if (isMobile) setIsSidebarOpen(false);
+              }}
             />
           </>
         )}

@@ -68,6 +68,7 @@ export default function LeftSidebar({
   dmUsers, onLoadMoreDMs, dmHasMore, dmLoadingMore, onCloseMobile, className = '',
   unreadMentions = 0, unreadCounts = {},
   isMobile = false,
+  onOpenCalendar,
 }) {
   const { onlineUsers } = useSocket();
   const [shortcutsOpen, setShortcutsOpen] = useState(true);
@@ -100,8 +101,8 @@ export default function LeftSidebar({
         position: isMobile ? 'fixed' : 'relative',
         zIndex: isMobile ? 50 : 'auto',
         left: 0, top: 0, bottom: 0,
-        width: 220,
-        minWidth: isMobile ? 220 : (isOpen ? 220 : 0),
+        width: isMobile ? 280 : 220,
+        minWidth: isMobile ? 280 : (isOpen ? 220 : 0),
         background: 'var(--ws-sidebar)',
         borderRight: (isMobile || isOpen) ? '0.5px solid var(--ws-border)' : 'none',
         flexShrink: 0,
@@ -113,7 +114,7 @@ export default function LeftSidebar({
       }}
     >
       {/* Inner container always 220px wide so content doesn't compress while animating */}
-      <div style={{ width: 220, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ width: isMobile ? 280 : 220, display: 'flex', flexDirection: 'column', height: '100%' }}>
 
         {/* New chat button */}
         <div style={{ padding: '12px 10px 8px' }}>
@@ -160,6 +161,19 @@ export default function LeftSidebar({
                   </svg>
                   <span style={{ fontSize: 12 }}>Home</span>
                 </button>
+
+                {isMobile && (
+                  <button onClick={() => { onOpenCalendar?.(); onCloseMobile?.(); }}
+                    style={navItemStyle(activeView === 'calendar')}
+                    onMouseEnter={e => { if (activeView !== 'calendar') e.currentTarget.style.background = 'var(--ws-hover)'; }}
+                    onMouseLeave={e => { if (activeView !== 'calendar') e.currentTarget.style.background = 'none'; }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span style={{ fontSize: 12 }}>Calendar</span>
+                  </button>
+                )}
 
                 {/* FIX 5: Mentions button with unread badge */}
                 <button onClick={() => { onMentionsClick(); onCloseMobile?.(); }}
