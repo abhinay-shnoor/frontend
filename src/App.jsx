@@ -72,7 +72,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [spaceMembers, setSpaceMembers] = useState([]);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1200);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentStatus, setCurrentStatus] = useState('active');
   const [isMaximized, setIsMaximized] = useState(false);
@@ -97,7 +97,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
+      const mobile = window.innerWidth < 1200;
       setIsMobile(mobile);
       if (mobile) setIsSidebarOpen(false);
       else setIsSidebarOpen(true);
