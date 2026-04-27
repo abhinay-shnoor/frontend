@@ -212,7 +212,7 @@ export const indianHolidays = {
 // FIX 9: CalendarView no longer accepts navSearchQuery from parent.
 // It manages its own internal search bar so the global chat search bar
 // is not shown when the calendar is active.
-export default function CalendarView({ isSidebarOpen }) {
+export default function CalendarView({ isSidebarOpen, isMobile }) {
   const [viewMode, setViewMode]     = useState("Month");
   const [tasks, setTasks]           = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -420,6 +420,7 @@ export default function CalendarView({ isSidebarOpen }) {
             setCurrentDate={setCurrentDate}
             tasks={tasks}
             indianHolidays={indianHolidays}
+            isMobile={isMobile}
           />
         )}
 

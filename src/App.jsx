@@ -655,7 +655,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
             />
           </>
         )}
-        {activeView === 'calendar' ? <CalendarView isSidebarOpen={isSidebarOpen} /> : (
+        {activeView === 'calendar' ? <CalendarView isSidebarOpen={isSidebarOpen} isMobile={isMobile} /> : (
           <>
             {(!isMobile || (activeView === 'home' && !activeSpace && !activeDM)) && !isMaximized && (
               <ConversationList

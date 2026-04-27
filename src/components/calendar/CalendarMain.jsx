@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function CalendarMain({ viewMode, onViewModeChange, currentDate, setCurrentDate, tasks, indianHolidays }) {
+export default function CalendarMain({ viewMode, onViewModeChange, currentDate, setCurrentDate, tasks, indianHolidays, isMobile }) {
 
   const handlePrev = () => {
     const newDate = new Date(currentDate);
@@ -294,44 +294,78 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
   const VIEW_MODES = ["Day", "Week", "Month", "Year", "Tasks"];
 
   return (
-    <div className="flex-1 flex flex-col bg-white overflow-hidden">
       {/* Calendar Action Bar */}
-      <div className="h-[52px] px-4 border-b border-gray-200 flex items-center gap-3 bg-white z-10 shadow-sm">
-        {/* Left: Today + nav arrows + date title */}
-        <button onClick={handleToday} className="px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 text-[13px] font-medium text-[#3c4043] transition-colors shadow-sm flex-shrink-0">
-          Today
-        </button>
-        <div className="flex gap-1 flex-shrink-0">
-          <button onClick={handlePrev} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+      <div style={{
+        height: isMobile ? 'auto' : 52,
+        padding: isMobile ? '8px 12px' : '0 16px',
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 8 : 12,
+        background: '#fff',
+        zIndex: 10,
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+          <button onClick={handleToday} style={{
+            px: 3, py: 1.5, border: '1px solid #dadce0', borderRadius: 6,
+            background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+            color: '#3c4043', height: 32, display: 'flex', alignItems: 'center'
+          }}>
+            Today
           </button>
-          <button onClick={handleNext} className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-          </button>
-        </div>
-        <h2 className="text-[18px] font-normal text-[#3c4043] flex-1 min-w-0 truncate">
-          {viewMode === "Day" ? `${getMonthName(currentDate)} ${currentDate.getDate()}, ${currentDate.getFullYear()}` : ''}
-          {viewMode === "Week" ? `${getMonthName(currentDate)} ${currentDate.getFullYear()}` : ''}
-          {viewMode === "Month" ? `${getMonthName(currentDate)} ${currentDate.getFullYear()}` : ''}
-          {viewMode === "Year" ? `${currentDate.getFullYear()}` : ''}
-          {viewMode === "Tasks" ? 'Tasks' : ''}
-        </h2>
-
-        {/* Right: View mode segmented control */}
-        <div className="flex items-center flex-shrink-0 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-          {VIEW_MODES.map((mode, idx) => (
-            <button
-              key={mode}
-              onClick={() => onViewModeChange && onViewModeChange(mode)}
-              className={`px-3 py-1.5 text-[12px] font-medium transition-colors ${
-                viewMode === mode
-                  ? 'bg-[#1a73e8] text-white'
-                  : 'bg-white text-[#3c4043] hover:bg-gray-50'
-              } ${idx !== 0 ? 'border-l border-gray-200' : ''}`}
-            >
-              {mode}
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={handlePrev} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: '50%', color: '#5f6368' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
-          ))}
+            <button onClick={handleNext} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: '50%', color: '#5f6368' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          </div>
+
+          <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 400, color: '#3c4043', margin: 0, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {viewMode === "Day" ? `${getMonthName(currentDate)} ${currentDate.getDate()}, ${currentDate.getFullYear()}` : ''}
+            {viewMode === "Week" ? `${getMonthName(currentDate)} ${currentDate.getFullYear()}` : ''}
+            {viewMode === "Month" ? `${getMonthName(currentDate)} ${currentDate.getFullYear()}` : ''}
+            {viewMode === "Year" ? `${currentDate.getFullYear()}` : ''}
+            {viewMode === "Tasks" ? 'Tasks' : ''}
+          </h2>
+        </div>
+
+        {/* Right: View mode selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'center' : 'flex-end' }}>
+          {isMobile ? (
+             <select 
+               value={viewMode} 
+               onChange={(e) => onViewModeChange?.(e.target.value)}
+               style={{
+                 padding: '4px 8px', borderRadius: 6, border: '1px solid #dadce0',
+                 fontSize: 13, background: '#fff', color: '#3c4043', outline: 'none'
+               }}
+             >
+               {VIEW_MODES.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+             </select>
+          ) : (
+            <div style={{ display: 'flex', border: '1px solid #dadce0', borderRadius: 6, overflow: 'hidden' }}>
+              {VIEW_MODES.map((mode, idx) => (
+                <button
+                  key={mode}
+                  onClick={() => onViewModeChange?.(mode)}
+                  style={{
+                    padding: '6px 12px', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 500,
+                    background: viewMode === mode ? '#f1f3f4' : 'none',
+                    color: viewMode === mode ? '#1a73e8' : '#5f6368',
+                    borderLeft: idx > 0 ? '1px solid #dadce0' : 'none'
+                  }}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
