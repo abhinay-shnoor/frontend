@@ -138,49 +138,117 @@ function HelpDropdown({ onClose }) {
   );
 }
 
-// FIX 8: AppsDropdown — Admin Panel redirects to admin, Contact Form removed
-function AppsDropdown({ onClose, onOpenAdmin, isAdmin }) {
+// Consolidated AppsDropdown for mobile + desktop
+function AppsDropdown({ 
+  onClose, 
+  onOpenAdmin, 
+  isAdmin, 
+  isMobile, 
+  onOpenCalendar, 
+  onOpenHelp, 
+  onToggleTheme, 
+  isDark,
+  currentUser,
+  onOpenProfileSettings,
+  onSignOut,
+  currentStatus,
+  onStatusChange
+}) {
   const ref = useRef(null);
   useClickOutside(ref, onClose);
 
-  // Only show Admin Panel if the user is an admin; Contact Form is removed entirely
-  const apps = isAdmin
-    ? [{ name: 'Admin Panel', icon: '⭐', desc: 'Manage users and spaces', onClick: () => { onOpenAdmin?.(); onClose(); } }]
-    : [];
+  const statusLabel = currentStatus === 'active' ? 'Active' : currentStatus === 'dnd' ? 'DND' : 'Away';
+  const statusColor = currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04';
 
   return (
     <div ref={ref} style={{
-      position: 'absolute', top: 48, right: 0, zIndex: 50, width: 220,
+      position: 'absolute', top: 48, right: 0, zIndex: 100, width: isMobile ? 260 : 220,
       background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)',
       borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
       animation: 'fadeSlideDown 0.15s ease-out', overflow: 'hidden',
     }}>
-      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '10px 14px 6px' }}>
-        Apps
-      </p>
-      {apps.length === 0 && (
-        <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', padding: '8px 14px 12px', margin: 0 }}>
-          No apps available
-        </p>
-      )}
-      {apps.map(app => (
-        <button key={app.name} onClick={app.onClick} style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          <span style={{ fontSize: 18 }}>{app.icon}</span>
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>{app.name}</p>
-            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>{app.desc}</p>
+      {isMobile && currentUser && (
+        <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--ws-border)', display: 'flex', gap: 10, alignItems: 'center', background: 'var(--ws-surface-2)' }}>
+          <Avatar initials={currentUser.initials} color={currentUser.color} size={36} avatarUrl={currentUser.avatar_url} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</p>
+            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.email}</p>
           </div>
-        </button>
-      ))}
+        </div>
+      )}
+
+      <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '10px 14px 6px' }}>
+        Menu
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {isMobile && (
+          <>
+            <button onClick={() => { onOpenCalendar?.(); onClose(); }} style={appItemStyle}>
+              <span style={{ fontSize: 18 }}>📅</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Calendar</span>
+            </button>
+            <button onClick={() => { onToggleTheme?.(); onClose(); }} style={appItemStyle}>
+              <span style={{ fontSize: 18 }}>{isDark ? '☀️' : '🌙'}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+            <button onClick={() => { onOpenHelp?.(); onClose(); }} style={appItemStyle}>
+              <span style={{ fontSize: 18 }}>❓</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Help</span>
+            </button>
+            
+            {/* Status nested logic or just a toggle */}
+            <div style={{ ...appItemStyle, cursor: 'default', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor }} />
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Status: {statusLabel}</span>
+              </div>
+              <select 
+                value={currentStatus} 
+                onChange={(e) => onStatusChange?.(e.target.value)}
+                style={{ fontSize: 11, background: 'var(--ws-surface-2)', border: '1px solid var(--ws-border)', borderRadius: 4, color: 'var(--ws-text)', padding: '2px 4px' }}
+              >
+                <option value="active">Active</option>
+                <option value="dnd">DND</option>
+                <option value="away">Away</option>
+              </select>
+            </div>
+          </>
+        )}
+
+        {isAdmin && (
+          <button onClick={() => { onOpenAdmin?.(); onClose(); }} style={appItemStyle}>
+            <span style={{ fontSize: 18 }}>⭐</span>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Admin Panel</p>
+              <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>Manage users and spaces</p>
+            </div>
+          </button>
+        )}
+
+        {isMobile && (
+          <>
+            <div style={{ height: 1, background: 'var(--ws-border)', margin: '4px 0' }} />
+            <button onClick={() => { onOpenProfileSettings(); onClose(); }} style={appItemStyle}>
+              <span style={{ fontSize: 18 }}>⚙️</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Profile Settings</span>
+            </button>
+            <button onClick={() => { onSignOut(); onClose(); }} style={{ ...appItemStyle, color: '#ef4444' }}>
+              <span style={{ fontSize: 18 }}>🚪</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>Sign Out</span>
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
+
+const appItemStyle = {
+  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+  padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+  transition: 'background 0.1s',
+};
 
 function ProfileDropdown({ currentUser, onClose, onOpenProfileSettings, onSignOut }) {
   const ref = useRef(null);
@@ -322,78 +390,67 @@ export default function TopNavbar({
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        {/* Calendar Shortcut for Mobile (since RightIconRail is hidden) */}
-        {isMobile && (
-          <button 
-            style={navBtn} 
-            onClick={() => onOpenCalendar?.()} 
-            title="Calendar"
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </button>
-        )}
+        
+        {/* On desktop, show all. On mobile, show only Apps (which now contains everything) and maybe Search toggle */}
+        {!isMobile ? (
+          <>
+            {/* Status pill */}
+            <div className="ws-status-btn" style={{ position: 'relative' }}>
+              <button onClick={() => setShowStatus(p => !p)} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 20,
+                border: '0.5px solid var(--ws-border)', background: 'none', cursor: 'pointer',
+              }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: statusDisplay?.dotColor || '#34A853', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)' }}>{statusLabel}</span>
+                <ChevronDownIcon />
+              </button>
+              {showStatus && <StatusDropdown currentStatus={currentStatus} onSelect={onStatusChange} onClose={() => setShowStatus(false)} />}
+            </div>
 
-        {/* Status pill */}
-        <div className="ws-status-btn" style={{ position: 'relative' }}>
-          <button onClick={() => setShowStatus(p => !p)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 20,
-            border: '0.5px solid var(--ws-border)', background: 'none', cursor: 'pointer',
-          }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: statusDisplay?.dotColor || '#34A853', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)' }}>{statusLabel}</span>
-            <ChevronDownIcon />
-          </button>
-          {showStatus && <StatusDropdown currentStatus={currentStatus} onSelect={onStatusChange} onClose={() => setShowStatus(false)} />}
-        </div>
+            {/* Dark/light toggle */}
+            <button style={navBtn} onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+            </button>
 
-        {/* Dark/light toggle */}
-        <button style={navBtn} onClick={toggleTheme} title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          {isDark ? <SunIcon /> : <MoonIcon />}
-        </button>
+            {/* Help */}
+            <div style={{ position: 'relative' }}>
+              <button style={navBtn} onClick={() => setShowHelp(p => !p)} title="Help"
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                <QuestionIcon />
+              </button>
+              {showHelp && <HelpDropdown onClose={() => setShowHelp(false)} />}
+            </div>
 
-        {/* Help */}
+            {/* Chat settings */}
+            <button style={navBtn} onClick={onOpenChatSettings} title="Chat settings"
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <SettingsIcon />
+            </button>
+
+            {/* Admin star */}
+            {isAdmin && (
+              <button style={navBtn} onClick={onOpenAdmin} title="Admin panel"
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </button>
+            )}
+          </>
+        ) : null}
+
+        {/* Apps Icon — Always visible, but expanded on mobile */}
         <div style={{ position: 'relative' }}>
-          <button style={navBtn} onClick={() => setShowHelp(p => !p)} title="Help"
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            <QuestionIcon />
-          </button>
-          {showHelp && <HelpDropdown onClose={() => setShowHelp(false)} />}
-        </div>
-
-        {/* Chat settings — hide on mobile */}
-        {!isMobile && (
-          <button style={navBtn} onClick={onOpenChatSettings} title="Chat settings"
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            <SettingsIcon />
-          </button>
-        )}
-
-        {/* Admin star (only for admins) */}
-        {isAdmin && (
-          <button style={navBtn} onClick={onOpenAdmin} title="Admin panel"
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-          </button>
-        )}
-
-        {/* FIX 8: Apps — passes onOpenAdmin so clicking Admin Panel works */}
-        <div style={{ position: 'relative' }}>
-          <button style={navBtn} onClick={() => setShowApps(p => !p)} title="Apps"
+          <button style={navBtn} onClick={() => setShowApps(p => !p)} title="Menu"
             onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
@@ -404,38 +461,50 @@ export default function TopNavbar({
               onClose={() => setShowApps(false)}
               onOpenAdmin={onOpenAdmin}
               isAdmin={isAdmin}
+              isMobile={isMobile}
+              onOpenCalendar={onOpenCalendar}
+              onOpenHelp={() => setShowHelp(true)}
+              onToggleTheme={toggleTheme}
+              isDark={isDark}
+              currentUser={currentUser}
+              onOpenProfileSettings={onOpenProfileSettings}
+              onSignOut={onSignOut}
+              currentStatus={currentStatus}
+              onStatusChange={onStatusChange}
             />
           )}
         </div>
 
-        {/* Profile avatar */}
-        <div style={{ position: 'relative', marginLeft: 6 }}>
-          <button onClick={() => setShowProfile(p => !p)} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px',
-            borderRadius: 24, background: 'none', border: 'none', cursor: 'pointer',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
-            <div style={{ position: 'relative' }}>
-              <Avatar initials={currentUser.initials} color={currentUser.color} size={32} avatarUrl={currentUser.avatar_url} />
-              {/* FIX 4: Status dot color based on currentStatus */}
-              <span style={{
-                position: 'absolute', bottom: -1, right: -1, width: 10, height: 10,
-                borderRadius: '50%', border: '2px solid var(--ws-navbar)',
-                background: currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04',
-              }} />
-            </div>
-          </button>
-          {showProfile && (
-            <ProfileDropdown
-              currentUser={currentUser}
-              onClose={() => setShowProfile(false)}
-              onOpenProfileSettings={onOpenProfileSettings}
-              onSignOut={onSignOut}
-            />
-          )}
-        </div>
+        {/* Profile avatar — Only show on desktop, consolidated into Apps on mobile */}
+        {!isMobile && (
+          <div style={{ position: 'relative', marginLeft: 6 }}>
+            <button onClick={() => setShowProfile(p => !p)} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px',
+              borderRadius: 24, background: 'none', border: 'none', cursor: 'pointer',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <div style={{ position: 'relative' }}>
+                <Avatar initials={currentUser.initials} color={currentUser.color} size={32} avatarUrl={currentUser.avatar_url} />
+                <span style={{
+                  position: 'absolute', bottom: -1, right: -1, width: 10, height: 10,
+                  borderRadius: '50%', border: '2px solid var(--ws-navbar)',
+                  background: currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04',
+                }} />
+              </div>
+              <ChevronDownIcon />
+            </button>
+            {showProfile && (
+              <ProfileDropdown
+                currentUser={currentUser}
+                onClose={() => setShowProfile(false)}
+                onOpenProfileSettings={onOpenProfileSettings}
+                onSignOut={onSignOut}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
