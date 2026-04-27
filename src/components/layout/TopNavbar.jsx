@@ -626,6 +626,7 @@ export default function TopNavbar({
   onOpenCalendar,
   onOpenChat,
   activeView,
+  isMobile,
 }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
@@ -652,7 +653,7 @@ export default function TopNavbar({
   return (
     <div style={{ display: 'flex', alignItems: 'center', height: 60, padding: '0 16px', borderBottom: `1px solid var(--ws-border)`, background: 'var(--ws-navbar)', flexShrink: 0, position: 'relative', zIndex: 20 }}>
       {/* Hamburger + logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 180 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: isMobile ? 'auto' : 180 }}>
         <button style={navBtn} onClick={onToggleSidebar} title="Toggle sidebar"
           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -661,13 +662,25 @@ export default function TopNavbar({
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src="/shnoor-logo.png" alt="SHNOOR" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'contain' }} />
-          <span className="ws-navbar-title" style={{ fontSize: 18, fontWeight: 500, color: 'var(--ws-text-muted)', letterSpacing: '-0.3px' }}>Chat</span>
+          {!isMobile && <span className="ws-navbar-title" style={{ fontSize: 18, fontWeight: 500, color: 'var(--ws-text-muted)', letterSpacing: '-0.3px' }}>Chat</span>}
         </div>
       </div>
 
-      {/* FIX 9: Search bar — hidden in calendar view */}
-      {!isCalendar && (
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '0 24px' }}>
+      {/* FIX 9: Search bar — hidden in calendar view or on mobile when not focused */}
+      {!isCalendar && (!isMobile || searchFocused || navSearchQuery) && (
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          padding: isMobile ? '0 8px' : '0 24px',
+          position: isMobile && (searchFocused || navSearchQuery) ? 'absolute' : 'relative',
+          left: isMobile && (searchFocused || navSearchQuery) ? 0 : 'auto',
+          right: isMobile && (searchFocused || navSearchQuery) ? 0 : 'auto',
+          zIndex: isMobile && (searchFocused || navSearchQuery) ? 100 : 'auto',
+          background: isMobile && (searchFocused || navSearchQuery) ? 'var(--ws-navbar)' : 'transparent',
+          height: isMobile && (searchFocused || navSearchQuery) ? '100%' : 'auto',
+          alignItems: 'center'
+        }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
             width: '100%', maxWidth: 600, borderRadius: 24,
@@ -680,15 +693,25 @@ export default function TopNavbar({
             <input
               value={navSearchQuery || ''}
               onChange={e => onNavSearchChange?.(e.target.value)}
-              placeholder="Search conversations"
+              placeholder="Search..."
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
             />
-            {navSearchQuery && (
+            {isMobile && (searchFocused || navSearchQuery) ? (
+              <button onClick={() => { onNavSearchChange?.(''); setSearchFocused(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 12 }}>Cancel</button>
+            ) : navSearchQuery && (
               <button onClick={() => onNavSearchChange?.('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', lineHeight: 1 }}>✕</button>
             )}
           </div>
+        </div>
+      )}
+      {/* Show search icon on mobile when not searching */}
+      {isMobile && !isCalendar && !searchFocused && !navSearchQuery && (
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', paddingRight: 8 }}>
+          <button style={navBtn} onClick={() => setSearchFocused(true)}>
+            <SearchIcon />
+          </button>
         </div>
       )}
       {/* Spacer when search is hidden */}
@@ -728,13 +751,15 @@ export default function TopNavbar({
           {showHelp && <HelpDropdown onClose={() => setShowHelp(false)} />}
         </div>
 
-        {/* Chat settings */}
-        <button style={navBtn} onClick={onOpenChatSettings} title="Chat settings"
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          <SettingsIcon />
-        </button>
+        {/* Chat settings — hide on mobile */}
+        {!isMobile && (
+          <button style={navBtn} onClick={onOpenChatSettings} title="Chat settings"
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            <SettingsIcon />
+          </button>
+        )}
 
         {/* Admin star (only for admins) */}
         {isAdmin && (

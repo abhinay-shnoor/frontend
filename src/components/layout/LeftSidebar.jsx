@@ -319,6 +319,7 @@ export default function LeftSidebar({
   onHomeClick, onMentionsClick, onStarredClick, onCreateSpace, allSpaces, currentUser,
   dmUsers, onLoadMoreDMs, dmHasMore, dmLoadingMore, onCloseMobile, className = '',
   unreadMentions = 0, unreadCounts = {},
+  isMobile = false,
 }) {
   const { onlineUsers } = useSocket();
   const [shortcutsOpen, setShortcutsOpen] = useState(true);
@@ -340,16 +341,24 @@ export default function LeftSidebar({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        // Animate width: 220 when open, 0 when closed
-        width: isOpen ? 220 : 0,
-        minWidth: isOpen ? 220 : 0,
+        // On mobile, use fixed positioning and translateX
+        position: isMobile ? 'fixed' : 'relative',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        zIndex: isMobile ? 50 : 'auto',
+        // Animate width: 220 when open, 0 when closed (on desktop)
+        // On mobile, we use transform
+        width: 220,
+        minWidth: isMobile ? 220 : (isOpen ? 220 : 0),
         background: 'var(--ws-sidebar)',
-        borderRight: isOpen ? '0.5px solid var(--ws-border)' : 'none',
+        borderRight: (isMobile || isOpen) ? '0.5px solid var(--ws-border)' : 'none',
         flexShrink: 0,
         height: '100%',
         // Hide content overflow while animating
         overflow: 'hidden',
-        transition: 'width 0.3s ease, min-width 0.3s ease',
+        transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+        transition: 'width 0.3s ease, min-width 0.3s ease, transform 0.3s ease',
       }}
     >
       {/* Inner container always 220px wide so content doesn't compress while animating */}

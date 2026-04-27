@@ -94,6 +94,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setTimeout(() => setHighlightMessageId(null), 3000);
   };
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [unreadCounts, setUnreadCounts] = useState({});
   const [mentionedMessages, setMentionedMessages] = useState([]);
   const [unreadMentions, setUnreadMentions] = useState(0);
@@ -369,12 +376,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const handleSelectSpace = async (space) => {
     setActiveSpace(space); setActiveDM(null); setActiveView('space'); setSpaceMembers([]);
     setUnreadCounts(prev => ({ ...prev, [`space_${space.id}`]: 0 }));
+    if (isMobile) setIsSidebarOpen(false);
     try { const members = await getSpaceMembers(space.id); setSpaceMembers(members); } catch { setSpaceMembers([]); }
   };
 
   const handleSelectDM = (dmUser) => {
     setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null);
     setUnreadCounts(prev => ({ ...prev, [`dm_${dmUser.id}`]: 0 }));
+    if (isMobile) setIsSidebarOpen(false);
   };
 
   const handleCreateSpace = () => {
@@ -388,6 +397,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setActiveView('mentions');
     setIsMaximized(false);
     setUnreadMentions(0);
+    if (isMobile) setIsSidebarOpen(false);
     // Persist "read at NOW()" to the DB so the badge stays at 0 after a page refresh
     markMentionsRead().catch(err => console.warn('markMentionsRead failed:', err));
   };
@@ -515,6 +525,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         onOpenCalendar={() => setActiveView('calendar')}
         onOpenChat={() => { setActiveSpace(null); setActiveDM(null); setActiveView('home'); }}
         activeView={activeView}
+        isMobile={isMobile}
       />
       {navSearchQuery && (
         <GlobalSearch
@@ -525,29 +536,41 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           conversationId={activeView === 'dm' ? activeDMConversationId : null}
         />
       )}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {activeView !== 'calendar' && (
-          <LeftSidebar
-            isOpen={isSidebarOpen}
-            onSelectSpace={handleSelectSpace}
-            onSelectDM={handleSelectDM}
-            activeSpace={activeSpace}
-            activeDM={activeDM}
-            activeView={activeView}
-            onHomeClick={handleBackToHome}
-            onMentionsClick={() => setActiveView('mentions')}
-            onStarredClick={() => setActiveView('starred')}
-            onCreateSpace={handleCreateSpace}
-            allSpaces={formattedSpaces}
-            currentUser={currentUser}
-            dmUsers={dmUsers}
-            unreadMentions={unreadMentions}
-            unreadCounts={unreadCounts}
-          />
+          <>
+            {isMobile && isSidebarOpen && (
+              <div 
+                className="fixed inset-0 bg-black/40 z-[40] transition-opacity"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )}
+            <LeftSidebar
+              isOpen={isSidebarOpen}
+              onSelectSpace={handleSelectSpace}
+              onSelectDM={handleSelectDM}
+              activeSpace={activeSpace}
+              activeDM={activeDM}
+              activeView={activeView}
+              onHomeClick={handleBackToHome}
+              onMentionsClick={handleMentionsClick}
+              onStarredClick={() => {
+                setActiveView('starred');
+                if (isMobile) setIsSidebarOpen(false);
+              }}
+              onCreateSpace={handleCreateSpace}
+              allSpaces={formattedSpaces}
+              currentUser={currentUser}
+              dmUsers={dmUsers}
+              unreadMentions={unreadMentions}
+              unreadCounts={unreadCounts}
+              isMobile={isMobile}
+            />
+          </>
         )}
         {activeView === 'calendar' ? <CalendarView isSidebarOpen={isSidebarOpen} /> : (
           <>
-            {!isMaximized && (
+            {(!isMobile || (activeView === 'home' && !activeSpace && !activeDM)) && !isMaximized && (
               <ConversationList
                 activeView={activeView}
                 onSelectConversation={(item) => {
@@ -558,78 +581,82 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 navSearchQuery={navSearchQuery} mentionedMessages={mentionedMessages}
                 allSpaces={formattedSpaces} dmConversations={dmConversations}
                 currentUserId={user?.id} unreadCounts={unreadCounts}
+                isMobile={isMobile}
               />
             )}
-            {activeView === 'mentions' ? (
-              <MentionsActivityFeed
-                mentions={mentionedMessages}
-                onSelectMention={(m) => {
-                  if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
-                  else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
-                  setHighlightMessageId(m.id);
-                  setTimeout(() => setHighlightMessageId(null), 3000);
-                }}
-                onDirectMessage={(senderId) => {
-                  const partner = allUsers.find(u => u.id === senderId);
-                  if (partner) handleSelectDM(partner);
-                }}
-                onClose={handleBackToHome}
-              />
-            ) : activeView === 'starred' ? (
-              <StarredMessagesFeed
-                starredMessages={starredMessages}
-                onSelectMessage={(m) => {
-                  if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
-                  else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
-                  setHighlightMessageId(m.id);
-                  setTimeout(() => setHighlightMessageId(null), 3000);
-                }}
-                onDirectMessage={(senderId) => {
-                  const partner = allUsers.find(u => u.id === senderId);
-                  if (partner) handleSelectDM(partner);
-                }}
-                onUnstar={(id) => handleToggleStar({ id, isStarred: true })}
-                onClose={handleBackToHome}
-              />
-            ) : (
-              <ChatArea
-                title={activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || ''}
-                isSpace={activeView === 'space'}
-                messages={messagesLoading ? [] : messages.map(formatMsg)}
-                onSend={handleSendMessage}
-                onEdit={handleEditMessage}
-                onDelete={handleDeleteMessage}
-                onReact={handleAddReaction}
-                onRemoveReact={handleRemoveReaction}
-                onAddReaction={handleAddReaction}
-                onRemoveReaction={handleRemoveReaction}
-                onDeleteMessage={handleDeleteMessage}
-                onHideMessage={handleHideMessage}
-                onToggleStar={handleToggleStar}
-                messagesLoading={messagesLoading}
-                hasMore={hasMore}
-                onLoadMore={handleLoadMore}
-                currentUserId={user?.id}
-                allSpaces={formattedSpaces}
-                dmUsers={dmUsers}
-                onForwardMessage={handleForwardMessage}
-                spaceMembers={spaceMembers}
-                activeView={activeView}
-                description={activeSpace?.description}
-                isMaximized={isMaximized}
-                onToggleMaximize={() => setIsMaximized(!isMaximized)}
-                onClose={handleBackToHome}
-                highlightMessageId={highlightMessageId}
-                spaceId={activeSpace?.id}
-                dmConversationId={activeDMConversationId}
-                typingUsers={typingUsers}
-                onTypingChange={handleTypingChange}
-                allUsers={allUsers}
-              />
+            {(!isMobile || (activeView !== 'home' || activeSpace || activeDM)) && (
+              activeView === 'mentions' ? (
+                <MentionsActivityFeed
+                  mentions={mentionedMessages}
+                  onSelectMention={(m) => {
+                    if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
+                    else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
+                    setHighlightMessageId(m.id);
+                    setTimeout(() => setHighlightMessageId(null), 3000);
+                  }}
+                  onDirectMessage={(senderId) => {
+                    const partner = allUsers.find(u => u.id === senderId);
+                    if (partner) handleSelectDM(partner);
+                  }}
+                  onClose={handleBackToHome}
+                />
+              ) : activeView === 'starred' ? (
+                <StarredMessagesFeed
+                  starredMessages={starredMessages}
+                  onSelectMessage={(m) => {
+                    if (m.sourceType === 'space') { const s = spaces.find(sp => sp.id === m.sourceId); if (s) handleSelectSpace(s); }
+                    else { const d = allUsers.find(u => u.id === m.sourceId); if (d) handleSelectDM(d); }
+                    setHighlightMessageId(m.id);
+                    setTimeout(() => setHighlightMessageId(null), 3000);
+                  }}
+                  onDirectMessage={(senderId) => {
+                    const partner = allUsers.find(u => u.id === senderId);
+                    if (partner) handleSelectDM(partner);
+                  }}
+                  onUnstar={(id) => handleToggleStar({ id, isStarred: true })}
+                  onClose={handleBackToHome}
+                />
+              ) : (
+                <ChatArea
+                  title={activeView === 'space' && activeSpace ? activeSpace.name : activeDM?.name || ''}
+                  isSpace={activeView === 'space'}
+                  messages={messagesLoading ? [] : messages.map(formatMsg)}
+                  onSend={handleSendMessage}
+                  onEdit={handleEditMessage}
+                  onDelete={handleDeleteMessage}
+                  onReact={handleAddReaction}
+                  onRemoveReact={handleRemoveReaction}
+                  onAddReaction={handleAddReaction}
+                  onRemoveReaction={handleRemoveReaction}
+                  onDeleteMessage={handleDeleteMessage}
+                  onHideMessage={handleHideMessage}
+                  onToggleStar={handleToggleStar}
+                  messagesLoading={messagesLoading}
+                  hasMore={hasMore}
+                  onLoadMore={handleLoadMore}
+                  currentUserId={user?.id}
+                  allSpaces={formattedSpaces}
+                  dmUsers={dmUsers}
+                  onForwardMessage={handleForwardMessage}
+                  spaceMembers={spaceMembers}
+                  activeView={activeView}
+                  description={activeSpace?.description}
+                  isMaximized={isMaximized}
+                  onToggleMaximize={() => setIsMaximized(!isMaximized)}
+                  onClose={handleBackToHome}
+                  highlightMessageId={highlightMessageId}
+                  spaceId={activeSpace?.id}
+                  dmConversationId={activeDMConversationId}
+                  typingUsers={typingUsers}
+                  onTypingChange={handleTypingChange}
+                  allUsers={allUsers}
+                  isMobile={isMobile}
+                />
+              )
             )}
           </>
         )}
-        {activeView !== 'calendar' && <RightIconRail onNavigateToCalendar={() => setActiveView('calendar')} />}
+        {!isMobile && activeView !== 'calendar' && <RightIconRail onNavigateToCalendar={() => setActiveView('calendar')} />}
       </div>
       {showProfileSettings && <ProfileSettingsModal onClose={() => setShowProfileSettings(false)} />}
       {showChatSettings && <ChatSettingsModal onClose={() => setShowChatSettings(false)} />}

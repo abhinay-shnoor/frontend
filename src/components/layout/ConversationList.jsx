@@ -13,10 +13,8 @@ const formatSidebarTime = (ts) => {
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-export default function ConversationList({
-  activeView, onSelectConversation, selectedId,
-  navSearchQuery, mentionedMessages, allSpaces, dmConversations, currentUserId,
   unreadCounts = {}, className = '',
+  isMobile = false,
 }) {
   const items = [
     ...allSpaces.map(s => ({
@@ -46,7 +44,7 @@ export default function ConversationList({
 
   if (activeView === 'mentions') {
     return (
-      <div className={className} style={{ display: 'flex', flexDirection: 'column', width: 360, borderRight: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
+      <div className={className} style={{ display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 360, borderRight: isMobile ? 'none' : '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)' }}>
           <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Mentions</h2>
         </div>
@@ -83,7 +81,7 @@ export default function ConversationList({
   }
 
   return (
-    <div className={className} style={{ display: 'flex', flexDirection: 'column', width: 360, borderRight: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
+    <div className={className} style={{ display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 360, borderRight: isMobile ? 'none' : '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
         <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
       </div>

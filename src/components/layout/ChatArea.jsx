@@ -1005,12 +1005,27 @@ export default function ChatArea({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ws-bg)', height: '100%', overflow: 'hidden' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0, background: 'var(--ws-bg)' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              {isSpace && <span style={{ color: 'var(--ws-text-muted)', fontSize: 18, fontWeight: 300 }}>#</span>}
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0 }}>{title}</h2>
-              {memberCount > 0 && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2 }}>· {memberCount} members</span>}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {isMobile && (
+              <button 
+                onClick={onClose}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--ws-text-muted)', display: 'flex', alignItems: 'center',
+                  padding: '4px', marginLeft: -4
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+              </button>
+            )}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                {isSpace && <span style={{ color: 'var(--ws-text-muted)', fontSize: 18, fontWeight: 300 }}>#</span>}
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0 }}>{title}</h2>
+                {memberCount > 0 && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2 }}>· {memberCount} members</span>}
+              </div>
             {description && (
               <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0, marginTop: 1, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {description}
