@@ -251,7 +251,25 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     const cleanups = [
       onNewMessage((msg) => {
         if (msg.space_id !== activeSpace.id) return;
-        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, formatMsg(msg)]);
+        setMessages(prev => {
+          // 1. If we already have this exact message ID, skip
+          if (prev.find(m => m.id === msg.id)) return prev;
+
+          // 2. If this is our own message, check if we have a matching optimistic message
+          if (msg.sender_id === user?.id) {
+            const tempMatch = prev.find(m => 
+              m.id.toString().startsWith('temp-') && 
+              m.text === (msg.content || msg.text)
+            );
+            if (tempMatch) {
+              // Replace optimistic with real message
+              return prev.map(m => m.id === tempMatch.id ? formatMsg(msg) : m);
+            }
+          }
+
+          // 3. Otherwise, just add it
+          return [...prev, formatMsg(msg)];
+        });
       }),
       onMessageEdited((msg) => {
         if (msg.space_id !== activeSpace.id) return;
@@ -281,8 +299,31 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     const cleanups = [
       onDMJoined(({ conversationId }) => setActiveDMConversationId(conversationId)),
       onNewMessage((msg) => {
+        // Only process if it belongs to a DM conversation
         if (!msg.conversation_id) return;
-        setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, formatMsg(msg)]);
+        
+        // If we have a known active conversation ID, verify it matches
+        if (activeDMConversationId && msg.conversation_id !== activeDMConversationId) return;
+
+        setMessages(prev => {
+          // 1. If we already have this exact message ID, skip
+          if (prev.find(m => m.id === msg.id)) return prev;
+
+          // 2. If this is our own message, check for a matching optimistic message
+          if (msg.sender_id === user?.id) {
+            const tempMatch = prev.find(m => 
+              m.id.toString().startsWith('temp-') && 
+              m.text === (msg.content || msg.text)
+            );
+            if (tempMatch) {
+              // Replace optimistic with real message
+              return prev.map(m => m.id === tempMatch.id ? formatMsg(msg) : m);
+            }
+          }
+
+          // 3. Otherwise, just add it
+          return [...prev, formatMsg(msg)];
+        });
       }),
       onReactionUpdated(({ messageId, reactions }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, reactions } : m));
