@@ -426,7 +426,7 @@ function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
   totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
-  onQuoteClick, onToggleStar, isMobile
+  onQuoteClick, onToggleStar, isMobile, showSenderInfo
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -456,26 +456,29 @@ function MessageBubble({
       }}
     >
       {!isOwn && (
-        <div style={{ flexShrink: 0, marginBottom: 4 }}>
-          {msg.avatar_url
-            ? <img src={msg.avatar_url} alt={msg.senderName} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-            : <Avatar initials={initials(msg.senderName)} color="#0D9488" size={32} />
-          }
+        <div style={{ flexShrink: 0, marginBottom: 4, width: 32 }}>
+          {showSenderInfo && (
+            msg.avatar_url
+              ? <img src={msg.avatar_url} alt={msg.senderName} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+              : <Avatar initials={initials(msg.senderName)} color="#0D9488" size={32} />
+          )}
         </div>
       )}
 
-      <div style={{ maxWidth: isMobile ? 'min(88%, 340px)' : 'min(72%, 600px)', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
-          {!isOwn && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.senderName}</span>}
-          <span style={{ fontSize: 10, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
-          {msg.is_edited && <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
-          {msg.is_forwarded && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic', opacity: 0.8 }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5" /><path d="M4 4v7a4 4 0 0 0 4 4h12" /></svg>
-              Forwarded
-            </span>
-          )}
-        </div>
+      <div style={{ maxWidth: isMobile ? 'min(88%, 340px)' : 'min(72%, 600px)', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
+        {showSenderInfo && (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
+            {!isOwn && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text)' }}>{msg.senderName}</span>}
+            <span style={{ fontSize: 10, color: 'var(--ws-text-muted)' }}>{msg.time}</span>
+            {msg.is_edited && <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>(edited)</span>}
+            {msg.is_forwarded && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: 'var(--ws-text-muted)', fontStyle: 'italic', opacity: 0.8 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 10 5 5-5 5" /><path d="M4 4v7a4 4 0 0 0 4 4h12" /></svg>
+                Forwarded
+              </span>
+            )}
+          </div>
+        )}
 
         {(msg.parentContent || msg.parentMessageId) && (
           <div
@@ -1143,8 +1146,19 @@ export default function ChatArea({
 
                 {(() => {
                   let lastDate = null;
-                  return messages.map(msg => {
+                  let lastSenderId = null;
+                  let lastTime = null;
+
+                  return messages.map((msg, idx) => {
                     const dateStr = msg.created_at;
+                    const msgTime = dateStr ? new Date(dateStr).getTime() : 0;
+                    
+                    // Group messages if from same sender within 5 minutes
+                    const showSenderInfo = msg.senderId !== lastSenderId || (msgTime - lastTime > 5 * 60 * 1000);
+                    
+                    lastSenderId = msg.senderId;
+                    lastTime = msgTime;
+
                     if (!dateStr) return (
                       <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
                         <MessageBubble
@@ -1168,6 +1182,7 @@ export default function ChatArea({
                           onQuoteClick={scrollToMessage}
                           onToggleStar={onToggleStar}
                           isMobile={isMobile}
+                          showSenderInfo={showSenderInfo}
                         />
                       </div>
                     );
@@ -1221,6 +1236,7 @@ export default function ChatArea({
                             onQuoteClick={scrollToMessage}
                             onToggleStar={onToggleStar}
                             isMobile={isMobile}
+                            showSenderInfo={showSenderInfo}
                           />
                         </div>
                       </React.Fragment>
