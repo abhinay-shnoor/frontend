@@ -426,7 +426,7 @@ function MessageBubble({
   msg, currentUserId, onEdit, onReact, onRemoveReact,
   isEditing, editContent, onEditChange, onEditSave, onEditCancel,
   totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
-  onQuoteClick, onToggleStar
+  onQuoteClick, onToggleStar, isMobile
 }) {
   const [hovered, setHovered] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -1145,7 +1145,32 @@ export default function ChatArea({
                   let lastDate = null;
                   return messages.map(msg => {
                     const dateStr = msg.created_at;
-                    if (!dateStr) return <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}><MessageBubble msg={msg} currentUserId={currentUserId} /></div>;
+                    if (!dateStr) return (
+                      <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
+                        <MessageBubble
+                          msg={msg}
+                          currentUserId={currentUserId}
+                          onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
+                          onReact={onAddReaction}
+                          onRemoveReact={onRemoveReaction}
+                          onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
+                          isEditing={editingId === msg.id}
+                          editContent={editingId === msg.id ? editContent : ''}
+                          onEditChange={setEditContent}
+                          onEditSave={handleEditSave}
+                          onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+                          totalMembers={isSpace ? memberCount : 2}
+                          isSpace={isSpace}
+                          onShowInfo={setInfoMessage}
+                          onDeleteMessage={onDeleteMessage}
+                          onHideMessage={onHideMessage}
+                          onForward={setForwardMessage}
+                          onQuoteClick={scrollToMessage}
+                          onToggleStar={onToggleStar}
+                          isMobile={isMobile}
+                        />
+                      </div>
+                    );
 
                     const msgDate = new Date(dateStr).toDateString();
                     const showDivider = msgDate !== lastDate;
@@ -1195,6 +1220,7 @@ export default function ChatArea({
                             onForward={setForwardMessage}
                             onQuoteClick={scrollToMessage}
                             onToggleStar={onToggleStar}
+                            isMobile={isMobile}
                           />
                         </div>
                       </React.Fragment>
