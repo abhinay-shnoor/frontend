@@ -531,16 +531,21 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to forward message', 'error'); }
   };
 
+  // Optimizing receipt marking: only process the last message if it's from someone else
   useEffect(() => {
-    if (!connected || !messages.length) return;
-    messages.forEach(msg => {
-      if (msg.senderId !== user?.id) {
-        const myReceipt = msg.receipts?.find(r => r.userId === user?.id);
-        if (!myReceipt || !myReceipt.deliveredAt) emitMarkDelivered({ messageId: msg.id, spaceId: activeSpace?.id, conversationId: activeDMConversationId });
-        if (!myReceipt || !myReceipt.seenAt) emitMarkSeen({ messageId: msg.id, spaceId: activeSpace?.id, conversationId: activeDMConversationId });
+    if (!connected || !messages.length || !user?.id) return;
+    
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.senderId !== user.id) {
+      const myReceipt = lastMsg.receipts?.find(r => r.userId === user.id);
+      if (!myReceipt || !myReceipt.deliveredAt) {
+        emitMarkDelivered({ messageId: lastMsg.id, spaceId: activeSpace?.id, conversationId: activeDMConversationId });
       }
-    });
-  }, [messages.length, activeSpace?.id, activeDMConversationId, connected]);
+      if (!myReceipt || !myReceipt.seenAt) {
+        emitMarkSeen({ messageId: lastMsg.id, spaceId: activeSpace?.id, conversationId: activeDMConversationId });
+      }
+    }
+  }, [messages.length, activeSpace?.id, activeDMConversationId, connected, user?.id]);
 
   const handleTypingChange = (isTyping) => {
     if (activeView === 'space' && activeSpace) emitTyping('space', activeSpace.id, user?.name, isTyping);
