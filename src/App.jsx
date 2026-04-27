@@ -72,7 +72,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [spaceMembers, setSpaceMembers] = useState([]);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [currentStatus, setCurrentStatus] = useState('active');
   const [isMaximized, setIsMaximized] = useState(false);
   const [navSearchQuery, setNavSearchQuery] = useState('');
@@ -514,7 +514,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white">
+    <div className="flex flex-col h-full overflow-hidden bg-[var(--ws-bg)] text-[var(--ws-text)]">
       <TopNavbar
         currentStatus={currentStatus} onStatusChange={setCurrentStatus}
         onOpenChatSettings={() => setShowChatSettings(true)} onOpenProfileSettings={() => setShowProfileSettings(true)}
@@ -541,7 +541,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           <>
             {isMobile && isSidebarOpen && (
               <div 
-                className="fixed inset-0 bg-black/40 z-[40] transition-opacity"
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 40, transition: 'opacity 0.25s' }}
                 onClick={() => setIsSidebarOpen(false)}
               />
             )}
