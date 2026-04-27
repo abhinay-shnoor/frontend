@@ -294,6 +294,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
   const VIEW_MODES = ["Day", "Week", "Month", "Year", "Tasks"];
 
   return (
+    <div className="flex-1 flex flex-col bg-white overflow-hidden">
       {/* Calendar Action Bar */}
       <div style={{
         height: isMobile ? 'auto' : 52,
