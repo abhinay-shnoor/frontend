@@ -734,7 +734,8 @@ export default function ChatArea({
   messagesLoading, hasMore, onLoadMore, currentUserId, allSpaces, dmUsers, onForwardMessage,
   spaceMembers, onAddReaction, onRemoveReaction, onDeleteMessage, onHideMessage,
   onToggleStar, description, isMaximized, onToggleMaximize, onClose,
-  highlightMessageId, spaceId, dmConversationId, typingUsers, onTypingChange, allUsers
+  highlightMessageId, spaceId, dmConversationId, typingUsers, onTypingChange, allUsers,
+  isMobile,
 }) {
   const memberCount = spaceMembers?.length || 0;
   const [loadingMore, setLoadingMore] = useState(false);
