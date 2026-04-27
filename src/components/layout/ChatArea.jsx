@@ -1349,7 +1349,8 @@ export default function ChatArea({
           />
         )}
       </div>
-      );
+    </div>
+  );
 }
 
 const iconBtn = (active) => ({

@@ -10,14 +10,6 @@ const ChevronIcon = ({ isOpen }) => (
   </svg>
 );
 
-
-const ChevronIcon = ({ isOpen }) => (
-  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"
-    style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', color: 'var(--ws-text-muted)' }}>
-    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-  </svg>
-);
-
 function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
   const [search, setSearch] = useState('');
   const filtered = (dmUsers || []).filter(u =>
