@@ -198,9 +198,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   useEffect(() => {
     if (!connected) return;
+    // Removing redundant fetches — updateConversationPreviews handles this locally now.
     const cleanups = [
-      onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => { }); }),
-      onSpacePreviewUpdated(() => { getSpaces().then(setSpaces).catch(() => { }); })
+      // onDMPreviewUpdated(() => { getDMConversations().then(setDmConversations).catch(() => { }); }),
+      // onSpacePreviewUpdated(() => { getSpaces().then(setSpaces).catch(() => { }); })
     ];
     return () => cleanups.forEach(fn => fn());
   }, [connected]);
@@ -409,6 +410,31 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   const handleSendMessage = async (text, parentMessageId = null, attachments = []) => {
     if (!text.trim() && !attachments.length) return;
+
+    // 1. Create optimistic message
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      sender_id: user.id,
+      sender_name: user.name,
+      avatar_url: user.avatar_url,
+      content: text,
+      text: text,
+      created_at: new Date().toISOString(),
+      attachments: attachments,
+      is_sending: true, // Custom flag for visual feedback
+      parent_message_id: parentMessageId,
+      // For spaces/DMs
+      space_id: activeView === 'space' ? activeSpace?.id : null,
+      dm_partner_id: activeView === 'dm' ? activeDM?.id : null,
+    };
+
+    const formatted = formatMsg(optimisticMsg);
+    
+    // 2. Update UI immediately
+    setMessages(prev => [...prev, formatted]);
+    updateConversationPreviews(optimisticMsg);
+
     try {
       let result;
       if (activeView === 'space' && activeSpace) {
@@ -418,13 +444,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }
 
       if (result) {
-        const formatted = formatMsg(result);
-        setMessages(prev => prev.find(m => m.id === result.id) ? prev : [...prev, formatted]);
+        const confirmed = formatMsg(result);
+        // 3. Replace optimistic message with confirmed one
+        setMessages(prev => prev.map(m => m.id === tempId ? confirmed : m));
         updateConversationPreviews(result);
       }
     } catch (err) {
       console.error('handleSendMessage error:', err);
       showToast('Failed to send message', 'error');
+      // 4. Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 

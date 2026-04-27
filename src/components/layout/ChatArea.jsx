@@ -111,6 +111,18 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn }) {
 
 function MessageStatus({ msg, isOwn, totalMembers, isSpace }) {
   if (!isOwn) return null;
+
+  // Handle optimistic "sending" state
+  if (msg.is_sending) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4, transform: 'translateY(2px)', opacity: 0.6 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 2s linear infinite' }}>
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+    );
+  }
+
   const receipts = msg.receipts || [];
 
   // Delivered: any receipt with deliveredAt
@@ -525,8 +537,9 @@ function MessageBubble({
               flexDirection: 'column',
               boxShadow: isOwn ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
               border: isOwn ? '1px solid var(--ws-border)' : 'none',
-              transition: 'transform 0.1s',
-              position: 'relative'
+              transition: 'transform 0.1s, opacity 0.2s',
+              position: 'relative',
+              opacity: msg.is_sending ? 0.7 : 1,
             }}
             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.01)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
