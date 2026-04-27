@@ -13,11 +13,11 @@ export default function AdminSidebar({ activePage, onNavigate, onBack, queries }
   const unreadCount = queries.filter(q => q.status === 'unread').length;
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard',       icon: <HouseIcon /> },
-    { id: 'users',     label: 'Users',            icon: <PeopleIcon /> },
-    { id: 'spaces',    label: 'Spaces',           icon: <SpacesIcon /> },
-    { id: 'contact',   label: 'Contact Queries',  icon: <MailIcon />, badge: unreadCount },
-    { id: 'settings',  label: 'Settings',         icon: <GearIcon /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <HouseIcon /> },
+    { id: 'users', label: 'Users', icon: <PeopleIcon /> },
+    { id: 'spaces', label: 'Spaces', icon: <SpacesIcon /> },
+    { id: 'contact', label: 'Contact Queries', icon: <MailIcon />, badge: unreadCount },
+    { id: 'settings', label: 'Settings', icon: <GearIcon /> },
   ];
 
   return (
@@ -29,7 +29,7 @@ export default function AdminSidebar({ activePage, onNavigate, onBack, queries }
       flexDirection: 'column',
       justifyContent: 'space-between',
       borderRight: `1px solid ${sidebarBorder}`,
-      height: '100vh',
+      height: '100%', minHeight: '100vh',
     }}>
 
       <div>

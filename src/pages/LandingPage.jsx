@@ -41,9 +41,9 @@ function Navbar({ onNavigate, scrollToContact }) {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-        ? isDark ? 'bg-gray-900/95 backdrop-blur-md shadow-lg shadow-black/20'
-          : 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5'
-        : isDark ? 'bg-gray-900' : 'bg-white'
+      ? isDark ? 'bg-gray-900/95 backdrop-blur-md shadow-lg shadow-black/20'
+        : 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5'
+      : isDark ? 'bg-gray-900' : 'bg-white'
       }`}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -57,7 +57,7 @@ function Navbar({ onNavigate, scrollToContact }) {
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
               <button key={link} onClick={() => scrollTo(link)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isDark ? 'text-gray-300 hover:text-white hover:bg-white/10'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}>{link}</button>
             ))}
           </div>
@@ -132,7 +132,7 @@ function Hero({ onNavigate }) {
             Now available for teams
           </div>
 
-          <h1 className={`text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+          <h1 className={`landing-hero-h1 text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-6 leading-tight ${isDark ? "text-white" : "text-gray-900"}`}>
             Your team,{" "}
             <span style={{ color: "#D4952D" }}>connected</span>{" "}
             in one place.
@@ -262,13 +262,13 @@ function Features() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="landing-contact-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f) => (
             <div
               key={f.title}
               className={`group p-6 rounded-2xl transition-all duration-300 border hover:shadow-lg hover:-translate-y-0.5 ${isDark
-                  ? "bg-gray-900 border-white/10 hover:border-white/20"
-                  : "bg-white border-gray-100 hover:border-gray-200"
+                ? "bg-gray-900 border-white/10 hover:border-white/20"
+                : "bg-white border-gray-100 hover:border-gray-200"
                 }`}
             >
               <div
@@ -322,7 +322,7 @@ function About() {
                   key={item.label}
                   className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? "bg-gray-800" : "bg-gray-50"}`}
                 >
-              
+
                   <span className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{item.label}</span>
                 </div>
               ))}
@@ -364,8 +364,8 @@ function Contact() {
   const [status, setStatus] = useState("idle");
 
   const inputClass = `w-full px-4 py-2.5 rounded-xl text-sm border transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/30 ${isDark
-      ? "bg-gray-800 border-white/10 text-white placeholder-gray-500"
-      : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"
+    ? "bg-gray-800 border-white/10 text-white placeholder-gray-500"
+    : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"
     }`;
 
   const handleChange = (key) => (e) => {
@@ -524,7 +524,7 @@ function Contact() {
                 className={`flex items-center gap-3 p-4 rounded-xl border ${isDark ? "bg-gray-900 border-white/10" : "bg-white border-gray-100"
                   }`}
               >
-                
+
                 <div>
                   <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>{item.label}</div>
                   <div className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>{item.value}</div>

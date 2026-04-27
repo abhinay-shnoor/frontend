@@ -6,10 +6,10 @@ import api from '../../api/axios';
 export default function AdminDashboard({ queries = [], queriesLoading = false }) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const text       = isDark ? '#F0F0F0' : '#111827';
-  const secondary  = isDark ? 'rgba(240,240,240,0.45)' : 'rgba(55,65,81,0.65)';
-  const panelBg    = isDark ? '#1A1A1A' : '#FFFFFF';
-  const border     = isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(226,232,240,0.8)';
+  const text = isDark ? '#F0F0F0' : '#111827';
+  const secondary = isDark ? 'rgba(240,240,240,0.45)' : 'rgba(55,65,81,0.65)';
+  const panelBg = isDark ? '#1A1A1A' : '#FFFFFF';
+  const border = isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(226,232,240,0.8)';
 
   const [users, setUsers] = useState([]);
   const [spaces, setSpaces] = useState([]);
@@ -49,8 +49,8 @@ export default function AdminDashboard({ queries = [], queriesLoading = false })
           <h1 style={{ fontSize: 22, fontWeight: 500, color: text, margin: 0 }}>Dashboard</h1>
           <p style={{ fontSize: 14, color: secondary, margin: '6px 0 0' }}>Loading...</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-          {[1,2,3,4].map(i => (
+        <div style={{ display: 'grid', gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 32 }}>
+          {[1, 2, 3, 4].map(i => (
             <div key={i} style={{ height: 80, borderRadius: 10, background: isDark ? '#1A1A1A' : '#e5e7eb', opacity: 0.5 }} />
           ))}
         </div>
@@ -66,11 +66,11 @@ export default function AdminDashboard({ queries = [], queriesLoading = false })
       </div>
 
       {/* Stat cards — all real data */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-        <StatCard label="Total Users"    value={users.length}  accentColor="#0D9488" />
-        <StatCard label="Active Users"   value={activeUsers}   accentColor="#10B981" />
-        <StatCard label="Total Spaces"   value={spaces.length} accentColor="#3B82F6" />
-        <StatCard label="Unread Queries" value={unread}        accentColor="#F59E0B" />
+      <div style={{ display: 'grid', gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 32 }}>
+        <StatCard label="Total Users" value={users.length} accentColor="#0D9488" />
+        <StatCard label="Active Users" value={activeUsers} accentColor="#10B981" />
+        <StatCard label="Total Spaces" value={spaces.length} accentColor="#3B82F6" />
+        <StatCard label="Unread Queries" value={unread} accentColor="#F59E0B" />
       </div>
 
       {/* Recently joined users */}
@@ -157,9 +157,9 @@ export default function AdminDashboard({ queries = [], queriesLoading = false })
 
 function StatusBadge({ status }) {
   const map = {
-    unread:   { bg: 'rgba(245,158,11,0.15)',  color: '#F59E0B' },
-    read:     { bg: 'rgba(107,114,128,0.1)',  color: '#6B7280' },
-    resolved: { bg: 'rgba(16,185,129,0.15)',  color: '#10B981' },
+    unread: { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' },
+    read: { bg: 'rgba(107,114,128,0.1)', color: '#6B7280' },
+    resolved: { bg: 'rgba(16,185,129,0.15)', color: '#10B981' },
   };
   const s = map[status] || map.read;
   return (

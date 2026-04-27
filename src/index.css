@@ -4,110 +4,396 @@
 @tailwind components;
 @tailwind utilities;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100dvh;
   width: 100%;
   font-family: 'Inter', 'DM Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal overflow on all screens */
+  overflow-x: hidden;
 }
 
-html.chat-mode, html.chat-mode body, html.chat-mode #root {
+html.chat-mode,
+html.chat-mode body,
+html.chat-mode #root {
   overflow: hidden;
 }
 
-/* ── Workspace dark-mode CSS variables ────────────────────────────────── */
-/* All workspace components reference these — changing the html.dark class  */
-/* flips the entire workspace to dark mode in one shot.                     */
-
+/* ── Workspace CSS variables ─────────────────────────────────────────────── */
 :root {
-  --ws-bg:               #ffffff;
-  --ws-surface:          #f8f9fa;
-  --ws-surface-2:        #f3f4f6;
-  --ws-text:             #111827;
-  --ws-text-muted:       #6b7280;
-  --ws-border:           #e5e7eb;
-  --ws-hover:            rgba(0,0,0,0.04);
-  --ws-input-bg:         #f9fafb;
-  --ws-skeleton:         #f0f0f0;
-  --ws-navbar:           #f8f9fa;
-  --ws-sidebar:          #ffffff;
-  --ws-bubble-own:       #ffffff;
-  --ws-bubble-own-text:  #111827;
-  --ws-bubble-other:     #f0f0f0;
-  --ws-bubble-other-text:#111827;
-  --ws-thread-line:      #e5e7eb;
+  --ws-bg: #ffffff;
+  --ws-surface: #f8f9fa;
+  --ws-surface-2: #f3f4f6;
+  --ws-text: #111827;
+  --ws-text-muted: #6b7280;
+  --ws-border: #e5e7eb;
+  --ws-hover: rgba(0, 0, 0, 0.04);
+  --ws-input-bg: #f9fafb;
+  --ws-skeleton: #f0f0f0;
+  --ws-navbar: #f8f9fa;
+  --ws-sidebar: #ffffff;
+  --ws-bubble-own: #ffffff;
+  --ws-bubble-own-text: #111827;
+  --ws-bubble-other: #f0f0f0;
+  --ws-bubble-other-text: #111827;
+  --ws-thread-line: #e5e7eb;
 }
 
 html.dark {
-  --ws-bg:               #1c1c1e;
-  --ws-surface:          #111111;
-  --ws-surface-2:        #0d0d0d;
-  --ws-text:             #f0f0f0;
-  --ws-text-muted:       rgba(240,240,240,0.45);
-  --ws-border:           rgba(255,255,255,0.08);
-  --ws-hover:            rgba(255,255,255,0.05);
-  --ws-input-bg:         #252525;
-  --ws-skeleton:         #2a2a2a;
-  --ws-navbar:           #111111;
-  --ws-sidebar:          #151515;
-  --ws-bubble-own:       #0D9488;
-  --ws-bubble-own-text:  #ffffff;
-  --ws-bubble-other:     #2d2d2d;
-  --ws-bubble-other-text:#f0f0f0;
-  --ws-thread-line:      rgba(255,255,255,0.1);
+  --ws-bg: #1c1c1e;
+  --ws-surface: #111111;
+  --ws-surface-2: #0d0d0d;
+  --ws-text: #f0f0f0;
+  --ws-text-muted: rgba(240, 240, 240, 0.45);
+  --ws-border: rgba(255, 255, 255, 0.08);
+  --ws-hover: rgba(255, 255, 255, 0.05);
+  --ws-input-bg: #252525;
+  --ws-skeleton: #2a2a2a;
+  --ws-navbar: #111111;
+  --ws-sidebar: #151515;
+  --ws-bubble-own: #0D9488;
+  --ws-bubble-own-text: #ffffff;
+  --ws-bubble-other: #2d2d2d;
+  --ws-bubble-other-text: #f0f0f0;
+  --ws-thread-line: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
 
-::-webkit-scrollbar        { width: 6px; }
-::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: var(--ws-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ws-text-muted); }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ws-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ws-text-muted);
+}
 
 /* ── Animations ─────────────────────────────────────────────────────────── */
-
 @keyframes fadeSlideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
-/* Animated skeleton loader — applied to skeleton divs */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes popBadge {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
 .skeleton-shimmer {
-  background: linear-gradient(90deg, var(--ws-skeleton) 25%, rgba(255,255,255,0.08) 50%, var(--ws-skeleton) 75%);
+  background: linear-gradient(90deg, var(--ws-skeleton) 25%, rgba(255, 255, 255, 0.08) 50%, var(--ws-skeleton) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-/* ── Mobile layout helpers ──────────────────────────────────────────────── */
+/* ── Responsive breakpoints ─────────────────────────────────────────────── */
+/* Mobile: ≤ 640px | Tablet: 641–1023px | Desktop: ≥ 1024px               */
 
-/* Mobile-specific adjustments */
-@media (max-width: 768px) {
-  .ws-right-rail { display: none !important; }
-  .ws-navbar-title { display: none !important; }
-  .ws-status-btn { display: none !important; }
-  
-  /* Hide search text on mobile but keep icon */
-  .ws-navbar-search-text { display: none !important; }
+/* ── Mobile-first layout helpers ─────────────────────────────────────────── */
+
+/* Completely hide right rail on tablet and mobile */
+@media (max-width: 1023px) {
+  .ws-right-rail {
+    display: none !important;
+  }
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+/* Hide text labels in navbar on mobile */
+@media (max-width: 768px) {
+  .ws-navbar-title {
+    display: none !important;
+  }
+
+  .ws-status-btn {
+    display: none !important;
+  }
+
+  .ws-navbar-search-text {
+    display: none !important;
+  }
+}
+
+/* ── Admin panel responsive ──────────────────────────────────────────────── */
+/* Admin sidebar collapses on mobile and overlays as a drawer */
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Admin sidebar: full width drawer on mobile */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    width: 240px !important;
+    min-width: 240px !important;
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-content {
+    padding: 20px 16px !important;
+    /* Reduce padding on mobile */
+  }
+}
+
+/* Admin stat cards: 2 cols on tablet, 1 col on small mobile */
+.admin-stat-grid {
+  display: grid;
+  gap: 16px;
+  /* Default: 4 columns for desktop */
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Chat area responsive ─────────────────────────────────────────────────── */
+/* Message bubbles: limit max-width on small screens */
+@media (max-width: 640px) {
+  .ws-message-bubble {
+    max-width: min(88%, 420px) !important;
+  }
+
+  /* Message input: full-width with comfortable tap targets */
+  .ws-message-input-area {
+    padding: 8px 10px !important;
+  }
+}
+
+/* ── Conversation list ─────────────────────────────────────────────────────── */
+/* On mobile: full-width when visible */
+@media (max-width: 1023px) {
+  .ws-conversation-list {
+    width: 100% !important;
+  }
+}
+
+/* ── Modals: full-screen on mobile ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ws-modal-overlay {
+    align-items: flex-end !important;
+    /* Sheet-style from bottom */
+  }
+
+  .ws-modal-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92dvh !important;
+  }
+}
+
+/* ── Landing page ─────────────────────────────────────────────────────────── */
+/* Ensure hero text scales down on small devices */
+@media (max-width: 640px) {
+
+  /* Hero headline */
+  .landing-hero-h1 {
+    font-size: clamp(2rem, 8vw, 4rem) !important;
+  }
+
+  /* Feature cards: single column */
+  .landing-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats: stack vertically */
+  .landing-stats {
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+
+  /* Contact form: full width */
+  .landing-contact-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  .landing-features-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Calendar responsive ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .calendar-sidebar {
+    display: none !important;
+    /* Hidden by default on mobile; toggled by state */
+  }
+
+  .calendar-sidebar.mobile-open {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    width: 100% !important;
+  }
+}
+
+/* ── Typography scale ────────────────────────────────────────────────────── */
+/* Fluid type for various heading levels to prevent overflow */
+@media (max-width: 480px) {
+  h1 {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+
+  h2 {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+  }
+}
+
+/* ── Touch-friendly tap targets ──────────────────────────────────────────── */
+/* Ensure all interactive elements are at least 44px tall on mobile */
+@media (max-width: 768px) {
+
+  button,
+  a,
+  [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Inline icon buttons (like nav buttons) can stay compact */
+  .ws-icon-btn {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* ── Dropdown menus: screen-aware positioning ─────────────────────────────── */
+/* On mobile, keep dropdowns within viewport */
+@media (max-width: 640px) {
+  .ws-dropdown-right {
+    right: 0 !important;
+    left: auto !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+}
+
+/* ── Prevent horizontal scroll ───────────────────────────────────────────── */
+/* Belt-and-suspenders: no horizontal scroll anywhere */
+.ws-app-root,
+.ws-chat-root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ── Sidebar overlay backdrop ────────────────────────────────────────────── */
+.ws-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .ws-sidebar-backdrop.visible {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 40;
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+/* ── Admin table overflow ────────────────────────────────────────────────── */
+/* Let tables scroll horizontally on narrow screens */
+.admin-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Input focus ring: easier to see on mobile ───────────────────────────── */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #0D9488;
+  outline-offset: 2px;
 }
