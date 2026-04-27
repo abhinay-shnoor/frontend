@@ -1119,22 +1119,23 @@ export default function ChatArea({
         >
           {floatingDate && (
             <div style={{
-              position: 'sticky', top: 8, zIndex: 100,
+              position: 'sticky', top: 12, zIndex: 100,
               display: 'flex', justifyContent: 'center',
               pointerEvents: 'none',
-              transition: 'opacity 0.3s ease-in-out',
+              transition: 'opacity 0.3s ease-out',
               opacity: showFloatingDate ? 1 : 0,
               width: '100%',
+              marginBottom: -32, // Offset the space taken by the sticky container
             }}>
               <span style={{
                 fontSize: 11, fontWeight: 700,
-                background: 'var(--ws-bg)',
-                opacity: 0.9,
-                color: '#4a4a4a',
-                padding: '4px 14px', borderRadius: 20,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(0,0,0,0.05)',
+                background: 'rgba(255, 255, 255, 0.8)',
+                color: '#374151',
+                padding: '5px 16px', borderRadius: 20,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                pointerEvents: 'auto',
               }}>
                 {floatingDate}
               </span>
@@ -1194,20 +1195,16 @@ export default function ChatArea({
                     <React.Fragment key={msg.id}>
                       {showDivider && (
                         <div style={{
-                          position: 'sticky', top: 0, zIndex: 10,
                           display: 'flex', justifyContent: 'center',
-                          padding: '24px 0 16px', pointerEvents: 'none',
-                          background: 'linear-gradient(to bottom, var(--ws-bg) 50%, transparent)'
+                          padding: '32px 0 20px',
                         }}>
                           <span style={{
                             fontSize: 11, fontWeight: 600,
                             background: 'var(--ws-surface-2)',
                             color: 'var(--ws-text-muted)',
-                            padding: '4px 12px', borderRadius: 20,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                            pointerEvents: 'auto',
-                            backdropFilter: 'blur(8px)',
-                            border: '0.5px solid var(--ws-border)',
+                            padding: '4px 16px', borderRadius: 20,
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            border: '1px solid var(--ws-border)',
                           }}>
                             {formatDateLabel(msg.created_at)}
                           </span>
