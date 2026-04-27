@@ -1,102 +1,66 @@
-// import { useState } from 'react';
-// import Avatar from '../ui/Avatar.jsx';
-// import { useSocket } from '../../context/SocketContext.jsx';
+import { useState } from 'react';
+import Avatar from '../ui/Avatar.jsx';
+import { useSocket } from '../../context/SocketContext.jsx';
+import React from 'react';
 
-// const ChevronIcon = ({ isOpen }) => (
-//   <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"
-//     style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', color: 'var(--ws-text-muted)' }}>
-//     <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-//   </svg>
-// );
+const ChevronIcon = ({ isOpen }) => (
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"
+    style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', color: 'var(--ws-text-muted)' }}>
+    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+  </svg>
+);
 
-// function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
-//   const [search, setSearch] = useState('');
-//   const filtered = (dmUsers || []).filter(u =>
-//     u.name.toLowerCase().includes(search.toLowerCase()) ||
-//     u.email.toLowerCase().includes(search.toLowerCase())
-//   );
+function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
+  const [search, setSearch] = useState('');
+  const filtered = (dmUsers || []).filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
-//   return (
-//     <div style={{ borderTop: '0.5px solid var(--ws-border)', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
-//       <div style={{ padding: '7px 10px 5px' }}>
-//         <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)', borderRadius: 7, padding: '5px 9px' }}>
-//           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-//             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-//           </svg>
-//           <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
-//             placeholder="Search teammates..." onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
-//             style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: 'var(--ws-text)' }}
-//           />
-//           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 13 }}>✕</button>
-//         </div>
-//       </div>
-//       <div style={{ maxHeight: 200, overflowY: 'auto' }}>
-//         {filtered.length === 0 ? (
-//           <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', textAlign: 'center', padding: '14px 12px', margin: 0 }}>
-//             {search ? 'No teammates found' : 'No other users yet'}
-//           </p>
-//         ) : filtered.map(user => {
-//           const isOnline = onlineUsers.has(user.id);
-//           return (
-//             <button key={user.id} onClick={() => { onSelectDM(user); onClose(); }} style={{
-//               width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 11px',
-//               background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-//             }}
-//               onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-//               onMouseLeave={e => e.currentTarget.style.background = 'none'}
-//             >
-//               <div style={{ position: 'relative', flexShrink: 0 }}>
-//                 <Avatar initials={user.initials} color={user.color} size={26} avatarUrl={user.avatar_url} />
-//                 {isOnline && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: '#10B981', borderRadius: '50%', border: '1.5px solid var(--ws-surface)' }} />}
-//               </div>
-//               <div style={{ flex: 1, minWidth: 0 }}>
-//                 <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-//                 <p style={{ fontSize: 10, color: 'var(--ws-text-muted)', margin: 0 }}>{isOnline ? 'Online' : user.email}</p>
-//               </div>
-//             </button>
-//           );
-//         })}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default function LeftSidebar({
-//   isOpen, onSelectSpace, onSelectDM, activeSpace, activeDM, activeView,
-//   onHomeClick, onMentionsClick, onCreateSpace, allSpaces, currentUser,
-//   dmUsers, onLoadMoreDMs, dmHasMore, dmLoadingMore, onCloseMobile, className = '',
-// }) {
-//   const { onlineUsers } = useSocket();
-//   const [shortcutsOpen, setShortcutsOpen] = useState(true);
-//   const [dmOpen,        setDmOpen]        = useState(false);
-//   const [spacesOpen,    setSpacesOpen]    = useState(false);
-//   const [showCreateSpace, setShowCreateSpace] = useState(false);
-//   const [newSpaceName,  setNewSpaceName]  = useState('');
-//   const [showNewChat,   setShowNewChat]   = useState(false);
-
-//   const handleCreateSpace = () => {
-//     if (newSpaceName.trim()) { onCreateSpace(newSpaceName.trim()); setNewSpaceName(''); setShowCreateSpace(false); }
-//   };
-
-//   const navItemStyle = (active) => ({
-//     width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-//     padding: '5px 10px', borderRadius: 7, background: active ? 'rgba(26,115,232,0.1)' : 'none',
-//     border: 'none', cursor: 'pointer', textAlign: 'left',
-//     transition: 'background 0.1s', color: active ? '#1a73e8' : 'var(--ws-text)',
-//   });
-
-//   return (
-//     <div
-//       className={`ws-sidebar ${isOpen ? 'open' : ''} ${className}`}
-//       style={{
-//         display: 'flex', flexDirection: 'column', width: 220,
-//         background: 'var(--ws-sidebar)', borderRight: '0.5px solid var(--ws-border)',
-//         flexShrink: 0, height: '100%', overflow: 'hidden',
-//         transition: 'width 0.3s ease',
-//       }}
-//     >
-//       {/* On mobile, tap outside closes the sidebar */}
-//       <div style={{ width: 220, display: 'flex', flexDirection: 'column', height: '100%' }}>
+  return (
+    <div style={{ borderTop: '0.5px solid var(--ws-border)', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
+      <div style={{ padding: '7px 10px 5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)', borderRadius: 7, padding: '5px 9px' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search teammates..." onKeyDown={e => { if (e.key === 'Escape') onClose(); }}
+            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: 'var(--ws-text)' }}
+          />
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 13 }}>✕</button>
+        </div>
+      </div>
+      <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+        {filtered.length === 0 ? (
+          <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', textAlign: 'center', padding: '14px 12px', margin: 0 }}>
+            {search ? 'No teammates found' : 'No other users yet'}
+          </p>
+        ) : filtered.map(user => {
+          const isOnline = onlineUsers.has(user.id);
+          return (
+            <button key={user.id} onClick={() => { onSelectDM(user); onClose(); }} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 11px',
+              background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <Avatar initials={user.initials} color={user.color} size={26} avatarUrl={user.avatar_url} />
+                {isOnline && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: '#10B981', borderRadius: '50%', border: '1.5px solid var(--ws-surface)' }} />}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
+                <p style={{ fontSize: 10, color: 'var(--ws-text-muted)', margin: 0 }}>{isOnline ? 'Online' : user.email}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 //         {/* New chat button */}
 //         <div style={{ padding: '12px 10px 8px' }}>
@@ -348,7 +312,10 @@ export default function LeftSidebar({
         bottom: 0,
         zIndex: isMobile ? 50 : 'auto',
         // Animate width: 220 when open, 0 when closed (on desktop)
-        // On mobile, we use transform
+        // On mobile, we use position: fixed and transform
+        position: isMobile ? 'fixed' : 'relative',
+        zIndex: isMobile ? 50 : 'auto',
+        left: 0, top: 0, bottom: 0,
         width: 220,
         minWidth: isMobile ? 220 : (isOpen ? 220 : 0),
         background: 'var(--ws-sidebar)',
@@ -358,7 +325,7 @@ export default function LeftSidebar({
         // Hide content overflow while animating
         overflow: 'hidden',
         transform: isMobile ? (isOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
-        transition: 'width 0.3s ease, min-width 0.3s ease, transform 0.3s ease',
+        transition: 'width 0.3s ease, min-width 0.3s ease, transform 0.3s ease, left 0.3s ease',
       }}
     >
       {/* Inner container always 220px wide so content doesn't compress while animating */}

@@ -72,7 +72,8 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [spaceMembers, setSpaceMembers] = useState([]);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentStatus, setCurrentStatus] = useState('active');
   const [isMaximized, setIsMaximized] = useState(false);
   const [navSearchQuery, setNavSearchQuery] = useState('');
@@ -94,9 +95,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setTimeout(() => setHighlightMessageId(null), 3000);
   };
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      // Optional: Auto-close sidebar when switching to mobile
+      // if (mobile) setIsSidebarOpen(false);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -514,7 +519,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-[var(--ws-bg)] text-[var(--ws-text)]">
+    <div 
+      className="flex flex-col h-full overflow-hidden bg-[var(--ws-bg)] text-[var(--ws-text)]"
+      data-mobile={isMobile}
+    >
       <TopNavbar
         currentStatus={currentStatus} onStatusChange={setCurrentStatus}
         onOpenChatSettings={() => setShowChatSettings(true)} onOpenProfileSettings={() => setShowProfileSettings(true)}
