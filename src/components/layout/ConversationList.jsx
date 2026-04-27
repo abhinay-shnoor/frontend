@@ -13,6 +13,9 @@ const formatSidebarTime = (ts) => {
 
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
+export default function ConversationList({
+  activeView, onSelectConversation, selectedId,
+  navSearchQuery, mentionedMessages, allSpaces, dmConversations, currentUserId,
   unreadCounts = {}, className = '',
   isMobile = false,
 }) {
