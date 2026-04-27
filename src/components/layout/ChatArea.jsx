@@ -1019,29 +1019,25 @@ export default function ChatArea({
           100% { background: transparent; }
         }
       `}</style>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ws-bg)', height: '100%', overflow: 'hidden' }}>
 
+      {/* Main Chat Content Column */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--ws-bg)', height: '100%', overflow: 'hidden', minWidth: 0 }}>
+        
+        {/* Chat Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0, background: 'var(--ws-bg)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             {isMobile && (
-              <button
-                onClick={onClose}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--ws-text-muted)', display: 'flex', alignItems: 'center',
-                  padding: '4px', marginLeft: -4
-                }}
-              >
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', display: 'flex', alignItems: 'center', padding: '4px', marginLeft: -4 }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6" />
                 </svg>
               </button>
             )}
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 {isSpace && <span style={{ color: 'var(--ws-text-muted)', fontSize: 18, fontWeight: 300 }}>#</span>}
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0 }}>{title}</h2>
-                {memberCount > 0 && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2 }}>· {memberCount} members</span>}
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</h2>
+                {memberCount > 0 && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', marginLeft: 2, whiteSpace: 'nowrap' }}>· {memberCount} members</span>}
               </div>
               {description && (
                 <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0, marginTop: 1, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1049,118 +1045,175 @@ export default function ChatArea({
                 </p>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setSearchResults([]); }} style={iconBtn(showSearch)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                Search
-              </button>
-              {memberCount && (
-                <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                  Members
-                </button>
-              )}
-              <button onClick={onToggleMaximize} style={iconBtn(false)} title={isMaximized ? 'Restore' : 'Expand'}>
-                {isMaximized ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="10" y1="14" x2="21" y2="3" /><line x1="3" y1="21" x2="14" y2="10" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
-                  </svg>
-                )}
-              </button>
-              <button onClick={onClose} style={{ ...iconBtn(false), color: 'var(--ws-text-muted)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
           </div>
 
-          {showSearch && (
-            <div style={{ padding: '8px 16px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
-              <input
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search messages..."
-                autoFocus
-                style={{ width: '100%', padding: '7px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}
-              />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+            <button onClick={() => { setShowSearch(p => !p); setSearchQuery(''); setSearchResults([]); }} style={iconBtn(showSearch)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              Search
+            </button>
+            {isSpace && memberCount > 0 && (
+              <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Members
+              </button>
+            )}
+            <button onClick={onToggleMaximize} style={iconBtn(false)} title={isMaximized ? 'Restore' : 'Expand'}>
+              {isMaximized ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="10" y1="14" x2="21" y2="3" /><line x1="3" y1="21" x2="14" y2="10" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+              )}
+            </button>
+            <button onClick={onClose} style={{ ...iconBtn(false), color: 'var(--ws-text-muted)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar Overlay */}
+        {showSearch && (
+          <div style={{ padding: '8px 16px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search messages..."
+              autoFocus
+              style={{ width: '100%', padding: '7px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}
+            />
+          </div>
+        )}
+
+        {/* Search Results Panel */}
+        {showSearch && (searchQuery.trim() || searchLoading) && (
+          <SearchResultsPanel
+            results={searchResults}
+            query={searchQuery}
+            loading={searchLoading}
+            onSelectResult={(r) => {
+              scrollToMessage(r.id);
+              setShowSearch(false);
+              setSearchQuery('');
+            }}
+            onClose={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
+            isSpace={isSpace}
+            dmPartnerName={title}
+          />
+        )}
+
+        {/* Messages Scrolling Area */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          style={{ flex: 1, overflowY: 'auto', paddingTop: 8, position: 'relative', width: '100%' }}
+        >
+          {floatingDate && (
+            <div style={{
+              position: 'sticky', top: 8, zIndex: 100,
+              display: 'flex', justifyContent: 'center',
+              pointerEvents: 'none',
+              transition: 'opacity 0.3s ease-in-out',
+              opacity: showFloatingDate ? 1 : 0,
+              width: '100%',
+            }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700,
+                background: 'var(--ws-bg)',
+                opacity: 0.9,
+                color: '#4a4a4a',
+                padding: '4px 14px', borderRadius: 20,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,0,0,0.05)',
+              }}>
+                {floatingDate}
+              </span>
             </div>
           )}
 
-          {showSearch && (searchQuery.trim() || searchLoading) && (
-            <SearchResultsPanel
-              results={searchResults}
-              query={searchQuery}
-              loading={searchLoading}
-              onSelectResult={(r) => {
-                scrollToMessage(r.id);
-                setShowSearch(false);
-                setSearchQuery('');
-              }}
-              onClose={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
-              isSpace={isSpace}
-              dmPartnerName={title}
-            />
-          )}
+          {messagesLoading ? <LoadingSkeleton /> : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {(() => {
+                let lastDate = null;
+                let lastSenderId = null;
+                let lastTime = null;
 
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            style={{ flex: 1, overflowY: 'auto', paddingTop: 8, position: 'relative' }}
-          >
-            {floatingDate && (
-              <div style={{
-                position: 'sticky', top: 8, zIndex: 100,
-                display: 'flex', justifyContent: 'center',
-                pointerEvents: 'none',
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: showFloatingDate ? 1 : 0,
-                width: '100%',
-              }}>
-                <span style={{
-                  fontSize: 11, fontWeight: 700,
-                  background: 'var(--ws-bg)',
-                  opacity: 0.9,
-                  color: '#4a4a4a',
-                  padding: '4px 14px', borderRadius: 20,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,0,0,0.05)',
-                }}>
-                  {floatingDate}
-                </span>
-              </div>
-            )}
-            {messagesLoading ? <LoadingSkeleton /> : (
-              <>
-                {/* Manual "Load more" button removed for dynamic infinite scroll */}
+                return messages.map((msg, idx) => {
+                  const dateStr = msg.created_at;
+                  const msgTime = dateStr ? new Date(dateStr).getTime() : 0;
+                  
+                  // Group messages if from same sender within 5 minutes
+                  const showSenderInfo = msg.senderId !== lastSenderId || (msgTime - lastTime > 5 * 60 * 1000);
+                  
+                  lastSenderId = msg.senderId;
+                  lastTime = msgTime;
 
+                  if (!dateStr) return (
+                    <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
+                      <MessageBubble
+                        msg={msg}
+                        currentUserId={currentUserId}
+                        onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
+                        onReact={onAddReaction}
+                        onRemoveReact={onRemoveReaction}
+                        onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
+                        isEditing={editingId === msg.id}
+                        editContent={editingId === msg.id ? editContent : ''}
+                        onEditChange={setEditContent}
+                        onEditSave={handleEditSave}
+                        onEditCancel={() => { setEditingId(null); setEditContent(''); }}
+                        totalMembers={isSpace ? memberCount : 2}
+                        isSpace={isSpace}
+                        onShowInfo={setInfoMessage}
+                        onDeleteMessage={onDeleteMessage}
+                        onHideMessage={onHideMessage}
+                        onForward={setForwardMessage}
+                        onQuoteClick={scrollToMessage}
+                        onToggleStar={onToggleStar}
+                        isMobile={isMobile}
+                        showSenderInfo={showSenderInfo}
+                      />
+                    </div>
+                  );
 
-                {(() => {
-                  let lastDate = null;
-                  let lastSenderId = null;
-                  let lastTime = null;
+                  const msgDate = new Date(dateStr).toDateString();
+                  const showDivider = msgDate !== lastDate;
+                  lastDate = msgDate;
 
-                  return messages.map((msg, idx) => {
-                    const dateStr = msg.created_at;
-                    const msgTime = dateStr ? new Date(dateStr).getTime() : 0;
-                    
-                    // Group messages if from same sender within 5 minutes
-                    const showSenderInfo = msg.senderId !== lastSenderId || (msgTime - lastTime > 5 * 60 * 1000);
-                    
-                    lastSenderId = msg.senderId;
-                    lastTime = msgTime;
-
-                    if (!dateStr) return (
-                      <div key={msg.id} id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
+                  return (
+                    <React.Fragment key={msg.id}>
+                      {showDivider && (
+                        <div style={{
+                          position: 'sticky', top: 0, zIndex: 10,
+                          display: 'flex', justifyContent: 'center',
+                          padding: '24px 0 16px', pointerEvents: 'none',
+                          background: 'linear-gradient(to bottom, var(--ws-bg) 50%, transparent)'
+                        }}>
+                          <span style={{
+                            fontSize: 11, fontWeight: 600,
+                            background: 'var(--ws-surface-2)',
+                            color: 'var(--ws-text-muted)',
+                            padding: '4px 12px', borderRadius: 20,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                            pointerEvents: 'auto',
+                            backdropFilter: 'blur(8px)',
+                            border: '0.5px solid var(--ws-border)',
+                          }}>
+                            {formatDateLabel(msg.created_at)}
+                          </span>
+                        </div>
+                      )}
+                      <div id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
                         <MessageBubble
                           msg={msg}
                           currentUserId={currentUserId}
@@ -1185,212 +1238,163 @@ export default function ChatArea({
                           showSenderInfo={showSenderInfo}
                         />
                       </div>
-                    );
+                    </React.Fragment>
+                  );
+                });
+              })()}
+              <div ref={bottomRef} style={{ height: 1 }} />
+            </div>
+          )}
+        </div>
 
-                    const msgDate = new Date(dateStr).toDateString();
-                    const showDivider = msgDate !== lastDate;
-                    lastDate = msgDate;
-
-                    return (
-                      <React.Fragment key={msg.id}>
-                        {showDivider && (
-                          <div style={{
-                            position: 'sticky', top: 0, zIndex: 10,
-                            display: 'flex', justifyContent: 'center',
-                            padding: '24px 0 16px', pointerEvents: 'none',
-                            background: 'linear-gradient(to bottom, var(--ws-bg) 50%, transparent)'
-                          }}>
-                            <span style={{
-                              fontSize: 11, fontWeight: 600,
-                              background: 'var(--ws-surface-2)',
-                              color: 'var(--ws-text-muted)',
-                              padding: '4px 12px', borderRadius: 20,
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                              pointerEvents: 'auto',
-                              backdropFilter: 'blur(8px)',
-                              border: '0.5px solid var(--ws-border)',
-                            }}>
-                              {formatDateLabel(msg.created_at)}
-                            </span>
-                          </div>
-                        )}
-                        <div id={`message-${msg.id}`} ref={el => messageRefs.current[msg.id] = el}>
-                          <MessageBubble
-                            msg={msg}
-                            currentUserId={currentUserId}
-                            onEdit={(id, text) => { setEditingId(id); setEditContent(text); }}
-                            onReact={onAddReaction}
-                            onRemoveReact={onRemoveReaction}
-                            onReply={(msg) => { setReplyingTo(msg); inputRef.current?.focus(); }}
-                            isEditing={editingId === msg.id}
-                            editContent={editingId === msg.id ? editContent : ''}
-                            onEditChange={setEditContent}
-                            onEditSave={handleEditSave}
-                            onEditCancel={() => { setEditingId(null); setEditContent(''); }}
-                            totalMembers={isSpace ? memberCount : 2}
-                            isSpace={isSpace}
-                            onShowInfo={setInfoMessage}
-                            onDeleteMessage={onDeleteMessage}
-                            onHideMessage={onHideMessage}
-                            onForward={setForwardMessage}
-                            onQuoteClick={scrollToMessage}
-                            onToggleStar={onToggleStar}
-                            isMobile={isMobile}
-                            showSenderInfo={showSenderInfo}
-                          />
-                        </div>
-                      </React.Fragment>
-                    );
-                  });
-                })()}
-                <div ref={bottomRef} />
-              </>
-            )}
+        {/* Typing Indicator */}
+        {typingUsers?.length > 0 && (
+          <div style={{ padding: '2px 16px 4px', fontSize: 11, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>
+            {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.join(', ')} are typing...`}
           </div>
+        )}
 
-          {typingUsers?.length > 0 && (
-            <div style={{ padding: '2px 16px 4px', fontSize: 11, color: 'var(--ws-text-muted)', fontStyle: 'italic' }}>
-              {typingUsers.length === 1 ? `${typingUsers[0]} is typing...` : `${typingUsers.join(', ')} are typing...`}
-            </div>
-          )}
-
-          {pendingFiles.length > 0 && (
-            <div style={{ padding: '6px 16px', borderTop: '0.5px solid var(--ws-border)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {pendingFiles.map((f, i) => (
-                <div key={i} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--ws-surface-2)', borderRadius: 8, padding: '4px 8px', fontSize: 12, color: 'var(--ws-text)' }}>
-                  {f.type?.startsWith('image/') ? <img src={f.url} alt={f.name} style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} /> : '📎'}
-                  <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-                  <button onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 14, lineHeight: 1, padding: '0 2px' }}>✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {replyingTo && (
-            <div style={{
-              background: 'var(--ws-surface)', padding: '10px 16px', borderRadius: '16px 16px 0 0',
-              border: '1px solid var(--ws-border)', borderBottom: 'none',
-              display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.2s ease-out'
-            }}>
-              <style>{`
-                 @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-               `}</style>
-              <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
-                <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {replyingTo.text || (
-                    replyingTo.attachments?.length
-                      ? (replyingTo.attachments.some(a => a.type?.startsWith('audio/') || a.isVoice) ? '🎤 Voice message'
-                        : replyingTo.attachments.some(a => a.type?.startsWith('image/')) ? '📷 Photo'
-                          : '📎 Attachment')
-                      : '📎 Attachment'
-                  )}
-                </div>
+        {/* Pending Files Preview */}
+        {pendingFiles.length > 0 && (
+          <div style={{ padding: '6px 16px', borderTop: '0.5px solid var(--ws-border)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {pendingFiles.map((f, i) => (
+              <div key={i} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--ws-surface-2)', borderRadius: 8, padding: '4px 8px', fontSize: 12, color: 'var(--ws-text)' }}>
+                {f.type?.startsWith('image/') ? <img src={f.url} alt={f.name} style={{ width: 32, height: 32, borderRadius: 4, objectFit: 'cover' }} /> : '📎'}
+                <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                <button onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 14, lineHeight: 1, padding: '0 2px' }}>✕</button>
               </div>
-              <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
+            ))}
+          </div>
+        )}
+
+        {/* Reply Context Bar */}
+        {replyingTo && (
+          <div style={{
+            background: 'var(--ws-surface)', padding: '10px 16px', borderRadius: '16px 16px 0 0',
+            border: '1px solid var(--ws-border)', borderBottom: 'none',
+            display: 'flex', alignItems: 'center', gap: 12, animation: 'slideUp 0.2s ease-out'
+          }}>
+            <style>{`
+               @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+             `}</style>
+            <div style={{ borderLeft: '3px solid #0D9488', paddingLeft: 10, flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#0D9488', marginBottom: 2 }}>Replying to {replyingTo.senderName}</div>
+              <div style={{ fontSize: 13, color: 'var(--ws-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {replyingTo.text || (
+                  replyingTo.attachments?.length
+                    ? (replyingTo.attachments.some(a => a.type?.startsWith('audio/') || a.isVoice) ? '🎤 Voice message'
+                      : replyingTo.attachments.some(a => a.type?.startsWith('image/')) ? '📷 Photo'
+                        : '📎 Attachment')
+                    : '📎 Attachment'
+                )}
+              </div>
             </div>
-          )}
+            <button onClick={() => setReplyingTo(null)} style={{ background: 'var(--ws-hover)', border: 'none', color: 'var(--ws-text)', cursor: 'pointer', width: 24, height: 24, borderRadius: '50%', fontSize: 10 }}>✕</button>
+          </div>
+        )}
 
+        {/* Forward Modal */}
+        {forwardMessage && (
+          <ForwardModal
+            spaces={allSpaces}
+            dmUsers={dmUsers}
+            onClose={() => setForwardMessage(null)}
+            onForward={(target) => onForwardMessage(target, forwardMessage)}
+          />
+        )}
 
-          {forwardMessage && (
-            <ForwardModal
-              spaces={allSpaces}
-              dmUsers={dmUsers}
-              onClose={() => setForwardMessage(null)}
-              onForward={(target) => onForwardMessage(target, forwardMessage)}
+        {/* Message Input Area */}
+        <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>
+          {showMentionDropdown && (
+            <MentionDropdown
+              users={allUsers}
+              search={mentionSearch}
+              onSelect={handleMentionSelect}
+              currentUserId={currentUserId}
             />
           )}
 
-          <div style={{ padding: '8px 16px 14px', flexShrink: 0, position: 'relative' }}>
-            {showMentionDropdown && (
-              <MentionDropdown
-                users={allUsers}
-                search={mentionSearch}
-                onSelect={handleMentionSelect}
-                currentUserId={currentUserId}
-              />
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: replyingTo ? '0 0 16px 16px' : 16, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingFile}
-                title="Attach file"
-                style={{ background: 'none', border: 'none', cursor: uploadingFile ? 'not-allowed' : 'pointer', color: 'var(--ws-text-muted)', display: 'flex', alignItems: 'center', padding: '2px', flexShrink: 0 }}
-              >
-                {uploadingFile ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                  </svg>
-                )}
-              </button>
-              <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv,audio/*" />
-
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={e => handleInputChange(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-                  if (e.key === 'Escape') { setShowMentionDropdown(false); setReplyingTo(null); }
-                }}
-                placeholder={`Message ${isSpace ? '#' : ''}${title}...`}
-                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
-              />
-
-              {(input.trim() || pendingFiles.length) ? (
-                <button onClick={handleSend}
-                  style={{
-                    width: 32, height: 32, borderRadius: 8, border: 'none',
-                    cursor: 'pointer',
-                    background: '#0D9488',
-                    color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s',
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
-                </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--ws-input-bg)', borderRadius: replyingTo ? '0 0 16px 16px' : 16, padding: '8px 12px', border: '0.5px solid var(--ws-border)', transition: 'border-color 0.15s' }}>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingFile}
+              title="Attach file"
+              style={{ background: 'none', border: 'none', cursor: uploadingFile ? 'not-allowed' : 'pointer', color: 'var(--ws-text-muted)', display: 'flex', alignItems: 'center', padding: '2px', flexShrink: 0 }}
+            >
+              {uploadingFile ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
               ) : (
-                <VoiceRecorder onSend={onSend} disabled={uploadingFile} replyingTo={replyingTo} onReplySent={() => setReplyingTo(null)} />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
               )}
-            </div>
+            </button>
+            <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv,audio/*" />
+
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => handleInputChange(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                if (e.key === 'Escape') { setShowMentionDropdown(false); setReplyingTo(null); }
+              }}
+              placeholder={`Message ${isSpace ? '#' : ''}${title}...`}
+              style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: 'var(--ws-text)' }}
+            />
+
+            {(input.trim() || pendingFiles.length) ? (
+              <button onClick={handleSend}
+                style={{
+                  width: 32, height: 32, borderRadius: 8, border: 'none',
+                  cursor: 'pointer',
+                  background: '#0D9488',
+                  color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
+              </button>
+            ) : (
+              <VoiceRecorder onSend={onSend} disabled={uploadingFile} replyingTo={replyingTo} onReplySent={() => setReplyingTo(null)} />
+            )}
           </div>
         </div>
-
-        {showMembers && isSpace && (
-          <div style={{ width: 240, borderLeft: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', height: 57, borderBottom: '0.5px solid var(--ws-border)' }}>
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)', margin: 0 }}>Members ({spaceMembers?.length || 0})</h3>
-              <button onClick={() => setShowMembers(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 16 }}>✕</button>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-              {(spaceMembers || []).map(m => (
-                <div key={m.id || m} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px' }}>
-                  <Avatar initials={initials(m.name || String(m))} color="#0D9488" size={30} avatarUrl={m.avatar_url} />
-                  <span style={{ fontSize: 13, color: 'var(--ws-text)', fontWeight: 500 }}>
-                    {m.name || m}
-                    {m.id === currentUserId && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400 }}> (you)</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {infoMessage && (
-          <MessageInfoModal
-            msg={infoMessage}
-            onClose={() => setInfoMessage(null)}
-            allUsers={allUsers}
-            currentUserId={currentUserId}
-          />
-        )}
       </div>
+
+      {/* Right Sidebar: Members (only for spaces) */}
+      {showMembers && isSpace && (
+        <div style={{ width: 240, borderLeft: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)', margin: 0 }}>Members ({spaceMembers?.length || 0})</h3>
+            <button onClick={() => setShowMembers(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 16 }}>✕</button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+            {(spaceMembers || []).map(m => (
+              <div key={m.id || m} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px' }}>
+                <Avatar initials={initials(m.name || String(m))} color="#0D9488" size={30} avatarUrl={m.avatar_url} />
+                <span style={{ fontSize: 13, color: 'var(--ws-text)', fontWeight: 500 }}>
+                  {m.name || m}
+                  {m.id === currentUserId && <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400 }}> (you)</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      {infoMessage && (
+        <MessageInfoModal
+          msg={infoMessage}
+          onClose={() => setInfoMessage(null)}
+          allUsers={allUsers}
+          currentUserId={currentUserId}
+        />
+      )}
     </div>
   );
 }
