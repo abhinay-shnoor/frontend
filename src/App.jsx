@@ -95,6 +95,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     setTimeout(() => setHighlightMessageId(null), 3000);
   };
 
+  useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
