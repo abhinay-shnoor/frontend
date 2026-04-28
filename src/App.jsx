@@ -84,7 +84,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
   const handleStatusChange = (status) => {
     setCurrentStatus(status);
-    emitStatusChange(status);
+    emitStatusChange(status, user?.id);
   };
 
   const handleSelectSearchResult = (msg) => {

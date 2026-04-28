@@ -157,14 +157,18 @@ export function SocketProvider({ children }) {
   const leaveCurrentDM  = (conversationId)=> emit('leave_dm', conversationId);
 
   // FIX 4: Let the current user broadcast their own status change
-  const emitStatusChange = (status) => {
+  const emitStatusChange = (status, userId) => {
     // 1. Broadcast to others
     emit('user:status_change', status);
     
-    // 2. Update locally for instant feedback if we know our ID
-    // (Assuming normalizeId(currentUser.id) can be matched)
-    // We'll rely on the socket events to populate the map for others,
-    // but for our own avatar, this ensures it's snappy.
+    // 2. Update locally for instant feedback
+    if (userId) {
+      setUserStatuses(prev => {
+        const next = new Map(prev);
+        next.set(userId, status);
+        return next;
+      });
+    }
   };
 
   const emitTyping = (roomType, roomId, userName, isTyping) => {
