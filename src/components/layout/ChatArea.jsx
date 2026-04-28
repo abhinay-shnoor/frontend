@@ -1497,7 +1497,7 @@ function FilePreviewModal({ file, onClose }) {
                         </div>
                     ) : (isPdf || isText || isOffice || !!file.url) ? (
                         <iframe
-                            src={file.url}
+                            src={`${window.location.origin}/api/download?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name || 'file')}&view=true`}
                             title="Direct Preview"
                             style={{ width: 'min(96vw, 1200px)', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }}
                         />
