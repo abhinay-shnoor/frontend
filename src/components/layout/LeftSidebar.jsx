@@ -11,6 +11,7 @@ const ChevronIcon = ({ isOpen }) => (
 );
 
 function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
+  const { getStatusColor } = useSocket();
   const [search, setSearch] = useState('');
   const filtered = (dmUsers || []).filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,8 +48,7 @@ function NewChatPicker({ dmUsers, onSelectDM, onlineUsers, onClose }) {
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <div style={{ position: 'relative', flexShrink: 0 }}>
-                <Avatar initials={user.initials} color={user.color} size={26} avatarUrl={user.avatar_url} />
-                {isOnline && <div style={{ position: 'absolute', bottom: -1, right: -1, width: 8, height: 8, background: '#10B981', borderRadius: '50%', border: '1.5px solid var(--ws-surface)' }} />}
+                <Avatar initials={user.initials} color={user.color} size={26} avatarUrl={user.avatar_url} statusColor={getStatusColor(user.id)} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
@@ -70,7 +70,7 @@ export default function LeftSidebar({
   isMobile = false,
   onOpenCalendar,
 }) {
-  const { onlineUsers } = useSocket();
+  const { onlineUsers, getStatusColor } = useSocket();
   const [shortcutsOpen, setShortcutsOpen] = useState(true);
   const [dmOpen,        setDmOpen]        = useState(false);
   const [spacesOpen,    setSpacesOpen]    = useState(false);
@@ -231,14 +231,7 @@ export default function LeftSidebar({
                       onMouseLeave={e => { if (activeDM?.id !== member.id) e.currentTarget.style.background = activeDM?.id === member.id ? 'rgba(26,115,232,0.1)' : 'none'; }}
                     >
                       <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <Avatar initials={member.initials} color={member.color} size={24} avatarUrl={member.avatar_url} />
-                        {/* Presence dot: green=online, gray=offline (no yellow/away for others unless server sends it) */}
-                        <div style={{
-                          position: 'absolute', bottom: -1, right: -1,
-                          width: 8, height: 8, borderRadius: '50%',
-                          background: isOnline ? '#10B981' : '#9CA3AF',
-                          border: '1.5px solid var(--ws-sidebar)',
-                        }} />
+                        <Avatar initials={member.initials} color={member.color} size={24} avatarUrl={member.avatar_url} statusColor={getStatusColor(member.id)} />
                       </div>
                       <span style={{ fontSize: 12, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{member.name}</span>
                       {/* FIX 6: Unread count badge per DM */}

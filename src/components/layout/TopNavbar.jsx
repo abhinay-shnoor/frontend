@@ -169,7 +169,7 @@ function AppsDropdown({
     }}>
       {isMobile && currentUser && (
         <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--ws-border)', display: 'flex', gap: 10, alignItems: 'center', background: 'var(--ws-surface-2)' }}>
-          <Avatar initials={currentUser.initials} color={currentUser.color} size={36} avatarUrl={currentUser.avatar_url} />
+          <Avatar initials={currentUser.initials} color={currentUser.color} size={36} avatarUrl={currentUser.avatar_url} statusColor={statusColor} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</p>
             <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.email}</p>
@@ -265,7 +265,7 @@ function ProfileDropdown({ currentUser, onClose, onOpenProfileSettings, onSignOu
       animation: 'fadeSlideDown 0.15s ease-out', overflow: 'hidden',
     }}>
       <div style={{ padding: '14px 16px', borderBottom: '0.5px solid var(--ws-border)', display: 'flex', gap: 10, alignItems: 'center' }}>
-        <Avatar initials={currentUser.initials} color={currentUser.color} size={40} avatarUrl={currentUser.avatar_url} />
+        <Avatar initials={currentUser.initials} color={currentUser.color} size={40} avatarUrl={currentUser.avatar_url} statusColor={currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04'} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--ws-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</p>
           <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.email}</p>
@@ -486,12 +486,13 @@ export default function TopNavbar({
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <div style={{ position: 'relative' }}>
-                <Avatar initials={currentUser.initials} color={currentUser.color} size={32} avatarUrl={currentUser.avatar_url} />
-                <span style={{
-                  position: 'absolute', bottom: -1, right: -1, width: 10, height: 10,
-                  borderRadius: '50%', border: '2px solid var(--ws-navbar)',
-                  background: currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04',
-                }} />
+                <Avatar 
+                  initials={currentUser.initials} 
+                  color={currentUser.color} 
+                  size={32} 
+                  avatarUrl={currentUser.avatar_url} 
+                  statusColor={currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04'} 
+                />
               </div>
               <ChevronDownIcon />
             </button>

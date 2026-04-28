@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import { formatDateLabel, formatTime as formatMsgTime } from '../../utils/dateUtils.js';
+import { useSocket } from '../../context/SocketContext.jsx';
 
 
 const formatSidebarTime = (ts) => {
@@ -19,6 +20,7 @@ export default function ConversationList({
   unreadCounts = {}, className = '',
   isMobile = false,
 }) {
+  const { getStatusColor } = useSocket();
   const items = [
     ...allSpaces.map(s => ({
       id: s.id, type: 'space', name: s.name,
@@ -111,10 +113,14 @@ export default function ConversationList({
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
                   #{item.initials[0]}
                 </div>
-              ) : item.avatar_url ? (
-                <img src={item.avatar_url} alt={item.name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
-                <Avatar initials={item.initials} color="#0D9488" size={40} />
+                <Avatar 
+                  initials={item.initials} 
+                  color="#0D9488" 
+                  size={40} 
+                  avatarUrl={item.avatar_url} 
+                  statusColor={getStatusColor(item.id)} 
+                />
               )}
               {item.unread > 0 && (
                 <div style={{
