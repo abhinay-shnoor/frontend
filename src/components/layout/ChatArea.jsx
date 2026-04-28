@@ -1487,17 +1487,19 @@ function FilePreviewModal({ file, onClose }) {
                                 display: 'block'
                             }}
                         />
-                    ) : (isPdf || isOffice) ? (
-                        <iframe
-                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url + (file.url.includes('?') ? '&' : '?') + 'f=' + (file.name || 'file'))}&embedded=true`}
-                            title="File Preview"
-                            style={{ width: 'min(96vw, 1200px)', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }}
-                        />
-                    ) : isText ? (
+                    ) : (isPdf || (isOffice && !['txt', 'csv'].includes(nExt) && !['txt', 'csv'].includes(uExt))) ? (
+                        <div style={{ width: 'min(96vw, 1200px)', height: '90vh', position: 'relative' }}>
+                            <iframe
+                                src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url + (file.url.includes('?') ? '&' : '?') + 'f=' + (file.name || 'file'))}&embedded=true`}
+                                title="File Preview"
+                                style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8, background: '#fff' }}
+                            />
+                        </div>
+                    ) : (isText || isOffice) ? (
                         <iframe
                             src={file.url}
-                            title="Text Preview"
-                            style={{ width: 'min(90vw, 1000px)', height: '85vh', border: 'none', borderRadius: 8, background: '#fff' }}
+                            title="Direct Preview"
+                            style={{ width: 'min(96vw, 1200px)', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }}
                         />
                     ) : (
                         <div style={{
