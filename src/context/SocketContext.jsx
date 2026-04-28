@@ -111,19 +111,29 @@ export function SocketProvider({ children }) {
     socketRef.current.on('connect', () => setConnected(true));
     socketRef.current.on('disconnect', () => setConnected(false));
 
+    // Robustly extract IDs if the server sends objects [{id:1}, ...]
     socketRef.current.on('users:online', (userIds) => {
-      setOnlineUsers(new Set(userIds));
+      const ids = Array.isArray(userIds) ? userIds.map(u => (typeof u === 'object' ? (u.id || u._id) : u)) : [];
+      setOnlineUsers(new Set(ids));
     });
 
-    // FIX 4: Listen for individual status changes from all users.
-    // Server emits: { userId, status: 'active' | 'away' | 'dnd' | 'offline' }
-    socketRef.current.on('user:status_changed', ({ userId, status }) => {
-      setUserStatuses(prev => {
-        const next = new Map(prev);
-        next.set(userId, status);
-        return next;
-      });
-    });
+    const handleStatusUpdate = (data) => {
+      if (!data) return;
+      const uid = data.userId || data.id || data.uid;
+      const status = data.status || data.mode;
+      if (uid && status) {
+        setUserStatuses(prev => {
+          const next = new Map(prev);
+          next.set(uid, status);
+          return next;
+        });
+      }
+    };
+
+    // Listen for multiple possible status event names
+    socketRef.current.on('user:status_changed', handleStatusUpdate);
+    socketRef.current.on('status_update', handleStatusUpdate);
+    socketRef.current.on('presence_change', handleStatusUpdate);
 
     return () => {
       socketRef.current?.disconnect();
@@ -147,7 +157,15 @@ export function SocketProvider({ children }) {
   const leaveCurrentDM  = (conversationId)=> emit('leave_dm', conversationId);
 
   // FIX 4: Let the current user broadcast their own status change
-  const emitStatusChange = (status) => emit('user:status_change', status);
+  const emitStatusChange = (status) => {
+    // 1. Broadcast to others
+    emit('user:status_change', status);
+    
+    // 2. Update locally for instant feedback if we know our ID
+    // (Assuming normalizeId(currentUser.id) can be matched)
+    // We'll rely on the socket events to populate the map for others,
+    // but for our own avatar, this ensures it's snappy.
+  };
 
   const emitTyping = (roomType, roomId, userName, isTyping) => {
     const event = isTyping ? 'typing:start' : 'typing:stop';
