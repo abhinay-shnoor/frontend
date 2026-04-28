@@ -673,10 +673,22 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 selectedId={activeSpace?.id || activeDM?.id}
                 navSearchQuery={navSearchQuery} mentionedMessages={mentionedMessages}
                 allSpaces={formattedSpaces} 
-                dmConversations={dmConversations.map(dm => ({
-                  ...dm,
-                  partnerId: dm.other_user_id || dm.partner_id || dm.id
-                }))}
+                dmConversations={dmConversations.map(dm => {
+                  // 1. Find the partner in allUsers by ID or Name (robust matching)
+                  const partner = allUsers.find(u => 
+                    u.id === dm.other_user_id || 
+                    u.id === dm.partner_id || 
+                    u.name === dm.other_user_name
+                  );
+                  const partnerId = partner?.id || dm.other_user_id || dm.partner_id || dm.id;
+                  
+                  return {
+                    ...dm,
+                    partnerId: partnerId,
+                    // Pre-calculate status color to ensure it's reactive
+                    statusColor: getStatusColor(partnerId)
+                  };
+                })}
                 currentUserId={user?.id} unreadCounts={unreadCounts}
                 isMobile={isMobile}
               />

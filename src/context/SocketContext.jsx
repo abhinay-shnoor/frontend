@@ -111,16 +111,21 @@ export function SocketProvider({ children }) {
     socketRef.current.on('connect', () => setConnected(true));
     socketRef.current.on('disconnect', () => setConnected(false));
 
-    // Robustly extract IDs if the server sends objects [{id:1}, ...]
-    socketRef.current.on('users:online', (userIds) => {
-      const ids = Array.isArray(userIds) ? userIds.map(u => (typeof u === 'object' ? (u.id || u._id) : u)) : [];
+    // Universal Online Users Listener
+    const handleOnlineUsers = (userIds) => {
+      if (!userIds) return;
+      const ids = Array.isArray(userIds) ? userIds.map(u => (typeof u === 'object' ? (u.id || u._id || u.userId) : u)) : [];
       setOnlineUsers(new Set(ids));
-    });
+    };
+    socketRef.current.on('users:online', handleOnlineUsers);
+    socketRef.current.on('online_users', handleOnlineUsers);
+    socketRef.current.on('users_list', handleOnlineUsers);
 
     const handleStatusUpdate = (data) => {
       if (!data) return;
-      const uid = data.userId || data.id || data.uid;
-      const status = data.status || data.mode;
+      // Capture ID and Status from ANY possible property name
+      const uid = data.userId || data.id || data.uid || data.user_id || data._id;
+      const status = data.status || data.mode || data.user_status || data.presence;
       if (uid && status) {
         setUserStatuses(prev => {
           const next = new Map(prev);
@@ -130,8 +135,8 @@ export function SocketProvider({ children }) {
       }
     };
 
-    // Listen for multiple possible status event names
     socketRef.current.on('user:status_changed', handleStatusUpdate);
+    socketRef.current.on('user_status_changed', handleStatusUpdate);
     socketRef.current.on('status_update', handleStatusUpdate);
     socketRef.current.on('presence_change', handleStatusUpdate);
 

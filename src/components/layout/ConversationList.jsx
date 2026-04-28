@@ -37,7 +37,8 @@ export default function ConversationList({
           : 'No messages yet',
         time: dm.last_message_at, avatar_url: dm.other_user_avatar,
         initials: initials(dm.other_user_name), isGroup: false, unread: unreadCounts[`dm_${partnerId}`] || 0,
-        partnerId: partnerId
+        partnerId: partnerId,
+        statusColor: dm.statusColor
       };
     }),
   ].sort((a, b) => {
@@ -123,7 +124,7 @@ export default function ConversationList({
                   color="#0D9488" 
                   size={40} 
                   avatarUrl={item.avatar_url} 
-                  statusColor={getStatusColor(item.partnerId || item.id)} 
+                  statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
                 />
               )}
               {item.unread > 0 && (
