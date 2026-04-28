@@ -108,12 +108,19 @@ export function SocketProvider({ children }) {
       { withCredentials: true }
     );
 
-    socketRef.current.on('connect', () => setConnected(true));
-    socketRef.current.on('disconnect', () => setConnected(false));
+    socketRef.current.on('connect', () => {
+      console.log('[Socket] Connected to server. ID:', socketRef.current.id);
+      setConnected(true);
+    });
+    socketRef.current.on('disconnect', (reason) => {
+      console.log('[Socket] Disconnected from server. Reason:', reason);
+      setConnected(false);
+    });
 
     // Universal Online Users Listener
     const handleOnlineUsers = (userIds) => {
       if (!userIds) return;
+      console.log('[Socket] Received users:online list:', userIds);
       const ids = Array.isArray(userIds) ? userIds.map(u => (typeof u === 'object' ? (u.id || u._id || u.userId) : u)) : [];
       setOnlineUsers(new Set(ids));
     };
@@ -123,6 +130,7 @@ export function SocketProvider({ children }) {
 
     // Sync full presence map from server
     socketRef.current.on('users:presence', (presenceMap) => {
+      console.log('[Socket] Received Full Presence Map:', presenceMap);
       if (!presenceMap) return;
       const ids = Object.keys(presenceMap);
       setOnlineUsers(new Set(ids));
@@ -155,7 +163,15 @@ export function SocketProvider({ children }) {
     socketRef.current.on('status_update', handleStatusUpdate);
     socketRef.current.on('presence_change', handleStatusUpdate);
 
+    // Heartbeat Interval (Production Reliability)
+    const heartbeatInterval = setInterval(() => {
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('heartbeat');
+      }
+    }, 5000);
+
     return () => {
+      clearInterval(heartbeatInterval);
       socketRef.current?.disconnect();
       socketRef.current = null;
       setConnected(false);
