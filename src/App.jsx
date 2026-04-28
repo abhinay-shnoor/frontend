@@ -258,15 +258,26 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       onNewMessage((msg) => {
         if (msg.space_id !== activeSpace.id) return;
         setMessages(prev => {
-          // 1. If we already have this exact message ID, skip
-          if (prev.find(m => m.id === msg.id)) return prev;
+          // 1. If we already have this exact message ID, skip (use string comparison for robustness)
+          if (prev.find(m => m.id && msg.id && m.id.toString() === msg.id.toString())) return prev;
 
           // 2. If this is our own message, check if we have a matching optimistic message
           if (msg.sender_id === user?.id) {
-            const tempMatch = prev.find(m => 
-              m.id.toString().startsWith('temp-') && 
-              m.text === (msg.content || msg.text)
-            );
+            const incomingText = msg.content || msg.text || '';
+            const incomingAttachCount = msg.attachments?.length || 0;
+
+            const tempMatch = prev.find(m => {
+              if (!m.id || !m.id.toString().startsWith('temp-')) return false;
+              
+              // Match by text content
+              if (incomingText && m.text === incomingText) return true;
+              
+              // Match by attachments if text is empty (common for files/audio)
+              if (!incomingText && incomingAttachCount > 0 && (m.attachments?.length === incomingAttachCount)) return true;
+              
+              return false;
+            });
+
             if (tempMatch) {
               // Replace optimistic with real message
               return prev.map(m => m.id === tempMatch.id ? formatMsg(msg) : m);
@@ -312,15 +323,26 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         if (activeDMConversationId && msg.conversation_id !== activeDMConversationId) return;
 
         setMessages(prev => {
-          // 1. If we already have this exact message ID, skip
-          if (prev.find(m => m.id === msg.id)) return prev;
+          // 1. If we already have this exact message ID, skip (use string comparison for robustness)
+          if (prev.find(m => m.id && msg.id && m.id.toString() === msg.id.toString())) return prev;
 
           // 2. If this is our own message, check for a matching optimistic message
           if (msg.sender_id === user?.id) {
-            const tempMatch = prev.find(m => 
-              m.id.toString().startsWith('temp-') && 
-              m.text === (msg.content || msg.text)
-            );
+            const incomingText = msg.content || msg.text || '';
+            const incomingAttachCount = msg.attachments?.length || 0;
+
+            const tempMatch = prev.find(m => {
+              if (!m.id || !m.id.toString().startsWith('temp-')) return false;
+              
+              // Match by text content
+              if (incomingText && m.text === incomingText) return true;
+              
+              // Match by attachments if text is empty (common for files/audio)
+              if (!incomingText && incomingAttachCount > 0 && (m.attachments?.length === incomingAttachCount)) return true;
+              
+              return false;
+            });
+
             if (tempMatch) {
               // Replace optimistic with real message
               return prev.map(m => m.id === tempMatch.id ? formatMsg(msg) : m);
