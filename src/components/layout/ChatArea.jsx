@@ -19,7 +19,7 @@ const groupReactions = (reactions) => {
     return Object.values(g);
 };
 
-function AttachmentPreview({ attachments: rawAttachments, isOwn }) {
+function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
     let attachments = rawAttachments;
     if (typeof rawAttachments === 'string') {
         try {
@@ -52,55 +52,19 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn }) {
                 const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
                 const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
 
-                const handleDownload = async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    try {
-                        const response = await downloadAttachment(a.url, a.name || 'file');
-                        const blob = response.data;
-
-                        // Check if the backend returned a JSON error disguised as a blob
-                        if (blob.size < 1000 && (blob.type === 'application/json' || blob.type?.includes('json'))) {
-                            const text = await blob.text();
-                            try {
-                                const err = JSON.parse(text);
-                                throw new Error(err.message || 'Download failed');
-                            } catch (parseErr) {
-                                if (parseErr.message && parseErr.message !== 'Download failed') throw parseErr;
-                                throw new Error(text || 'Download failed');
-                            }
-                        }
-
-                        const blobUrl = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.setAttribute('download', a.name || 'attachment');
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        window.URL.revokeObjectURL(blobUrl);
-                    } catch (err) {
-                        console.error('Download failed:', err);
-                        alert(err?.message || 'Download failed. Please try again.');
-                    }
-                };
-
                 return (
-                    <div key={i} style={{ marginBottom: 6 }} onClick={e => e.stopPropagation()}>
+                    <div key={i} style={{ marginBottom: 6 }} onClick={e => { e.stopPropagation(); onPreview(a); }}>
                         {isImage ? (
-                            <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }}
-                                onClick={(e) => { e.stopPropagation(); window.open(a.url, '_blank'); }} />
+                            <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} />
                         ) : (
-                            <a
-                                href="#"
-                                onClick={handleDownload}
+                            <div
                                 style={{
                                     color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
                                     display: 'inline-block', padding: '4px 0',
                                 }}
                             >
-                                📎 Download Attachment: {a.name || 'File'}
-                            </a>
+                                📎 Preview Attachment: {a.name || 'File'}
+                            </div>
                         )}
                     </div>
                 );
@@ -426,7 +390,7 @@ function MessageBubble({
     msg, currentUserId, onEdit, onReact, onRemoveReact,
     isEditing, editContent, onEditChange, onEditSave, onEditCancel,
     totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
-    onQuoteClick, onToggleStar, isMobile, showSenderInfo
+    onQuoteClick, onToggleStar, isMobile, showSenderInfo, onPreview
 }) {
     const [hovered, setHovered] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
@@ -552,7 +516,7 @@ function MessageBubble({
                                     : <span key={i}>{part}</span>
                             )}
                         </div>
-                        <AttachmentPreview attachments={msg.attachments} isOwn={isOwn} />
+                        <AttachmentPreview attachments={msg.attachments} isOwn={isOwn} onPreview={onPreview} />
                         <div style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', marginTop: 2 }}>
                             <MessageStatus msg={msg} isOwn={isOwn} totalMembers={totalMembers} isSpace={isSpace} />
                         </div>
@@ -751,6 +715,7 @@ export default function ChatArea({
     highlightMessageId, spaceId, dmConversationId, typingUsers, onTypingChange, allUsers,
     isMobile,
 }) {
+    const [previewFile, setPreviewFile] = useState(null);
     const memberCount = spaceMembers?.length || 0;
     const [loadingMore, setLoadingMore] = useState(false);
     const [input, setInput] = useState('');
@@ -795,7 +760,6 @@ export default function ChatArea({
     const [uploadingFile, setUploadingFile] = useState(false);
     const [infoMessage, setInfoMessage] = useState(null);
     const [forwardMessage, setForwardMessage] = useState(null);
-    //const [replyingTo, setReplyingTo] = useState(null);
 
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
@@ -1181,6 +1145,7 @@ export default function ChatArea({
                                                 onToggleStar={onToggleStar}
                                                 isMobile={isMobile}
                                                 showSenderInfo={showSenderInfo}
+                                                onPreview={setPreviewFile}
                                             />
                                         </div>
                                     );
@@ -1231,6 +1196,7 @@ export default function ChatArea({
                                                     onToggleStar={onToggleStar}
                                                     isMobile={isMobile}
                                                     showSenderInfo={showSenderInfo}
+                                                    onPreview={setPreviewFile}
                                                 />
                                             </div>
                                         </React.Fragment>
@@ -1390,6 +1356,145 @@ export default function ChatArea({
                     currentUserId={currentUserId}
                 />
             )}
+
+            {previewFile && (
+                <FilePreviewModal
+                    file={previewFile}
+                    onClose={() => setPreviewFile(null)}
+                />
+            )}
+        </div>
+    );
+}
+
+function FilePreviewModal({ file, onClose }) {
+    if (!file) return null;
+
+    const isPdf = file.url.toLowerCase().endsWith('.pdf') || (file.type && file.type.toLowerCase().includes('pdf'));
+    const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.url) || file.type?.startsWith('image/')) && !isPdf;
+    const isVideo = /\.(mp4|webm|ogg)$/i.test(file.url) || file.type?.startsWith('video/');
+
+    const handleDownload = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            const response = await downloadAttachment(file.url, file.name || 'file');
+            const blob = response.data;
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.setAttribute('download', file.name || 'attachment');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            console.error('Download failed:', err);
+            alert('Download failed. Please try again.');
+        }
+    };
+
+    return (
+        <div
+            style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+                zIndex: 10000, display: 'flex', flexDirection: 'column',
+                backdropFilter: 'blur(4px)', animation: 'fadeIn 0.2s ease'
+            }}
+            onClick={onClose}
+        >
+            {/* Header */}
+            <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 20px', background: 'rgba(0,0,0,0.3)', color: '#fff'
+            }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {file.name || 'File Preview'}
+                    </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <button
+                        onClick={handleDownload}
+                        style={{
+                            background: '#0D9488', color: '#fff', border: 'none',
+                            padding: '6px 16px', borderRadius: 6, cursor: 'pointer',
+                            fontSize: 13, fontWeight: 600, transition: 'all 0.2s'
+                        }}
+                    >
+                        Download
+                    </button>
+                    <button
+                        onClick={() => window.open(file.url, '_blank')}
+                        style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 13 }}
+                    >
+                        Open Original
+                    </button>
+                    <button
+                        onClick={onClose}
+                        style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 24, padding: '0 8px' }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, overflow: 'hidden' }}
+                onClick={onClose}
+            >
+                <div
+                    style={{ maxWidth: '100%', maxHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    {isImage ? (
+                        <img
+                            src={file.url}
+                            alt="Preview"
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                        />
+                    ) : isPdf ? (
+                        <iframe
+                            src={`${file.url}#toolbar=0`}
+                            title="PDF Preview"
+                            style={{ width: 'min(90vw, 1000px)', height: '85vh', border: 'none', borderRadius: 8, background: '#fff' }}
+                        />
+                    ) : isVideo ? (
+                        <video
+                            src={file.url}
+                            controls
+                            autoPlay
+                            style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8 }}
+                        />
+                    ) : (
+                        <div style={{
+                            background: 'var(--ws-surface-2)', padding: '40px 60px',
+                            borderRadius: 16, textAlign: 'center', color: 'var(--ws-text)'
+                        }}>
+                            <div style={{ fontSize: 48, marginBottom: 16 }}>📎</div>
+                            <h3 style={{ margin: '0 0 8px' }}>No Preview Available</h3>
+                            <p style={{ color: 'var(--ws-text-muted)', margin: '0 0 24px' }}>This file type cannot be previewed in-app.</p>
+                            <button
+                                onClick={handleDownload}
+                                style={{
+                                    background: '#0D9488', color: '#fff', border: 'none',
+                                    padding: '10px 24px', borderRadius: 8, cursor: 'pointer',
+                                    fontSize: 14, fontWeight: 600
+                                }}
+                            >
+                                Download to View
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+            `}</style>
         </div>
     );
 }
