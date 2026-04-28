@@ -178,16 +178,25 @@ export function SocketProvider({ children }) {
   const getUserStatus = (userId) => {
     if (!userId) return 'offline';
     
-    // Check online status by looking for ID in onlineUsers set (handle string/number mismatch)
-    const id = userId.toString();
-    const isOnline = Array.from(onlineUsers).some(u => u.toString() === id);
+    // Normalize ID to string, handling potential nested objects (e.g. MongoDB _id)
+    const normalizeId = (id) => {
+      if (!id) return '';
+      if (typeof id === 'object') return (id.id || id._id || id.toString());
+      return String(id);
+    };
+
+    const targetId = normalizeId(userId);
+    if (!targetId) return 'offline';
+
+    // Check online status by looking for ID in onlineUsers set
+    const isOnline = Array.from(onlineUsers).some(u => normalizeId(u) === targetId);
     
     if (!isOnline) return 'offline';
     
-    // Check userStatuses Map for explicit mode (handle string/number mismatch)
+    // Check userStatuses Map for explicit mode
     let s = 'online';
     for (let [uid, status] of userStatuses.entries()) {
-      if (uid.toString() === id) {
+      if (normalizeId(uid) === targetId) {
         s = status;
         break;
       }
@@ -205,7 +214,10 @@ export function SocketProvider({ children }) {
     if (status === 'online') return '#34A853'; // Match navbar "Active" green
     if (status === 'away')   return '#FBBC04'; // Match navbar "Away" yellow
     if (status === 'dnd')    return '#EA4335'; // Match navbar "DND" red
-    return null;                               // Hide badge if offline
+    
+    // Show a very subtle transparent dot even when offline to verify the badge is rendering
+    // This can be changed back to null once confirmed working
+    return null; 
   };
 
   return (

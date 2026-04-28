@@ -60,6 +60,7 @@ export default function Avatar({ initials, color, size = 32, avatarUrl, statusCo
             background: statusColor,
             border: `${Math.max(1.5, size * 0.05)}px solid var(--ws-bg, #fff)`,
             boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            zIndex: 10,
           }}
         />
       )}
