@@ -47,6 +47,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     onDMJoined, onTypingUpdate, emitTyping, onlineUsers,
     onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged,
     onReceiptUpdated, emitMarkDelivered, emitMarkSeen,
+    emitStatusChange,
   } = useSocket();
 
   const currentUser = {
@@ -80,6 +81,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
   const [highlightMessageId, setHighlightMessageId] = useState(null);
+
+  const handleStatusChange = (status) => {
+    setCurrentStatus(status);
+    emitStatusChange(status);
+  };
 
   const handleSelectSearchResult = (msg) => {
     if (msg.chat_type === 'space') {
@@ -599,7 +605,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       data-mobile={isMobile}
     >
       <TopNavbar
-        currentStatus={currentStatus} onStatusChange={setCurrentStatus}
+        currentStatus={currentStatus} onStatusChange={handleStatusChange}
         onOpenChatSettings={() => setShowChatSettings(true)} onOpenProfileSettings={() => setShowProfileSettings(true)}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         navSearchQuery={navSearchQuery} onNavSearchChange={setNavSearchQuery}
