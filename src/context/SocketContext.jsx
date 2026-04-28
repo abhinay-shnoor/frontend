@@ -177,23 +177,17 @@ export function SocketProvider({ children }) {
   // Returns: 'online' | 'away' | 'dnd' | 'offline'
   const getUserStatus = (userId) => {
     if (!userId) return 'offline';
-    const idStr = String(userId);
     
-    // Check online status (robustly)
-    let isOnline = false;
-    for (let onlineId of onlineUsers) {
-      if (String(onlineId) === idStr) {
-        isOnline = true;
-        break;
-      }
-    }
+    // Check online status by looking for ID in onlineUsers set (handle string/number mismatch)
+    const id = userId.toString();
+    const isOnline = Array.from(onlineUsers).some(u => u.toString() === id);
     
     if (!isOnline) return 'offline';
     
-    // Check status map (robustly)
+    // Check userStatuses Map for explicit mode (handle string/number mismatch)
     let s = 'online';
-    for (let [id, status] of userStatuses.entries()) {
-      if (String(id) === idStr) {
+    for (let [uid, status] of userStatuses.entries()) {
+      if (uid.toString() === id) {
         s = status;
         break;
       }
@@ -205,11 +199,12 @@ export function SocketProvider({ children }) {
   };
 
   // Dot color helper used by Avatar presence indicators
+  // Matches colors in TopNavbar: Active=#34A853, Away=#FBBC04, DND=#EA4335
   const getStatusColor = (userId) => {
     const status = getUserStatus(userId);
-    if (status === 'online') return '#10B981'; // green
-    if (status === 'away')   return '#FBBC04'; // yellow
-    if (status === 'dnd')    return '#EA4335'; // red
+    if (status === 'online') return '#34A853'; // Match navbar "Active" green
+    if (status === 'away')   return '#FBBC04'; // Match navbar "Away" yellow
+    if (status === 'dnd')    return '#EA4335'; // Match navbar "DND" red
     return null;                               // Hide badge if offline
   };
 
