@@ -55,60 +55,20 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                 const isImage = (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(nameExt) || a.type?.startsWith('image/')) && !isPdf;
                 const isDoc = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md'].includes(ext) || ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md'].includes(nameExt);
 
-                const handleDownload = async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    try {
-                        const response = await downloadAttachment(a.url, a.name || 'file');
-                        const blob = response.data;
-                        const blobUrl = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = blobUrl;
-                        link.setAttribute('download', a.name || 'attachment');
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        window.URL.revokeObjectURL(blobUrl);
-                    } catch (err) {
-                        console.error('Download failed:', err);
-                        alert('Download failed. Please try again.');
-                    }
-                };
-
                 return (
-                    <div key={i} style={{ marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div 
-                            onClick={e => { e.stopPropagation(); onPreview(a); }}
-                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
-                        >
-                            {isImage ? (
-                                <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block' }} />
-                            ) : (
-                                <div
-                                    style={{
-                                        color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px',
-                                        display: 'inline-block', padding: '4px 0',
-                                    }}
-                                >
-                                    📎 {isPdf ? 'Preview Document' : isDoc ? 'Preview File' : 'Preview Attachment'}: {a.name || 'File'}
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={handleDownload}
-                            style={{
-                                alignSelf: 'flex-start',
-                                background: 'rgba(13,148,136,0.1)', color: '#0D9488', border: 'none',
-                                padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-                                fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
-                                transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(13,148,136,0.2)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(13,148,136,0.1)'}
-                        >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download
-                        </button>
+                    <div key={i} style={{ marginBottom: 6 }} onClick={e => { e.stopPropagation(); onPreview(a); }}>
+                        {isImage ? (
+                            <img src={a.url} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, display: 'block', cursor: 'pointer' }} />
+                        ) : (
+                            <div
+                                style={{
+                                    color: '#1a73e8', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer',
+                                    display: 'inline-block', padding: '4px 0',
+                                }}
+                            >
+                                📎 {isPdf ? 'Preview Document' : isDoc ? 'Preview File' : 'Preview Attachment'}: {a.name || 'File'}
+                            </div>
+                        )}
                     </div>
                 );
             })}
