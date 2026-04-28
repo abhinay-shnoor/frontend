@@ -49,8 +49,8 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                     );
                 }
 
-                const isPdf = a.url.toLowerCase().endsWith('.pdf') || (a.type && a.type.toLowerCase().includes('pdf'));
-                const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
+                const isPdf = /\.(pdf)(\?.*)?$/i.test(a.url) || (a.type && a.type.toLowerCase().includes('pdf'));
+                const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(a.url) || a.type?.startsWith('image/')) && !isPdf;
 
                 return (
                     <div key={i} style={{ marginBottom: 6 }} onClick={e => { e.stopPropagation(); onPreview(a); }}>
@@ -63,7 +63,7 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                                     display: 'inline-block', padding: '4px 0',
                                 }}
                             >
-                                📎 Preview Attachment: {a.name || 'File'}
+                                📎 {isPdf ? 'Preview Document' : 'Preview Attachment'}: {a.name || 'File'}
                             </div>
                         )}
                     </div>
@@ -1370,9 +1370,9 @@ export default function ChatArea({
 function FilePreviewModal({ file, onClose }) {
     if (!file) return null;
 
-    const isPdf = file.url.toLowerCase().endsWith('.pdf') || (file.type && file.type.toLowerCase().includes('pdf'));
-    const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.url) || file.type?.startsWith('image/')) && !isPdf;
-    const isVideo = /\.(mp4|webm|ogg)$/i.test(file.url) || file.type?.startsWith('video/');
+    const isPdf = /\.(pdf)(\?.*)?$/i.test(file.url) || (file.type && file.type.toLowerCase().includes('pdf'));
+    const isImage = (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(file.url) || file.type?.startsWith('image/')) && !isPdf;
+    const isVideo = /\.(mp4|webm|ogg)(\?.*)?$/i.test(file.url) || file.type?.startsWith('video/');
 
     const handleDownload = async (e) => {
         e.preventDefault();
