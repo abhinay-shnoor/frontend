@@ -62,7 +62,7 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
                 const isImage = (imageExts.includes(ext) || imageExts.includes(nameExt) || a.type?.startsWith('image/')) && !isPdf;
                 
-                const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'rtf', 'odt', 'ods', 'odp'];
+                const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'rtf', 'odt', 'ods', 'odp'];
                 const isDoc = officeExts.includes(ext) || officeExts.includes(nameExt) || a.type?.includes('officedocument') || a.type?.includes('msword') || a.type?.includes('ms-excel') || a.type?.includes('ms-powerpoint');
                 
                 const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(ext) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nameExt) || a.type?.startsWith('text/');
@@ -1308,7 +1308,7 @@ export default function ChatArea({
                                 </svg>
                             )}
                         </button>
-                        <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv,audio/*" />
+                        <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: 'none' }} accept="image/*,.pdf,.doc,.docx,.txt,.zip,.csv,.xls,.xlsx,.ppt,.pptx,audio/*" />
 
                         <input
                             ref={inputRef}
@@ -1395,7 +1395,7 @@ function FilePreviewModal({ file, onClose }) {
     
     const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(uExt) || ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(nExt) || file.type?.startsWith('video/');
     
-    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'rtf', 'odt', 'ods', 'odp'];
+    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt', 'rtf', 'odt', 'ods', 'odp'];
     const isOffice = officeExts.includes(uExt) || officeExts.includes(nExt) || file.type?.includes('officedocument') || file.type?.includes('msword') || file.type?.includes('ms-excel') || file.type?.includes('ms-powerpoint');
     
     const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(uExt) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nExt) || file.type?.startsWith('text/');
@@ -1406,6 +1406,11 @@ function FilePreviewModal({ file, onClose }) {
         try {
             const response = await downloadAttachment(file.url, file.name || 'file');
             const blob = response.data;
+            
+            if (!blob || blob.size < 5) {
+                throw new Error('Invalid file data received');
+            }
+
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = blobUrl;
@@ -1416,7 +1421,8 @@ function FilePreviewModal({ file, onClose }) {
             window.URL.revokeObjectURL(blobUrl);
         } catch (err) {
             console.error('Download failed:', err);
-            alert('Download failed. Please try again.');
+            const errorMsg = err.response?.data?.message || err.message || 'Download failed';
+            alert(`Download failed: ${errorMsg}. Please try again or check your connection.`);
         }
     };
 
