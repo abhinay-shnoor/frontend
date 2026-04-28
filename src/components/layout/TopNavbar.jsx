@@ -250,7 +250,7 @@ const appItemStyle = {
   transition: 'background 0.1s',
 };
 
-function ProfileDropdown({ currentUser, onClose, onOpenProfileSettings, onSignOut }) {
+function ProfileDropdown({ currentUser, currentStatus, onClose, onOpenProfileSettings, onSignOut }) {
   const ref = useRef(null);
   useClickOutside(ref, onClose);
   const items = [
@@ -499,6 +499,7 @@ export default function TopNavbar({
             {showProfile && (
               <ProfileDropdown
                 currentUser={currentUser}
+                currentStatus={currentStatus}
                 onClose={() => setShowProfile(false)}
                 onOpenProfileSettings={onOpenProfileSettings}
                 onSignOut={onSignOut}
