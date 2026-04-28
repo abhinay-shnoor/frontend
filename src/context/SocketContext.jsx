@@ -224,7 +224,7 @@ export function SocketProvider({ children }) {
     if (status === 'online') return '#34A853'; // green
     if (status === 'away')   return '#FBBC04'; // yellow
     if (status === 'dnd')    return '#EA4335'; // red
-    return null; 
+    return '#9CA3AF';                          // gray = offline (always visible)
   };
 
   return (
