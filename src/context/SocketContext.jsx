@@ -132,16 +132,13 @@ export function SocketProvider({ children }) {
     socketRef.current.on('users:presence', (presenceMap) => {
       console.log('[Socket] Received Full Presence Map:', presenceMap);
       if (!presenceMap) return;
+      
       const ids = Object.keys(presenceMap);
       setOnlineUsers(new Set(ids));
       
-      setUserStatuses(prev => {
-        const next = new Map(prev);
-        Object.entries(presenceMap).forEach(([uid, status]) => {
-          next.set(uid, status);
-        });
-        return next;
-      });
+      // Replace the entire status map with the server's current snapshot
+      // This ensures that users who went offline are removed from the map.
+      setUserStatuses(new Map(Object.entries(presenceMap)));
     });
 
     const handleStatusUpdate = (data) => {
