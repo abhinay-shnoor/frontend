@@ -121,6 +121,21 @@ export function SocketProvider({ children }) {
     socketRef.current.on('online_users', handleOnlineUsers);
     socketRef.current.on('users_list', handleOnlineUsers);
 
+    // Sync full presence map from server
+    socketRef.current.on('users:presence', (presenceMap) => {
+      if (!presenceMap) return;
+      const ids = Object.keys(presenceMap);
+      setOnlineUsers(new Set(ids));
+      
+      setUserStatuses(prev => {
+        const next = new Map(prev);
+        Object.entries(presenceMap).forEach(([uid, status]) => {
+          next.set(uid, status);
+        });
+        return next;
+      });
+    });
+
     const handleStatusUpdate = (data) => {
       if (!data) return;
       // Capture ID and Status from ANY possible property name
