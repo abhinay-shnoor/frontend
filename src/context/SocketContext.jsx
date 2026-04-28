@@ -176,8 +176,29 @@ export function SocketProvider({ children }) {
   // FIX 4: Helper to get a display status for a user
   // Returns: 'online' | 'away' | 'dnd' | 'offline'
   const getUserStatus = (userId) => {
-    if (!onlineUsers.has(userId)) return 'offline';
-    const s = userStatuses.get(userId);
+    if (!userId) return 'offline';
+    const idStr = String(userId);
+    
+    // Check online status (robustly)
+    let isOnline = false;
+    for (let onlineId of onlineUsers) {
+      if (String(onlineId) === idStr) {
+        isOnline = true;
+        break;
+      }
+    }
+    
+    if (!isOnline) return 'offline';
+    
+    // Check status map (robustly)
+    let s = 'online';
+    for (let [id, status] of userStatuses.entries()) {
+      if (String(id) === idStr) {
+        s = status;
+        break;
+      }
+    }
+    
     if (s === 'away') return 'away';
     if (s === 'dnd')  return 'dnd';
     return 'online';
@@ -189,7 +210,7 @@ export function SocketProvider({ children }) {
     if (status === 'online') return '#10B981'; // green
     if (status === 'away')   return '#FBBC04'; // yellow
     if (status === 'dnd')    return '#EA4335'; // red
-    return '#9CA3AF';                          // gray = offline
+    return null;                               // Hide badge if offline
   };
 
   return (
