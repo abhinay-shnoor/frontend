@@ -95,22 +95,26 @@ export default function ConversationList({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
-          {onlineUsers && onlineUsers.size > 0 && (
-            <span style={{ 
-              fontSize: 12, 
-              color: '#34A853', 
-              background: '#34A85315', 
-              padding: '2px 8px', 
-              borderRadius: 20,
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34A853' }} />
-              {onlineUsers.size} online
-            </span>
-          )}
+          {(() => {
+            const otherCount = onlineUsers ? (onlineUsers.has(currentUserId) ? onlineUsers.size - 1 : onlineUsers.size) : 0;
+            if (otherCount <= 0) return null;
+            return (
+              <span style={{ 
+                fontSize: 12, 
+                color: '#34A853', 
+                background: '#34A85315', 
+                padding: '2px 8px', 
+                borderRadius: 20,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34A853' }} />
+                {otherCount} online
+              </span>
+            );
+          })()}
         </div>
       </div>
 
