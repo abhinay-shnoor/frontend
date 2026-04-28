@@ -28,14 +28,17 @@ export default function ConversationList({
       time: s.last_message_at || s.created_at, isGroup: true,
       initials: s.name.substring(0, 2).toUpperCase(), unread: unreadCounts[`space_${s.id}`] || 0,
     })),
-    ...(dmConversations || []).map(dm => ({
-      id: dm.other_user_id, type: 'dm', name: dm.other_user_name,
-      preview: dm.last_message
-        ? (dm.last_message_sender_id === currentUserId ? `You: ${dm.last_message}` : dm.last_message)
-        : 'No messages yet',
-      time: dm.last_message_at, avatar_url: dm.other_user_avatar,
-      initials: initials(dm.other_user_name), isGroup: false, unread: unreadCounts[`dm_${dm.other_user_id}`] || 0,
-    })),
+    ...(dmConversations || []).map(dm => {
+      const partnerId = dm.other_user_id || dm.id || dm.userId;
+      return {
+        id: partnerId, type: 'dm', name: dm.other_user_name,
+        preview: dm.last_message
+          ? (dm.last_message_sender_id === currentUserId ? `You: ${dm.last_message}` : dm.last_message)
+          : 'No messages yet',
+        time: dm.last_message_at, avatar_url: dm.other_user_avatar,
+        initials: initials(dm.other_user_name), isGroup: false, unread: unreadCounts[`dm_${partnerId}`] || 0,
+      };
+    }),
   ].sort((a, b) => {
     if (!a.time) return 1; if (!b.time) return -1;
     return new Date(b.time) - new Date(a.time);

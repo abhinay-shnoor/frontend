@@ -178,10 +178,14 @@ export function SocketProvider({ children }) {
   const getUserStatus = (userId) => {
     if (!userId) return 'offline';
     
-    // Normalize ID to string, handling potential nested objects (e.g. MongoDB _id)
+    // Normalize ID to string, handling all possible formats
     const normalizeId = (id) => {
       if (!id) return '';
-      if (typeof id === 'object') return (id.id || id._id || id.toString());
+      if (typeof id === 'string') return id.trim();
+      if (typeof id === 'number') return String(id);
+      if (typeof id === 'object') {
+        return String(id.id || id._id || id.userId || id.uid || JSON.stringify(id));
+      }
       return String(id);
     };
 
@@ -189,22 +193,28 @@ export function SocketProvider({ children }) {
     if (!targetId) return 'offline';
 
     // Check online status by looking for ID in onlineUsers set
-    const isOnline = Array.from(onlineUsers).some(u => normalizeId(u) === targetId);
-    
-    if (!isOnline) return 'offline';
+    const onlineList = Array.from(onlineUsers);
+    const isOnline = onlineList.some(u => normalizeId(u) === targetId);
     
     // Check userStatuses Map for explicit mode
-    let s = 'online';
+    let explicitStatus = null;
     for (let [uid, status] of userStatuses.entries()) {
       if (normalizeId(uid) === targetId) {
-        s = status;
+        explicitStatus = status;
         break;
       }
     }
     
-    if (s === 'away') return 'away';
-    if (s === 'dnd')  return 'dnd';
-    return 'online';
+    // If they have an explicit status set (away/dnd), prioritize that even if "offline"
+    // (though usually status comes from online users)
+    if (explicitStatus === 'away') return 'away';
+    if (explicitStatus === 'dnd')  return 'dnd';
+    if (explicitStatus === 'active') return 'online';
+
+    // Fallback to online if they are in the online list
+    if (isOnline) return 'online';
+    
+    return 'offline';
   };
 
   // Dot color helper used by Avatar presence indicators
@@ -214,9 +224,6 @@ export function SocketProvider({ children }) {
     if (status === 'online') return '#34A853'; // Match navbar "Active" green
     if (status === 'away')   return '#FBBC04'; // Match navbar "Away" yellow
     if (status === 'dnd')    return '#EA4335'; // Match navbar "DND" red
-    
-    // Show a very subtle transparent dot even when offline to verify the badge is rendering
-    // This can be changed back to null once confirmed working
     return null; 
   };
 
