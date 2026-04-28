@@ -1487,7 +1487,7 @@ function FilePreviewModal({ file, onClose }) {
                                 display: 'block'
                             }}
                         />
-                    ) : (isPdf || (isOffice && !['txt', 'csv', 'md'].includes(nExt) && !['txt', 'csv', 'md'].includes(uExt))) ? (
+                    ) : (isOffice && !['txt', 'csv', 'md'].includes(nExt) && !['txt', 'csv', 'md'].includes(uExt)) ? (
                         <div style={{ width: 'min(96vw, 1200px)', height: '90vh', position: 'relative' }}>
                             <iframe
                                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url + (file.url.includes('?') ? '&' : '?') + 'f=' + (file.name || 'file'))}&embedded=true`}
@@ -1495,7 +1495,7 @@ function FilePreviewModal({ file, onClose }) {
                                 style={{ width: '100%', height: '100%', border: 'none', borderRadius: 8, background: '#fff' }}
                             />
                         </div>
-                    ) : (isText || isOffice || isPdf || !!file.url) ? (
+                    ) : (isPdf || isText || isOffice || !!file.url) ? (
                         <iframe
                             src={file.url}
                             title="Direct Preview"
