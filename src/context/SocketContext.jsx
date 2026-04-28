@@ -178,15 +178,20 @@ export function SocketProvider({ children }) {
   const getUserStatus = (userId) => {
     if (!userId) return 'offline';
     
-    // Normalize ID to string, handling all possible formats
+    // Normalize ID to string, handling all possible formats with fuzzy matching
     const normalizeId = (id) => {
       if (!id) return '';
-      if (typeof id === 'string') return id.trim();
-      if (typeof id === 'number') return String(id);
-      if (typeof id === 'object') {
-        return String(id.id || id._id || id.userId || id.uid || JSON.stringify(id));
+      let strId = '';
+      if (typeof id === 'string') strId = id;
+      else if (typeof id === 'number') strId = String(id);
+      else if (typeof id === 'object') {
+        strId = String(id.id || id._id || id.userId || id.uid || id.partner_id || JSON.stringify(id));
+      } else {
+        strId = String(id);
       }
-      return String(id);
+      
+      // Fuzzy: trim, lowercase, and strip common prefixes like "user_" or "u_"
+      return strId.trim().toLowerCase().replace(/^(user_|u_)/, '');
     };
 
     const targetId = normalizeId(userId);
@@ -205,25 +210,20 @@ export function SocketProvider({ children }) {
       }
     }
     
-    // If they have an explicit status set (away/dnd), prioritize that even if "offline"
-    // (though usually status comes from online users)
     if (explicitStatus === 'away') return 'away';
     if (explicitStatus === 'dnd')  return 'dnd';
     if (explicitStatus === 'active') return 'online';
-
-    // Fallback to online if they are in the online list
     if (isOnline) return 'online';
     
     return 'offline';
   };
 
   // Dot color helper used by Avatar presence indicators
-  // Matches colors in TopNavbar: Active=#34A853, Away=#FBBC04, DND=#EA4335
   const getStatusColor = (userId) => {
     const status = getUserStatus(userId);
-    if (status === 'online') return '#34A853'; // Match navbar "Active" green
-    if (status === 'away')   return '#FBBC04'; // Match navbar "Away" yellow
-    if (status === 'dnd')    return '#EA4335'; // Match navbar "DND" red
+    if (status === 'online') return '#34A853'; // green
+    if (status === 'away')   return '#FBBC04'; // yellow
+    if (status === 'dnd')    return '#EA4335'; // red
     return null; 
   };
 

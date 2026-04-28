@@ -122,7 +122,7 @@ export default function ConversationList({
                   color="#0D9488" 
                   size={40} 
                   avatarUrl={item.avatar_url} 
-                  statusColor={getStatusColor(item.id)} 
+                  statusColor={getStatusColor(item.id) || getStatusColor(item.other_user_id) || getStatusColor(item.userId)} 
                 />
               )}
               {item.unread > 0 && (
