@@ -1478,13 +1478,20 @@ function FilePreviewModal({ file, onClose }) {
                         <img
                             src={file.url}
                             alt="Preview"
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                            style={{ 
+                                maxWidth: '95vw', 
+                                maxHeight: '85vh', 
+                                objectFit: 'scale-down', 
+                                borderRadius: 4, 
+                                boxShadow: '0 12px 48px rgba(0,0,0,0.6)',
+                                display: 'block'
+                            }}
                         />
                     ) : (isPdf || isOffice) ? (
                         <iframe
-                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`}
+                            src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url + (file.url.includes('?') ? '&' : '?') + 'f=' + (file.name || 'file'))}&embedded=true`}
                             title="File Preview"
-                            style={{ width: 'min(94vw, 1100px)', height: '88vh', border: 'none', borderRadius: 8, background: '#fff' }}
+                            style={{ width: 'min(96vw, 1200px)', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }}
                         />
                     ) : isText ? (
                         <iframe
