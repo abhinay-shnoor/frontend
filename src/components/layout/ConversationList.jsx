@@ -20,7 +20,7 @@ export default function ConversationList({
   unreadCounts = {}, className = '',
   isMobile = false,
 }) {
-  const { getStatusColor } = useSocket();
+  const { getStatusColor, onlineUsers } = useSocket();
   const items = [
     ...allSpaces.map(s => ({
       id: s.id, type: 'space', name: s.name,
@@ -93,7 +93,25 @@ export default function ConversationList({
   return (
     <div className={className} style={{ display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 360, borderRight: isMobile ? 'none' : '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
+          {onlineUsers && onlineUsers.size > 0 && (
+            <span style={{ 
+              fontSize: 12, 
+              color: '#34A853', 
+              background: '#34A85315', 
+              padding: '2px 8px', 
+              borderRadius: 20,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34A853' }} />
+              {onlineUsers.size} online
+            </span>
+          )}
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
