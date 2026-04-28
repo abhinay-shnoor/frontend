@@ -78,7 +78,7 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                                     display: 'inline-block', padding: '4px 0',
                                 }}
                             >
-                                📎 {isPdf ? 'Preview Document' : isDoc ? 'Preview File' : 'Preview Attachment'}: {a.name || 'File'}
+                                📎 {a.name || 'File'}
                             </div>
                         )}
                     </div>
