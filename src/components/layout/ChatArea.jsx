@@ -448,11 +448,9 @@ function MessageBubble({
             id={`message-${msg.id}`}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            onClick={handleOpenMenu}
             style={{
                 display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row',
                 alignItems: 'flex-end', gap: 8, padding: '2px 16px', position: 'relative',
-                cursor: 'pointer'
             }}
         >
             {!isOwn && (

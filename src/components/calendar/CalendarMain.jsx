@@ -94,7 +94,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
               <div key={i} className="h-[60px] border-b border-gray-100 last:border-b-0 w-full" />
             ))}
             {currentDate.toDateString() === new Date().toDateString() && <CurrentTimeLine />}
-            
+
             {/* Dynamic Tasks */}
             {tasks.filter(t => normDate(t.date) === toLocalDateStr(currentDate)).map((task, idx) => {
               const topPos = calculateTop(task.time);
@@ -105,7 +105,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
                   className="absolute left-2 right-4 h-[3.5rem] bg-[#e8f0fe] border-l-4 border-[#1a73e8] rounded-md p-2 overflow-hidden hover:shadow-lg transition-all cursor-pointer z-20"
                 >
                   <span className="text-[12px] font-semibold text-[#1a73e8] block truncate">{task.title}</span>
-                  <span className="text-[10px] text-[#1a73e8] font-medium opacity-80">{task.time ? task.time.slice(0,5) : ''}</span>
+                  <span className="text-[10px] text-[#1a73e8] font-medium opacity-80">{task.time ? task.time.slice(0, 5) : ''}</span>
                 </div>
               );
             })}
@@ -153,9 +153,9 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
                 {Array.from({ length: 24 }).map((_, i) => (
                   <div key={i} className="h-[60px] border-b border-gray-100 last:border-b-0 w-full hover:bg-gray-50/30 cursor-pointer" />
                 ))}
-                
+
                 {date.toDateString() === new Date().toDateString() && <CurrentTimeLine />}
-                
+
                 {/* Dynamic Tasks for Week View */}
                 {tasks.filter(t => normDate(t.date) === toLocalDateStr(date)).map((task, idx) => {
                   const topPos = calculateTop(task.time);
@@ -166,7 +166,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
                       className="absolute left-1 right-1 h-[2.5rem] bg-[#e8f0fe] border-l-4 border-[#1a73e8] rounded-sm p-1 overflow-hidden hover:shadow-md transition-shadow cursor-pointer z-20"
                     >
                       <span className="text-[10px] font-semibold text-[#1a73e8] block truncate">{task.title}</span>
-                      <span className="text-[9px] text-[#1a73e8] opacity-70">{task.time ? task.time.slice(0,5) : ''}</span>
+                      <span className="text-[9px] text-[#1a73e8] opacity-70">{task.time ? task.time.slice(0, 5) : ''}</span>
                     </div>
                   );
                 })}
@@ -209,7 +209,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
                     {day || ""}
                   </div>
                 </div>
-                
+
                 {/* Dynamic Content for Month View */}
                 {day && (
                   <div className="flex flex-col gap-1 overflow-hidden mt-1 px-1">
@@ -272,9 +272,8 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
                   });
                   return (
                     <div key={idx} className="flex flex-col items-center">
-                      <div className={`w-6 h-6 flex items-center justify-center rounded-full text-[12px] hover:bg-gray-100 cursor-pointer ${
-                        isToday ? 'bg-[#1a73e8] text-white font-bold' : 'text-[#3c4043]'
-                      }`}>
+                      <div className={`w-6 h-6 flex items-center justify-center rounded-full text-[12px] hover:bg-gray-100 cursor-pointer ${isToday ? 'bg-[#1a73e8] text-white font-bold' : 'text-[#3c4043]'
+                        }`}>
                         {date || ''}
                       </div>
                       {hasTask && (
@@ -319,7 +318,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
 
           {/* FIX: Add Task button specifically for mobile header since sidebar is hidden */}
           {isMobile && (
-            <button 
+            <button
               onClick={onAddTask}
               style={{
                 width: 32, height: 32, borderRadius: '50%', background: '#e8f0fe',
@@ -333,7 +332,7 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
               </svg>
             </button>
           )}
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <button onClick={handlePrev} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: '50%', color: '#5f6368' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
@@ -355,16 +354,16 @@ export default function CalendarMain({ viewMode, onViewModeChange, currentDate, 
         {/* Right: View mode selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'center' : 'flex-end' }}>
           {isMobile ? (
-             <select 
-               value={viewMode} 
-               onChange={(e) => onViewModeChange?.(e.target.value)}
-               style={{
-                 padding: '4px 8px', borderRadius: 6, border: '1px solid #dadce0',
-                 fontSize: 13, background: '#fff', color: '#3c4043', outline: 'none'
-               }}
-             >
-               {VIEW_MODES.map(mode => <option key={mode} value={mode}>{mode}</option>)}
-             </select>
+            <select
+              value={viewMode}
+              onChange={(e) => onViewModeChange?.(e.target.value)}
+              style={{
+                padding: '4px 8px', borderRadius: 6, border: '1px solid #dadce0',
+                fontSize: 13, background: '#fff', color: '#3c4043', outline: 'none'
+              }}
+            >
+              {VIEW_MODES.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+            </select>
           ) : (
             <div style={{ display: 'flex', border: '1px solid #dadce0', borderRadius: 6, overflow: 'hidden' }}>
               {VIEW_MODES.map((mode, idx) => (
