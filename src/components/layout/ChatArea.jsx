@@ -62,7 +62,7 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
                 const isImage = (imageExts.includes(ext) || imageExts.includes(nameExt) || a.type?.startsWith('image/')) && !isPdf;
                 
-                const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'];
+                const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'rtf', 'odt', 'ods', 'odp'];
                 const isDoc = officeExts.includes(ext) || officeExts.includes(nameExt) || a.type?.includes('officedocument') || a.type?.includes('msword') || a.type?.includes('ms-excel') || a.type?.includes('ms-powerpoint');
                 
                 const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(ext) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nameExt) || a.type?.startsWith('text/');
@@ -1395,7 +1395,7 @@ function FilePreviewModal({ file, onClose }) {
     
     const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(uExt) || ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(nExt) || file.type?.startsWith('video/');
     
-    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'];
+    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'rtf', 'odt', 'ods', 'odp'];
     const isOffice = officeExts.includes(uExt) || officeExts.includes(nExt) || file.type?.includes('officedocument') || file.type?.includes('msword') || file.type?.includes('ms-excel') || file.type?.includes('ms-powerpoint');
     
     const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(uExt) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nExt) || file.type?.startsWith('text/');
