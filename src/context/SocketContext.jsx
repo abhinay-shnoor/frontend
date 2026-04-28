@@ -200,7 +200,7 @@ export function SocketProvider({ children }) {
   const getUserStatus = (userId) => {
     if (!userId) return 'offline';
     
-    // Normalize ID to string, handling all possible formats with fuzzy matching
+    // Normalize ID to string, handling all possible formats with ultra-lenient matching
     const normalizeId = (id) => {
       if (!id) return '';
       let strId = '';
@@ -212,18 +212,14 @@ export function SocketProvider({ children }) {
         strId = String(id);
       }
       
-      // Fuzzy: trim, lowercase, and strip common prefixes like "user_" or "u_"
-      return strId.trim().toLowerCase().replace(/^(user_|u_)/, '');
+      // Ultra-lenient: strip everything except alphanumeric characters for comparison
+      return strId.toLowerCase().replace(/[^a-z0-9]/g, '');
     };
 
     const targetId = normalizeId(userId);
     if (!targetId) return 'offline';
 
-    // Check online status by looking for ID in onlineUsers set
-    const onlineList = Array.from(onlineUsers);
-    const isOnline = onlineList.some(u => normalizeId(u) === targetId);
-    
-    // Check userStatuses Map for explicit mode
+    // Check userStatuses Map for explicit mode first (highest priority)
     let explicitStatus = null;
     for (let [uid, status] of userStatuses.entries()) {
       if (normalizeId(uid) === targetId) {
@@ -234,7 +230,12 @@ export function SocketProvider({ children }) {
     
     if (explicitStatus === 'away') return 'away';
     if (explicitStatus === 'dnd')  return 'dnd';
-    if (explicitStatus === 'active') return 'online';
+    if (explicitStatus === 'active' || explicitStatus === 'online') return 'online';
+
+    // Check online status by looking for ID in onlineUsers set
+    const onlineList = Array.from(onlineUsers);
+    const isOnline = onlineList.some(u => normalizeId(u) === targetId);
+    
     if (isOnline) return 'online';
     
     return 'offline';
