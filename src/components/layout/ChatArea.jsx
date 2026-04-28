@@ -49,11 +49,23 @@ function AttachmentPreview({ attachments: rawAttachments, isOwn, onPreview }) {
                     );
                 }
 
-                const ext = (a.url || '').split('?')[0].split('.').pop().toLowerCase();
-                const nameExt = (a.name || '').split('.').pop().toLowerCase();
-                const isPdf = ext === 'pdf' || nameExt === 'pdf' || a.type?.includes('pdf');
-                const isImage = (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(nameExt) || a.type?.startsWith('image/')) && !isPdf;
-                const isDoc = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md'].includes(ext) || ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md'].includes(nameExt);
+                const getExt = (u, n) => {
+                    const uExt = (u || '').split('?')[0].split('.').pop().toLowerCase();
+                    const nExt = (n || '').split('.').pop().toLowerCase();
+                    return { uExt, nExt };
+                };
+
+                const { uExt: ext, nExt: nameExt } = getExt(a.url, a.name);
+                
+                const isPdf = ext === 'pdf' || nameExt === 'pdf' || a.type?.toLowerCase().includes('pdf');
+                
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+                const isImage = (imageExts.includes(ext) || imageExts.includes(nameExt) || a.type?.startsWith('image/')) && !isPdf;
+                
+                const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'];
+                const isDoc = officeExts.includes(ext) || officeExts.includes(nameExt) || a.type?.includes('officedocument') || a.type?.includes('msword') || a.type?.includes('ms-excel') || a.type?.includes('ms-powerpoint');
+                
+                const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(ext) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nameExt) || a.type?.startsWith('text/');
 
                 return (
                     <div key={i} style={{ marginBottom: 6 }} onClick={e => { e.stopPropagation(); onPreview(a); }}>
@@ -1373,14 +1385,20 @@ export default function ChatArea({
 function FilePreviewModal({ file, onClose }) {
     if (!file) return null;
 
-    const ext = (file.url || '').split('?')[0].split('.').pop().toLowerCase();
-    const nameExt = (file.name || '').split('.').pop().toLowerCase();
+    const uExt = (file.url || '').split('?')[0].split('.').pop().toLowerCase();
+    const nExt = (file.name || '').split('.').pop().toLowerCase();
     
-    const isPdf = ext === 'pdf' || nameExt === 'pdf' || file.type?.includes('pdf');
-    const isImage = (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(nameExt) || file.type?.startsWith('image/')) && !isPdf;
-    const isVideo = ['mp4', 'webm', 'ogg'].includes(ext) || ['mp4', 'webm', 'ogg'].includes(nameExt) || file.type?.startsWith('video/');
-    const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext) || ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(nameExt);
-    const isText = ['txt', 'md', 'js', 'css', 'json', 'html'].includes(ext) || ['txt', 'md', 'js', 'css', 'json', 'html'].includes(nameExt) || file.type?.startsWith('text/');
+    const isPdf = uExt === 'pdf' || nExt === 'pdf' || file.type?.toLowerCase().includes('pdf');
+    
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+    const isImage = (imageExts.includes(uExt) || imageExts.includes(nExt) || file.type?.startsWith('image/')) && !isPdf;
+    
+    const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(uExt) || ['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(nExt) || file.type?.startsWith('video/');
+    
+    const officeExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'rtf', 'odt', 'ods', 'odp'];
+    const isOffice = officeExts.includes(uExt) || officeExts.includes(nExt) || file.type?.includes('officedocument') || file.type?.includes('msword') || file.type?.includes('ms-excel') || file.type?.includes('ms-powerpoint');
+    
+    const isText = ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(uExt) || ['txt', 'md', 'js', 'css', 'json', 'html', 'py', 'c', 'cpp'].includes(nExt) || file.type?.startsWith('text/');
 
     const handleDownload = async (e) => {
         e.preventDefault();
@@ -1456,23 +1474,16 @@ function FilePreviewModal({ file, onClose }) {
                             alt="Preview"
                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
                         />
-                    ) : (isPdf || isText) ? (
-                        <iframe
-                            src={file.url}
-                            title="File Preview"
-                            style={{ width: 'min(90vw, 1000px)', height: '85vh', border: 'none', borderRadius: 8, background: '#fff' }}
-                        />
-                    ) : isVideo ? (
-                        <video
-                            src={file.url}
-                            controls
-                            autoPlay
-                            style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8 }}
-                        />
-                    ) : isOffice ? (
+                    ) : (isPdf || isOffice) ? (
                         <iframe
                             src={`https://docs.google.com/viewer?url=${encodeURIComponent(file.url)}&embedded=true`}
-                            title="Office Preview"
+                            title="File Preview"
+                            style={{ width: 'min(94vw, 1100px)', height: '88vh', border: 'none', borderRadius: 8, background: '#fff' }}
+                        />
+                    ) : isText ? (
+                        <iframe
+                            src={file.url}
+                            title="Text Preview"
                             style={{ width: 'min(90vw, 1000px)', height: '85vh', border: 'none', borderRadius: 8, background: '#fff' }}
                         />
                     ) : (
