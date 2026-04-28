@@ -1497,7 +1497,7 @@ function FilePreviewModal({ file, onClose }) {
                         </div>
                     ) : (isPdf || isText || isOffice || !!file.url) ? (
                         <iframe
-                            src={`${import.meta.env.VITE_API_URL || 'https://backend-p8u6.onrender.com'}/api/download?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name || 'file')}&view=true`}
+                            src={`${import.meta.env.VITE_API_URL || 'https://backend-p8u6.onrender.com'}/api/download?url=${encodeURIComponent(file.url)}&name=${encodeURIComponent(file.name || 'file')}&view=true&t=${Date.now()}`}
                             title="Direct Preview"
                             style={{ width: 'min(96vw, 1200px)', height: '90vh', border: 'none', borderRadius: 8, background: '#fff' }}
                         />
