@@ -29,7 +29,7 @@ export default function ConversationList({
       initials: s.name.substring(0, 2).toUpperCase(), unread: unreadCounts[`space_${s.id}`] || 0,
     })),
     ...(dmConversations || []).map(dm => {
-      const partnerId = dm.other_user_id || dm.id || dm.userId;
+      const partnerId = dm.partnerId || dm.other_user_id || dm.id;
       return {
         id: partnerId, type: 'dm', name: dm.other_user_name,
         preview: dm.last_message
@@ -37,6 +37,7 @@ export default function ConversationList({
           : 'No messages yet',
         time: dm.last_message_at, avatar_url: dm.other_user_avatar,
         initials: initials(dm.other_user_name), isGroup: false, unread: unreadCounts[`dm_${partnerId}`] || 0,
+        partnerId: partnerId
       };
     }),
   ].sort((a, b) => {
@@ -122,7 +123,7 @@ export default function ConversationList({
                   color="#0D9488" 
                   size={40} 
                   avatarUrl={item.avatar_url} 
-                  statusColor={getStatusColor(item.id) || getStatusColor(item.other_user_id) || getStatusColor(item.userId)} 
+                  statusColor={getStatusColor(item.partnerId || item.id)} 
                 />
               )}
               {item.unread > 0 && (

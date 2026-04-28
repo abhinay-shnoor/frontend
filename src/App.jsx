@@ -672,7 +672,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 }}
                 selectedId={activeSpace?.id || activeDM?.id}
                 navSearchQuery={navSearchQuery} mentionedMessages={mentionedMessages}
-                allSpaces={formattedSpaces} dmConversations={dmConversations}
+                allSpaces={formattedSpaces} 
+                dmConversations={dmConversations.map(dm => ({
+                  ...dm,
+                  partnerId: dm.other_user_id || dm.partner_id || dm.id
+                }))}
                 currentUserId={user?.id} unreadCounts={unreadCounts}
                 isMobile={isMobile}
               />
