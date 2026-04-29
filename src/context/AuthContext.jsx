@@ -14,6 +14,32 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // Session timer logic to handle automatic logout
+  useEffect(() => {
+    let timer;
+    if (user?.expiresAt) {
+      const expiresAt = new Date(user.expiresAt).getTime();
+      const now = new Date().getTime();
+      const delay = expiresAt - now;
+
+      if (delay <= 0) {
+        logout();
+      } else {
+        // Set a timer to logout when the session expires
+        timer = setTimeout(() => {
+          console.log('Session expired, logging out automatically...');
+          logout();
+          // Notify the rest of the app (App.jsx) via the custom event
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+        }, delay);
+      }
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [user]);
+
   // Axios interceptor fires this on 401 (session expired while app is open)
   useEffect(() => {
     const handleForceLogout = () => setUser(null);

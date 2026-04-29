@@ -5,56 +5,56 @@ import React from 'react';
 
 const SearchIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
   </svg>
 );
 const HamburgerIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
   </svg>
 );
 const QuestionIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
 const SettingsIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
 const AppsIcon = () => (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="var(--ws-text-muted)">
-    <circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/>
-    <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-    <circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/>
+    <circle cx="5" cy="5" r="2" /><circle cx="12" cy="5" r="2" /><circle cx="19" cy="5" r="2" />
+    <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+    <circle cx="5" cy="19" r="2" /><circle cx="12" cy="19" r="2" /><circle cx="19" cy="19" r="2" />
   </svg>
 );
 const SunIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="5"/>
-    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
   </svg>
 );
 const MoonIcon = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
   </svg>
 );
 const ChevronDownIcon = () => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9"/>
+    <polyline points="6 9 12 15 18 9" />
   </svg>
 );
 
 const STATUS_OPTIONS = [
-  { id: "active", label: "Automatic",       description: "Based on your activity", dotColor: "#34A853" },
-  { id: "dnd",    label: "Do not disturb",  description: "Mute notifications",     dotColor: "#EA4335" },
-  { id: "away",   label: "Set as away",     description: null,                     dotColor: "#FBBC04" },
+  { id: "active", label: "Automatic", description: "Based on your activity", dotColor: "#34A853" },
+  { id: "dnd", label: "Do not disturb", description: "Mute notifications", dotColor: "#EA4335" },
+  { id: "away", label: "Set as away", description: null, dotColor: "#FBBC04" },
 ];
 
 function useClickOutside(ref, callback) {
@@ -91,7 +91,7 @@ function StatusDropdown({ currentStatus, onSelect, onClose }) {
           </div>
           {currentStatus === opt.id && (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
         </button>
@@ -139,14 +139,14 @@ function HelpDropdown({ onClose }) {
 }
 
 // Consolidated AppsDropdown for mobile + desktop
-function AppsDropdown({ 
-  onClose, 
-  onOpenAdmin, 
-  isAdmin, 
-  isMobile, 
-  onOpenCalendar, 
-  onOpenHelp, 
-  onToggleTheme, 
+function AppsDropdown({
+  onClose,
+  onOpenAdmin,
+  isAdmin,
+  isMobile,
+  onOpenCalendar,
+  onOpenHelp,
+  onToggleTheme,
   isDark,
   currentUser,
   onOpenProfileSettings,
@@ -196,15 +196,15 @@ function AppsDropdown({
               <span style={{ fontSize: 18 }}>❓</span>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Help</span>
             </button>
-            
+
             {/* Status nested logic or just a toggle */}
             <div style={{ ...appItemStyle, cursor: 'default', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor }} />
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)' }}>Status: {statusLabel}</span>
               </div>
-              <select 
-                value={currentStatus} 
+              <select
+                value={currentStatus}
                 onChange={(e) => onStatusChange?.(e.target.value)}
                 style={{ fontSize: 11, background: 'var(--ws-surface-2)', border: '1px solid var(--ws-border)', borderRadius: 4, color: 'var(--ws-text)', padding: '2px 4px' }}
               >
@@ -255,7 +255,7 @@ function ProfileDropdown({ currentUser, currentStatus, onClose, onOpenProfileSet
   useClickOutside(ref, onClose);
   const items = [
     { label: 'Profile Settings', onClick: () => { onOpenProfileSettings(); onClose(); } },
-    { label: 'Sign Out',         onClick: () => { onSignOut?.(); onClose(); }, danger: true },
+    { label: 'Sign Out', onClick: () => { onSignOut?.(); onClose(); }, danger: true },
   ];
   return (
     <div ref={ref} style={{
@@ -302,14 +302,14 @@ export default function TopNavbar({
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
 
-  const [showStatus,  setShowStatus]  = useState(false);
-  const [showHelp,    setShowHelp]    = useState(false);
-  const [showApps,    setShowApps]    = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showApps, setShowApps] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
 
   const statusDisplay = STATUS_OPTIONS.find(s => s.id === currentStatus);
-  const statusLabel   = currentStatus === 'active' ? 'Active' : currentStatus === 'dnd' ? 'DND' : 'Away';
+  const statusLabel = currentStatus === 'active' ? 'Active' : currentStatus === 'dnd' ? 'DND' : 'Away';
 
   const navBtn = {
     width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -339,10 +339,10 @@ export default function TopNavbar({
 
       {/* FIX 9: Search bar — hidden in calendar view or on mobile when not focused */}
       {!isCalendar && (!isMobile || searchFocused || navSearchQuery) && (
-        <div style={{ 
-          flex: 1, 
-          display: 'flex', 
-          justifyContent: 'center', 
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
           padding: isMobile ? '0 8px' : '0 24px',
           position: isMobile && (searchFocused || navSearchQuery) ? 'absolute' : 'relative',
           left: isMobile && (searchFocused || navSearchQuery) ? 0 : 'auto',
@@ -390,7 +390,7 @@ export default function TopNavbar({
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        
+
         {/* On desktop, show all. On mobile, show only Apps (which now contains everything) and maybe Search toggle */}
         {!isMobile ? (
           <>
@@ -441,7 +441,7 @@ export default function TopNavbar({
                 onMouseLeave={e => e.currentTarget.style.background = 'none'}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
               </button>
             )}
@@ -486,12 +486,12 @@ export default function TopNavbar({
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <div style={{ position: 'relative' }}>
-                <Avatar 
-                  initials={currentUser.initials} 
-                  color={currentUser.color} 
-                  size={32} 
-                  avatarUrl={currentUser.avatar_url} 
-                  statusColor={currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04'} 
+                <Avatar
+                  initials={currentUser.initials}
+                  color={currentUser.color}
+                  size={32}
+                  avatarUrl={currentUser.avatar_url}
+                  statusColor={currentStatus === 'active' ? '#34A853' : currentStatus === 'dnd' ? '#EA4335' : '#FBBC04'}
                 />
               </div>
               <ChevronDownIcon />
