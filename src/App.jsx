@@ -124,6 +124,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   useEffect(() => { activeSpaceRef.current = activeSpace; }, [activeSpace]);
   useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
 
+  const currentStatusRef = useRef(currentStatus);
+  useEffect(() => { currentStatusRef.current = currentStatus; }, [currentStatus]);
+
   const formatMsg = (m) => {
     if (!m) return m;
     if (m.senderId && m.time) return m;
@@ -429,7 +432,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         if (activeViewRef.current !== 'mentions') setUnreadMentions(prev => prev + 1);
       }
       const isFocused = document.visibilityState === 'visible' && document.hasFocus();
-      if ((activeViewRef.current !== (msg.space_id ? 'space' : 'dm') || (msg.space_id ? activeSpaceRef.current?.id !== msg.space_id : activeDMRef.current?.id !== msg.sender_id)) || !isFocused) {
+      const shouldNotify = currentStatusRef.current === 'active' && 
+        ((activeViewRef.current !== (msg.space_id ? 'space' : 'dm') || 
+         (msg.space_id ? activeSpaceRef.current?.id !== msg.space_id : activeDMRef.current?.id !== msg.sender_id)) || !isFocused);
+
+      if (shouldNotify) {
         showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
       }
     });
