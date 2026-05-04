@@ -77,16 +77,37 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1200);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentStatus, setCurrentStatus] = useState('active');
+  const [currentDndExpiry, setCurrentDndExpiry] = useState(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
   const [highlightMessageId, setHighlightMessageId] = useState(null);
 
-  const handleStatusChange = (status) => {
+  const handleStatusChange = (status, expiry = null) => {
     setCurrentStatus(status);
+    setCurrentDndExpiry(expiry);
     emitStatusChange(status, user?.id);
+    
+    if (status === 'dnd' && expiry) {
+      showToast(`Notifications muted until ${new Date(expiry).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`, 'success');
+    }
   };
+
+  // Auto-revert DND status
+  useEffect(() => {
+    if (currentStatus !== 'dnd' || !currentDndExpiry) return;
+
+    const checkExpiry = () => {
+      if (new Date() >= new Date(currentDndExpiry)) {
+        handleStatusChange('active');
+        showToast('Notifications unmuted automatically', 'info');
+      }
+    };
+
+    const timer = setInterval(checkExpiry, 10000); // Check every 10s
+    return () => clearInterval(timer);
+  }, [currentStatus, currentDndExpiry]);
 
   const handleSelectSearchResult = (msg) => {
     if (msg.chat_type === 'space') {
@@ -635,7 +656,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       data-mobile={isMobile}
     >
       <TopNavbar
-        currentStatus={currentStatus} onStatusChange={handleStatusChange}
+        currentStatus={currentStatus} currentDndExpiry={currentDndExpiry} onStatusChange={handleStatusChange}
         onOpenChatSettings={() => setShowChatSettings(true)} onOpenProfileSettings={() => setShowProfileSettings(true)}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         navSearchQuery={navSearchQuery} onNavSearchChange={setNavSearchQuery}

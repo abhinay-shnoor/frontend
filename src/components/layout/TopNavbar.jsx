@@ -65,42 +65,153 @@ function useClickOutside(ref, callback) {
   }, [callback]);
 }
 
-function StatusDropdown({ currentStatus, onSelect, onClose }) {
-  const ref = useRef(null);
-  useClickOutside(ref, onClose);
+const ChevronRightIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ws-text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const MuteDurations = [
+  { id: 30, label: "30 minutes" },
+  { id: 60, label: "1 hour" },
+  { id: 120, label: "2 hours" },
+  { id: 240, label: "4 hours" },
+  { id: 480, label: "8 hours" },
+  { id: 1440, label: "24 hours" },
+  { id: "custom", label: "Until a specific time" },
+];
+
+function DndSubMenu({ onSelect, onClose, currentDndExpiry }) {
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  const formatUntilTime = (mins) => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + mins);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+
   return (
-    <div ref={ref} style={{
-      position: 'absolute', top: 44, right: 0, zIndex: 50, width: 280,
+    <div style={{
+      position: 'absolute', top: 0, right: 280, width: 240,
       background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)',
       borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-      animation: 'fadeSlideDown 0.15s ease-out', overflow: 'hidden',
+      animation: 'fadeSlideLeft 0.15s ease-out', overflow: 'hidden', padding: '6px 0'
     }}>
-      {STATUS_OPTIONS.map(opt => (
-        <button key={opt.id} onClick={() => { onSelect(opt.id); onClose(); }} style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '8px 14px 4px' }}>
+        Mute until...
+      </p>
+      {MuteDurations.map(dur => (
+        <button key={dur.id} onClick={() => {
+          if (dur.id === 'custom') {
+            setShowTimePicker(true);
+          } else {
+            const expiry = new Date();
+            expiry.setMinutes(expiry.getMinutes() + dur.id);
+            onSelect('dnd', expiry.toISOString());
+            onClose();
+          }
+        }} style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
           textAlign: 'left', transition: 'background 0.1s',
         }}
           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: opt.dotColor, flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>{opt.label}</p>
-            {opt.description && <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>{opt.description}</p>}
+            <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>{dur.label}</p>
+            {typeof dur.id === 'number' && (
+              <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>Until {formatUntilTime(dur.id)}</p>
+            )}
           </div>
-          {currentStatus === opt.id && (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          )}
         </button>
       ))}
-      <div style={{ padding: '8px 14px', borderTop: '0.5px solid var(--ws-border)' }}>
-        <p style={{ fontSize: 11, color: 'var(--ws-text-muted)' }}>
-          Team-wide status visibility coming soon
+      {showTimePicker && (
+        <div style={{ padding: '8px 14px', borderTop: '0.5px solid var(--ws-border)', background: 'var(--ws-surface-2)' }}>
+          <input 
+            type="time" 
+            onChange={(e) => {
+              const [h, m] = e.target.value.split(':');
+              const expiry = new Date();
+              expiry.setHours(parseInt(h), parseInt(m), 0, 0);
+              // If the time is already passed today, assume it's for tomorrow
+              if (expiry < new Date()) expiry.setDate(expiry.getDate() + 1);
+              onSelect('dnd', expiry.toISOString());
+              onClose();
+            }}
+            style={{ 
+              width: '100%', padding: '6px', fontSize: 13, borderRadius: 6, 
+              border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text)' 
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusDropdown({ currentStatus, currentDndExpiry, onSelect, onClose }) {
+  const ref = useRef(null);
+  const [hoveredOpt, setHoveredOpt] = useState(null);
+  useClickOutside(ref, onClose);
+
+  return (
+    <div ref={ref} style={{
+      position: 'absolute', top: 44, right: 0, zIndex: 50, width: 280,
+      background: 'var(--ws-bg)', border: '0.5px solid var(--ws-border)',
+      borderRadius: 12, boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+      animation: 'fadeSlideDown 0.15s ease-out', overflow: 'visible',
+    }}>
+      <div style={{ padding: '6px 0' }}>
+        {STATUS_OPTIONS.map(opt => (
+          <div key={opt.id} style={{ position: 'relative' }} onMouseEnter={() => setHoveredOpt(opt.id)} onMouseLeave={() => setHoveredOpt(null)}>
+            <button onClick={() => { 
+              if (opt.id !== 'dnd') {
+                onSelect(opt.id); 
+                onClose(); 
+              }
+            }} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+              textAlign: 'left', transition: 'background 0.1s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: opt.dotColor, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>{opt.label}</p>
+                {opt.id === 'dnd' && currentDndExpiry ? (
+                  <p style={{ fontSize: 11, color: '#EA4335', fontWeight: 500, margin: 0 }}>
+                    Muted until {new Date(currentDndExpiry).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                ) : opt.description && (
+                  <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>{opt.description}</p>
+                )}
+              </div>
+              {opt.id === 'dnd' ? <ChevronRightIcon /> : currentStatus === opt.id && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+            {opt.id === 'dnd' && hoveredOpt === 'dnd' && (
+              <DndSubMenu onSelect={onSelect} onClose={onClose} currentDndExpiry={currentDndExpiry} />
+            )}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: '8px 14px', borderTop: '0.5px solid var(--ws-border)', background: 'var(--ws-surface-2)' }}>
+        <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>
+          {currentStatus === 'dnd' ? 'Notifications are muted' : 'Team-wide status visibility coming soon'}
         </p>
       </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeSlideLeft {
+          from { opacity: 0; transform: translateX(10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+      `}} />
     </div>
   );
 }
@@ -152,6 +263,7 @@ function AppsDropdown({
   onOpenProfileSettings,
   onSignOut,
   currentStatus,
+  currentDndExpiry,
   onStatusChange
 }) {
   const ref = useRef(null);
@@ -290,7 +402,7 @@ function ProfileDropdown({ currentUser, currentStatus, onClose, onOpenProfileSet
 }
 
 export default function TopNavbar({
-  currentStatus, onStatusChange,
+  currentStatus, currentDndExpiry, onStatusChange,
   onOpenChatSettings, onOpenProfileSettings,
   onToggleSidebar, navSearchQuery, onNavSearchChange,
   onSignOut, currentUser, onOpenAdmin, isAdmin,
@@ -404,7 +516,7 @@ export default function TopNavbar({
                 <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--ws-text)' }}>{statusLabel}</span>
                 <ChevronDownIcon />
               </button>
-              {showStatus && <StatusDropdown currentStatus={currentStatus} onSelect={onStatusChange} onClose={() => setShowStatus(false)} />}
+              {showStatus && <StatusDropdown currentStatus={currentStatus} currentDndExpiry={currentDndExpiry} onSelect={onStatusChange} onClose={() => setShowStatus(false)} />}
             </div>
 
             {/* Dark/light toggle */}
@@ -470,6 +582,7 @@ export default function TopNavbar({
               onOpenProfileSettings={onOpenProfileSettings}
               onSignOut={onSignOut}
               currentStatus={currentStatus}
+              currentDndExpiry={currentDndExpiry}
               onStatusChange={onStatusChange}
             />
           )}
