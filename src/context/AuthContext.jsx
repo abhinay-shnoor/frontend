@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
 
         // Set a timer to show a warning 10 minutes before expiry (at 50 minutes)
         // If the session is shorter than 10 minutes, show it at the 50% mark or just immediately
-        const warningThreshold = 10 * 60 * 1000; // 10 minutes
+        const warningThreshold = 5 * 60 * 1000; // 5 minutes for testing (was 10 mins)
         const warningDelay = Math.max(0, delay - warningThreshold);
 
         warningTimer = setTimeout(() => {
