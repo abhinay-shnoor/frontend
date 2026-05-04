@@ -152,7 +152,7 @@ function DndSubMenu({ onSelect, onClose, currentDndExpiry }) {
 
 function StatusDropdown({ currentStatus, currentDndExpiry, onSelect, onClose }) {
   const ref = useRef(null);
-  const [hoveredOpt, setHoveredOpt] = useState(null);
+  const [showDndPanel, setShowDndPanel] = useState(false);
   useClickOutside(ref, onClose);
 
   return (
@@ -164,19 +164,25 @@ function StatusDropdown({ currentStatus, currentDndExpiry, onSelect, onClose }) 
     }}>
       <div style={{ padding: '6px 0' }}>
         {STATUS_OPTIONS.map(opt => (
-          <div key={opt.id} style={{ position: 'relative' }} onMouseEnter={() => setHoveredOpt(opt.id)} onMouseLeave={() => setHoveredOpt(null)}>
+          <div key={opt.id} style={{ position: 'relative' }}>
             <button onClick={() => { 
-              if (opt.id !== 'dnd') {
+              if (opt.id === 'dnd') {
+                setShowDndPanel(!showDndPanel);
+              } else {
                 onSelect(opt.id); 
                 onClose(); 
               }
             }} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
+              padding: '10px 14px', background: showDndPanel && opt.id === 'dnd' ? 'var(--ws-hover)' : 'none', border: 'none', cursor: 'pointer',
               textAlign: 'left', transition: 'background 0.1s',
             }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              onMouseLeave={e => {
+                if (!(showDndPanel && opt.id === 'dnd')) {
+                  e.currentTarget.style.background = 'none';
+                }
+              }}
             >
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: opt.dotColor, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
@@ -189,13 +195,13 @@ function StatusDropdown({ currentStatus, currentDndExpiry, onSelect, onClose }) 
                   <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>{opt.description}</p>
                 )}
               </div>
-              {opt.id === 'dnd' ? <ChevronRightIcon /> : currentStatus === opt.id && (
+              {currentStatus === opt.id && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               )}
             </button>
-            {opt.id === 'dnd' && hoveredOpt === 'dnd' && (
+            {opt.id === 'dnd' && showDndPanel && (
               <DndSubMenu onSelect={onSelect} onClose={onClose} currentDndExpiry={currentDndExpiry} />
             )}
           </div>
