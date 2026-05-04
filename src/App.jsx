@@ -6,6 +6,7 @@ import { ToastProvider, useToast } from './context/ToastContext.jsx';
 import AdminApp from './Admin/AdminApp.jsx';
 import ProfileSettingsModal from './components/ui/ProfileSettingsModal.jsx';
 import ChatSettingsModal from './components/ui/ChatSettingsModal.jsx';
+import SessionExpiryModal from './components/ui/SessionExpiryModal.jsx';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -812,7 +813,10 @@ function WorkspaceRoot({ user, onSignOut }) {
 }
 
 function AppRouter() {
-  const { user, loading, logout } = useAuth();
+  const { 
+    user, loading, logout, 
+    isExpiryWarningOpen, continueSession 
+  } = useAuth();
   const [page, setPage] = useState('landing');
   const navigate = (to) => { setPage(to); window.scrollTo({ top: 0 }); };
   const handleSignOut = async () => { await logout(); navigate('landing'); };
@@ -825,13 +829,29 @@ function AppRouter() {
     </div>
   );
 
-  if (user) return <WorkspaceRoot user={user} onSignOut={handleSignOut} />;
-  if (page === 'login') return <LoginPage onNavigate={navigate} />;
-  if (page === 'privacy') return <PrivacyPolicyPage onNavigate={navigate} />;
-  if (page === 'terms') return <TermsPage onNavigate={navigate} />;
-  if (page === 'cookie') return <CookiePolicyPage onNavigate={navigate} />;
-  if (page === 'security') return <SecurityPage onNavigate={navigate} />;
-  return <LandingPage onNavigate={navigate} />;
+  return (
+    <>
+      {user ? (
+        <WorkspaceRoot user={user} onSignOut={handleSignOut} />
+      ) : (
+        <>
+          {page === 'login' && <LoginPage onNavigate={navigate} />}
+          {page === 'privacy' && <PrivacyPolicyPage onNavigate={navigate} />}
+          {page === 'terms' && <TermsPage onNavigate={navigate} />}
+          {page === 'cookie' && <CookiePolicyPage onNavigate={navigate} />}
+          {page === 'security' && <SecurityPage onNavigate={navigate} />}
+          {page === 'landing' && <LandingPage onNavigate={navigate} />}
+        </>
+      )}
+      
+      {isExpiryWarningOpen && (
+        <SessionExpiryModal 
+          onContinue={continueSession} 
+          onLogout={handleSignOut} 
+        />
+      )}
+    </>
+  );
 }
 
 export default function App() {
