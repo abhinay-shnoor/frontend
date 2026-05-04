@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
+import { showNotification } from '../utils/notifications';
 
 const AuthContext = createContext(null);
 
@@ -70,8 +71,9 @@ export function AuthProvider({ children }) {
         const warningThreshold = 5 * 60 * 1000; // 5 minutes for testing (was 10 mins)
         const warningDelay = Math.max(0, delay - warningThreshold);
 
+        console.log(`Session debug: Total delay: ${Math.round(delay/1000)}s, Warning delay: ${Math.round(warningDelay/1000)}s`);
+
         warningTimer = setTimeout(() => {
-          const { showNotification } = require('../utils/notifications.js');
           showNotification('Your session is about to expire.', {
             body: 'Click here to extend your session and stay logged in.',
             requireInteraction: true,
