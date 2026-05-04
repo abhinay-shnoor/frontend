@@ -73,15 +73,21 @@ export function AuthProvider({ children }) {
 
         console.log(`Session debug: Total delay: ${Math.round(delay/1000)}s, Warning delay: ${Math.round(warningDelay/1000)}s`);
 
+        // Only show notification if not already shown for this specific expiry
+        const notificationKey = `warning_shown_${expiresAt}`;
+        
         warningTimer = setTimeout(() => {
-          showNotification('Your session is about to expire.', {
-            body: 'Click here to extend your session and stay logged in.',
-            requireInteraction: true,
-            onClick: () => {
-              window.focus();
-              setIsExpiryWarningOpen(true);
-            }
-          });
+          if (!sessionStorage.getItem(notificationKey)) {
+            showNotification('Your session is about to expire.', {
+              body: 'Click here to extend your session and stay logged in.',
+              requireInteraction: true,
+              onClick: () => {
+                window.focus();
+                setIsExpiryWarningOpen(true);
+              }
+            });
+            sessionStorage.setItem(notificationKey, 'true');
+          }
           // Also show the modal immediately in-app if the tab is visible
           setIsExpiryWarningOpen(true);
         }, warningDelay);
@@ -118,6 +124,10 @@ export function AuthProvider({ children }) {
         const newExpiresAt = res.data.expiresAt;
         setUser(prev => ({ ...prev, expiresAt: newExpiresAt }));
         setIsExpiryWarningOpen(false);
+        
+        // Bring focus to the window just in case
+        window.focus();
+
         // Sync to other tabs
         new BroadcastChannel('session_sync').postMessage({ 
           type: 'SESSION_REFRESHED', 
