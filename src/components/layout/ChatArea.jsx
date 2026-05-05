@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
-import { searchMessages, uploadFile, downloadAttachment, getAttachments } from '../../api/messages.js';
+import { searchMessages, uploadFile, downloadAttachment, getAttachments, getPinnedMessages, pinMessage, unpinMessage } from '../../api/messages.js';
 import { formatDateLabel } from '../../utils/dateUtils.js';
 import VoiceRecorder from '../chat/VoiceRecorder.jsx';
 import VoiceMessagePlayer from '../chat/VoiceMessagePlayer.jsx';
@@ -311,7 +311,7 @@ function ForwardModal({ spaces, dmUsers, onClose, onForward }) {
     );
 }
 
-function MessageContextMenu({ isOwn, isStarred, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply, onToggleStar }) {
+function MessageContextMenu({ isOwn, isStarred, isPinned, onClose, onInfo, onDeleteForMe, onDeleteForEveryone, onEmojis, onEdit, onForward, onReply, onToggleStar, onTogglePin }) {
     const [showDeleteSub, setShowDeleteSub] = useState(false);
     const ref = useRef(null);
 
@@ -387,6 +387,12 @@ function MessageContextMenu({ isOwn, isStarred, onClose, onInfo, onDeleteForMe, 
                         </svg>
                         {isStarred ? 'Unstar' : 'Star'}
                     </button>
+                    <button className="menu-item" onClick={onTogglePin}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill={isPinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                            <path d="M21 10V8H19V3H17V8H12V3H10V8H5V10H7L8 16H5V18H19V16H16L17 10H21Z" />
+                        </svg>
+                        {isPinned ? 'Unpin from Board' : 'Pin to Board'}
+                    </button>
                 </>
             ) : (
                 <>
@@ -405,7 +411,7 @@ function MessageBubble({
     msg, currentUserId, onEdit, onReact, onRemoveReact,
     isEditing, editContent, onEditChange, onEditSave, onEditCancel,
     totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
-    onQuoteClick, onToggleStar, isMobile, showSenderInfo, onPreview
+    onQuoteClick, onToggleStar, onTogglePin, isMobile, showSenderInfo, onPreview
 }) {
     const [hovered, setHovered] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
@@ -520,6 +526,7 @@ function MessageBubble({
                             transition: 'transform 0.1s, opacity 0.2s',
                             position: 'relative',
                             opacity: msg.is_sending ? 0.7 : 1,
+                            border: msg.is_pinned ? '2px solid #0D9488' : (isOwn ? '1px solid var(--ws-border)' : 'none'),
                         }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.01)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -529,6 +536,9 @@ function MessageBubble({
                                 part.startsWith('@')
                                     ? <span key={i} style={{ fontWeight: 600, opacity: 0.9 }}>{part}</span>
                                     : <span key={i}>{part}</span>
+                            )}
+                            {msg.is_pinned && (
+                                <span style={{ marginLeft: 6, color: '#0D9488', fontSize: 12 }} title="Pinned to Board">📌</span>
                             )}
                         </div>
                         <AttachmentPreview attachments={msg.attachments} isOwn={isOwn} onPreview={onPreview} />
@@ -548,6 +558,8 @@ function MessageBubble({
                                 onReply={() => { onReply(msg); closeMenu(); }}
                                 onForward={() => { onForward(msg); closeMenu(); }}
                                 onToggleStar={() => { onToggleStar(msg); closeMenu(); }}
+                                isPinned={msg.is_pinned}
+                                onTogglePin={() => { onTogglePin(msg); closeMenu(); }}
                             />
                         )}
                     </div>
@@ -831,6 +843,77 @@ function SharedFilesView({ spaceId, conversationId, onPreview, isMobile }) {
     );
 }
 
+function BoardPanel({ spaceId, conversationId, onSelect, onClose }) {
+    const [pinned, setPinned] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const { onMessagePinned, onMessageUnpinned } = useSocket();
+
+    const fetchPinned = () => {
+        setLoading(true);
+        getPinnedMessages(spaceId, conversationId)
+            .then(data => setPinned(data))
+            .catch(err => console.error('Failed to fetch pinned messages:', err))
+            .finally(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchPinned();
+    }, [spaceId, conversationId]);
+
+    useEffect(() => {
+        const cleanups = [
+            onMessagePinned(() => fetchPinned()),
+            onMessageUnpinned(() => fetchPinned())
+        ];
+        return () => cleanups.forEach(fn => fn?.());
+    }, [onMessagePinned, onMessageUnpinned, spaceId, conversationId]);
+
+    return (
+        <div style={{ width: 320, borderLeft: '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ws-text)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>📌</span> Board
+                </h3>
+                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 16 }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+                {loading ? (
+                    <div style={{ padding: 20, textAlign: 'center', color: 'var(--ws-text-muted)' }}>Loading board...</div>
+                ) : pinned.length === 0 ? (
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.5 }}>📌</div>
+                        <p style={{ fontSize: 14, color: 'var(--ws-text)', fontWeight: 600, margin: '0 0 4px' }}>No pinned messages</p>
+                        <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0 }}>Pin important messages to keep them here for everyone to see.</p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {pinned.map(msg => (
+                            <button key={msg.id} onClick={() => onSelect(msg.id)} style={{
+                                width: '100%', padding: '12px', borderRadius: 12, background: 'var(--ws-surface-2)',
+                                border: '1px solid var(--ws-border)', textAlign: 'left', cursor: 'pointer',
+                                transition: 'transform 0.1s'
+                            }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                    <Avatar initials={initials(msg.sender_name)} size={20} color="#0D9488" avatarUrl={msg.avatar_url} />
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ws-text)' }}>{msg.sender_name}</span>
+                                    <span style={{ fontSize: 10, color: 'var(--ws-text-muted)', marginLeft: 'auto' }}>{new Date(msg.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p style={{ margin: 0, fontSize: 13, color: 'var(--ws-text)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {msg.content}
+                                </p>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function ChatArea({
     activeView, title, isSpace, messages, onSend, onEdit, onDelete, onReact, onRemoveReact,
     messagesLoading, hasMore, onLoadMore, currentUserId, allSpaces, dmUsers, onForwardMessage,
@@ -885,6 +968,7 @@ export default function ChatArea({
     const [uploadingFile, setUploadingFile] = useState(false);
     const [infoMessage, setInfoMessage] = useState(null);
     const [forwardMessage, setForwardMessage] = useState(null);
+    const [showBoard, setShowBoard] = useState(false);
 
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
@@ -892,6 +976,18 @@ export default function ChatArea({
     const fileInputRef = useRef(null);
     const searchTimerRef = useRef(null);
     const messageRefs = useRef({});
+
+    const onTogglePin = async (msg) => {
+        try {
+            if (msg.is_pinned) {
+                await unpinMessage(msg.id);
+            } else {
+                await pinMessage(msg.id);
+            }
+        } catch (err) {
+            console.error('Failed to toggle pin:', err);
+        }
+    };
 
     const scrollToMessage = (msgId) => {
         const el = document.getElementById(`message-${msgId}`);
@@ -1141,6 +1237,10 @@ export default function ChatArea({
                             </svg>
                             Search
                         </button>
+                        <button onClick={() => setShowBoard(p => !p)} style={iconBtn(showBoard)} title="Board">
+                            <span style={{ fontSize: 16 }}>📌</span>
+                            Board
+                        </button>
                         {isSpace && memberCount > 0 && (
                             <button onClick={() => setShowMembers(p => !p)} style={iconBtn(showMembers)}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1306,6 +1406,7 @@ export default function ChatArea({
                                                 onForward={setForwardMessage}
                                                 onQuoteClick={scrollToMessage}
                                                 onToggleStar={onToggleStar}
+                                                onTogglePin={onTogglePin}
                                                 isMobile={isMobile}
                                                 showSenderInfo={showSenderInfo}
                                                 onPreview={setPreviewFile}
@@ -1357,6 +1458,7 @@ export default function ChatArea({
                                                     onForward={setForwardMessage}
                                                     onQuoteClick={scrollToMessage}
                                                     onToggleStar={onToggleStar}
+                                                    onTogglePin={onTogglePin}
                                                     isMobile={isMobile}
                                                     showSenderInfo={showSenderInfo}
                                                     onPreview={setPreviewFile}
@@ -1517,6 +1619,16 @@ export default function ChatArea({
                         ))}
                     </div>
                 </div>
+            )}
+            
+            {/* Right Sidebar: Board */}
+            {showBoard && (
+                <BoardPanel 
+                    spaceId={spaceId} 
+                    conversationId={dmConversationId} 
+                    onSelect={scrollToMessage}
+                    onClose={() => setShowBoard(false)}
+                />
             )}
 
             {/* Modals */}

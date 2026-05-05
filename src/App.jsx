@@ -48,6 +48,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     onDMJoined, onTypingUpdate, emitTyping, onlineUsers,
     onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged,
     onReceiptUpdated, emitMarkDelivered, emitMarkSeen,
+    onMessagePinned, onMessageUnpinned,
     emitStatusChange,
   } = useSocket();
 
@@ -172,6 +173,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       source: m.source,
       sourceId: m.sourceId || m.space_id || m.dm_partner_id || m.sender_id,
       sourceType: m.sourceType || (m.space_id ? 'space' : 'dm'),
+      is_pinned: !!m.is_pinned,
     };
 
   };
@@ -331,6 +333,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       onReceiptUpdated(({ messageId, receipts }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
       }),
+      onMessagePinned(({ messageId, is_pinned }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_pinned } : m));
+      }),
+      onMessageUnpinned(({ messageId, is_pinned }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_pinned } : m));
+      }),
     ];
     return () => { leaveSpace(activeSpace.id); cleanups.forEach(fn => fn?.()); };
   }, [activeSpace, activeView, connected]);
@@ -395,6 +403,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }),
       onReceiptUpdated(({ messageId, receipts }) => {
         setMessages(prev => prev.map(m => m.id === messageId ? { ...m, receipts } : m));
+      }),
+      onMessagePinned(({ messageId, is_pinned }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_pinned } : m));
+      }),
+      onMessageUnpinned(({ messageId, is_pinned }) => {
+        setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_pinned } : m));
       }),
     ];
     return () => cleanups.forEach(fn => fn?.());

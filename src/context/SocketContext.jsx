@@ -219,6 +219,8 @@ export function SocketProvider({ children }) {
   const onSpacePreviewUpdated = (cb) => on('space:preview_updated', cb);
   const onUserRoleChanged  = (cb) => on('user:role_changed',  cb);
   const onReceiptUpdated   = (cb) => on('receipt:updated',   cb);
+  const onMessagePinned    = (cb) => on('message:pinned',    cb);
+  const onMessageUnpinned  = (cb) => on('message:unpinned',  cb);
 
   // Mark message as delivered
   const emitMarkDelivered = ({ messageId, spaceId, conversationId }) =>
@@ -292,6 +294,7 @@ export function SocketProvider({ children }) {
       onNewMessage, onMessageEdited, onMessageDeleted,
       onReactionUpdated, onDMJoined, onTypingUpdate,
       onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged, onReceiptUpdated,
+      onMessagePinned, onMessageUnpinned,
       emitMarkDelivered, emitMarkSeen,
     }}>
       {children}

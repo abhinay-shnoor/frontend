@@ -61,3 +61,16 @@ export const getAttachments = (spaceId = null, conversationId = null) => {
   if (conversationId) url += `&conversationId=${conversationId}`;
   return api.get(url).then(r => r.data);
 };
+
+export const getPinnedMessages = (spaceId = null, conversationId = null) => {
+  let url = '/api/pinned?';
+  if (spaceId) url += `spaceId=${spaceId}`;
+  if (conversationId) url += `&conversationId=${conversationId}`;
+  return api.get(url).then(r => r.data);
+};
+
+export const pinMessage = (msgId) =>
+  api.post(`/api/messages/${msgId}/pin`).then(r => r.data);
+
+export const unpinMessage = (msgId) =>
+  api.delete(`/api/messages/${msgId}/pin`).then(r => r.data);
