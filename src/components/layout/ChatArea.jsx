@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
 import { searchMessages, uploadFile, downloadAttachment, getAttachments, getPinnedMessages, pinMessage, unpinMessage } from '../../api/messages.js';
+import { useSocket } from '../../context/SocketContext.jsx';
 import { formatDateLabel } from '../../utils/dateUtils.js';
 import VoiceRecorder from '../chat/VoiceRecorder.jsx';
 import VoiceMessagePlayer from '../chat/VoiceMessagePlayer.jsx';
@@ -413,6 +414,21 @@ function MessageBubble({
     totalMembers, isSpace, onShowInfo, onDeleteMessage, onHideMessage, onForward, onReply,
     onQuoteClick, onToggleStar, onTogglePin, isMobile, showSenderInfo, onPreview
 }) {
+    if (msg.is_system) {
+        return (
+            <div style={{
+                display: 'flex', justifyContent: 'center', margin: '12px 0', width: '100%'
+            }}>
+                <div style={{
+                    fontSize: 12, fontWeight: 500, color: 'var(--ws-text-muted)',
+                    background: 'var(--ws-surface-2)', padding: '4px 16px', borderRadius: 20,
+                    border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', gap: 6
+                }}>
+                    {msg.text}
+                </div>
+            </div>
+        );
+    }
     const [hovered, setHovered] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
     const [menuPos, setMenuPos] = useState(null);

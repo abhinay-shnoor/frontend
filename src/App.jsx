@@ -174,6 +174,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       sourceId: m.sourceId || m.space_id || m.dm_partner_id || m.sender_id,
       sourceType: m.sourceType || (m.space_id ? 'space' : 'dm'),
       is_pinned: !!m.is_pinned,
+      is_system: !!m.is_system,
     };
 
   };
