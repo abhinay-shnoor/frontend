@@ -1253,6 +1253,12 @@ export default function ChatArea({
                             </svg>
                             Search
                         </button>
+                        <button onClick={() => setActiveTab(p => p === 'messages' ? 'shared' : 'messages')} style={iconBtn(activeTab === 'shared')} title="Shared Files">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                            Shared
+                        </button>
                         <button onClick={() => setShowBoard(p => !p)} style={iconBtn(showBoard)} title="Board">
                             <span style={{ fontSize: 16 }}>📌</span>
                             Board
@@ -1284,41 +1290,7 @@ export default function ChatArea({
                     </div>
                 </div>
 
-                {/* Tab Switcher */}
-                <div style={{ display: 'flex', padding: '0 16px', borderBottom: '0.5px solid var(--ws-border)', gap: 24, background: 'var(--ws-bg)' }}>
-                    <button 
-                        onClick={() => setActiveTab('messages')}
-                        style={{
-                            padding: '12px 4px',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: activeTab === 'messages' ? '#0D9488' : 'var(--ws-text-muted)',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: activeTab === 'messages' ? '2px solid #0D9488' : '2px solid transparent',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Messages
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('shared')}
-                        style={{
-                            padding: '12px 4px',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: activeTab === 'shared' ? '#0D9488' : 'var(--ws-text-muted)',
-                            background: 'none',
-                            border: 'none',
-                            borderBottom: activeTab === 'shared' ? '2px solid #0D9488' : '2px solid transparent',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Shared
-                    </button>
-                </div>
+
 
                 {/* Search Bar Overlay */}
                 {activeTab === 'messages' && showSearch && (
