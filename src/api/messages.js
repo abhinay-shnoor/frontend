@@ -54,3 +54,10 @@ export const downloadAttachment = (url, name) =>
     responseType: 'blob',
     timeout: 60000, // 60s timeout for large files
   });
+
+export const getAttachments = (spaceId = null, conversationId = null) => {
+  let url = '/api/attachments?';
+  if (spaceId) url += `spaceId=${spaceId}`;
+  if (conversationId) url += `&conversationId=${conversationId}`;
+  return api.get(url).then(r => r.data);
+};

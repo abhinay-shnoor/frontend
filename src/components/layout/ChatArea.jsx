@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import Avatar from '../ui/Avatar.jsx';
 import EmojiPicker from '../ui/EmojiPicker.jsx';
-import { searchMessages, uploadFile, downloadAttachment } from '../../api/messages.js';
+import { searchMessages, uploadFile, downloadAttachment, getAttachments } from '../../api/messages.js';
 import { formatDateLabel } from '../../utils/dateUtils.js';
 import VoiceRecorder from '../chat/VoiceRecorder.jsx';
 import VoiceMessagePlayer from '../chat/VoiceMessagePlayer.jsx';
@@ -722,6 +722,115 @@ function Highlight({ text = '', highlight = '' }) {
     );
 }
 
+function SharedFilesView({ spaceId, conversationId, onPreview, isMobile }) {
+    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setLoading(true);
+        getAttachments(spaceId, conversationId)
+            .then(data => setFiles(data))
+            .catch(err => console.error('Failed to fetch attachments:', err))
+            .finally(() => setLoading(false));
+    }, [spaceId, conversationId]);
+
+    if (loading) {
+        return (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-muted)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'spin 1s linear infinite' }}>
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    <span>Loading shared files...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (files.length === 0) {
+        return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-muted)', padding: 40, textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }}>📂</div>
+                <h3 style={{ margin: '0 0 8px', color: 'var(--ws-text)' }}>No shared files yet</h3>
+                <p style={{ margin: 0, fontSize: 14 }}>All images, PDFs, and documents sent in this chat will appear here.</p>
+            </div>
+        );
+    }
+
+    const getFileIcon = (url, name, type) => {
+        const uExt = (url || '').split('?')[0].split('.').pop().toLowerCase();
+        const nExt = (name || '').split('.').pop().toLowerCase();
+        const isPdf = uExt === 'pdf' || nExt === 'pdf' || type?.toLowerCase().includes('pdf');
+        
+        if (isPdf) return '📄';
+        if (['doc', 'docx'].includes(uExt) || ['doc', 'docx'].includes(nExt)) return '📝';
+        if (['xls', 'xlsx', 'csv'].includes(uExt) || ['xls', 'xlsx', 'csv'].includes(nExt)) return '📊';
+        if (['zip', 'rar', '7z'].includes(uExt) || ['zip', 'rar', '7z'].includes(nExt)) return '📦';
+        return '📎';
+    };
+
+    const isImageFile = (url, name, type) => {
+        const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'];
+        const uExt = (url || '').split('?')[0].split('.').pop().toLowerCase();
+        const nExt = (name || '').split('.').pop().toLowerCase();
+        return (imageExts.includes(uExt) || imageExts.includes(nExt) || type?.startsWith('image/')) && !(uExt === 'pdf' || nExt === 'pdf' || type?.toLowerCase().includes('pdf'));
+    };
+
+    return (
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? 12 : 24 }}>
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? '140px' : '180px'}, 1fr))`, 
+                gap: isMobile ? 12 : 20 
+            }}>
+                {files.map((file, i) => {
+                    const isImg = isImageFile(file.url, file.name, file.type);
+                    return (
+                        <div 
+                            key={i} 
+                            onClick={() => onPreview(file)}
+                            style={{ 
+                                background: 'var(--ws-surface)', 
+                                border: '1px solid var(--ws-border)', 
+                                borderRadius: 12, 
+                                overflow: 'hidden', 
+                                cursor: 'pointer',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                position: 'relative'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-4px)';
+                                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        >
+                            <div style={{ height: 120, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                {isImg ? (
+                                    <img src={file.url} alt={file.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ fontSize: 40 }}>{getFileIcon(file.url, file.name, file.type)}</div>
+                                )}
+                            </div>
+                            <div style={{ padding: 12 }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }} title={file.name}>
+                                    {file.name}
+                                </div>
+                                <div style={{ fontSize: 11, color: 'var(--ws-text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                                    <span style={{ maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.senderName}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function ChatArea({
     activeView, title, isSpace, messages, onSend, onEdit, onDelete, onReact, onRemoveReact,
     messagesLoading, hasMore, onLoadMore, currentUserId, allSpaces, dmUsers, onForwardMessage,
@@ -731,6 +840,7 @@ export default function ChatArea({
     isMobile,
 }) {
     const [previewFile, setPreviewFile] = useState(null);
+    const [activeTab, setActiveTab] = useState('messages');
     const memberCount = spaceMembers?.length || 0;
     const [loadingMore, setLoadingMore] = useState(false);
     const [input, setInput] = useState('');
@@ -1058,8 +1168,44 @@ export default function ChatArea({
                     </div>
                 </div>
 
+                {/* Tab Switcher */}
+                <div style={{ display: 'flex', padding: '0 16px', borderBottom: '0.5px solid var(--ws-border)', gap: 24, background: 'var(--ws-bg)' }}>
+                    <button 
+                        onClick={() => setActiveTab('messages')}
+                        style={{
+                            padding: '12px 4px',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: activeTab === 'messages' ? '#0D9488' : 'var(--ws-text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'messages' ? '2px solid #0D9488' : '2px solid transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Messages
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('shared')}
+                        style={{
+                            padding: '12px 4px',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: activeTab === 'shared' ? '#0D9488' : 'var(--ws-text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'shared' ? '2px solid #0D9488' : '2px solid transparent',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Shared
+                    </button>
+                </div>
+
                 {/* Search Bar Overlay */}
-                {showSearch && (
+                {activeTab === 'messages' && showSearch && (
                     <div style={{ padding: '8px 16px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface)' }}>
                         <input
                             value={searchQuery}
@@ -1072,7 +1218,7 @@ export default function ChatArea({
                 )}
 
                 {/* Search Results Panel */}
-                {showSearch && (searchQuery.trim() || searchLoading) && (
+                {activeTab === 'messages' && showSearch && (searchQuery.trim() || searchLoading) && (
                     <SearchResultsPanel
                         results={searchResults}
                         query={searchQuery}
@@ -1088,7 +1234,9 @@ export default function ChatArea({
                     />
                 )}
 
-                {/* Messages Scrolling Area */}
+                {activeTab === 'messages' ? (
+                    <>
+                        {/* Messages Scrolling Area */}
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
@@ -1339,6 +1487,15 @@ export default function ChatArea({
                         )}
                     </div>
                 </div>
+                    </>
+                ) : (
+                    <SharedFilesView 
+                        spaceId={spaceId} 
+                        conversationId={dmConversationId} 
+                        onPreview={setPreviewFile} 
+                        isMobile={isMobile}
+                    />
+                )}
             </div>
 
             {/* Right Sidebar: Members (only for spaces) */}
