@@ -49,3 +49,18 @@ export const archiveChat = (chat_id, chat_type) =>
 
 export const unarchiveChat = (chat_id, chat_type) =>
   api.delete(`/api/users/me/archived-chats/${chat_type}/${chat_id}`).then(r => r.data);
+
+export const getLockedChats = () =>
+  api.get('/api/users/me/locked-chats').then(r => r.data);
+
+export const lockChat = (chat_id, chat_type) =>
+  api.post('/api/users/me/locked-chats', { chat_id, chat_type }).then(r => r.data);
+
+export const unlockChat = (chat_id, chat_type) =>
+  api.delete(`/api/users/me/locked-chats/${chat_type}/${chat_id}`).then(r => r.data);
+
+export const setPin = (pin) =>
+  api.post('/api/users/me/pin', { pin }).then(r => r.data);
+
+export const verifyPin = (pin) =>
+  api.post('/api/users/me/pin/verify', { pin }).then(r => r.data);

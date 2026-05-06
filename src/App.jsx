@@ -31,10 +31,12 @@ import {
   deleteSpaceMessage,
   getSpaceMembers
 } from './api/spaces.js';
-import { getAllUsers, getDMMessages, sendDMMessage, getArchivedChats, archiveChat, unarchiveChat } from './api/users.js';
+import { getAllUsers, getDMMessages, sendDMMessage, getArchivedChats, archiveChat, unarchiveChat, getLockedChats, lockChat, unlockChat } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions, markMentionsRead, starMessage, unstarMessage, getStarredMessages } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import StarredMessagesFeed from './components/layout/StarredMessagesFeed.jsx';
+import PinSetupModal from './components/ui/PinSetupModal.jsx';
+import PinVerifyModal from './components/ui/PinVerifyModal.jsx';
 import api from './api/axios.js';
 import { requestNotificationPermission, showNotification } from './utils/notifications.js';
 
@@ -84,6 +86,17 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeDMConversationId, setActiveDMConversationId] = useState(null);
   const [highlightMessageId, setHighlightMessageId] = useState(null);
+
+  const [lockedChats, setLockedChats] = useState([]);
+  const [tempUnlockedChats, setTempUnlockedChats] = useState([]);
+  const [pendingSelection, setPendingSelection] = useState(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showPinSetupModal, setShowPinSetupModal] = useState(false);
+
+  const isChatLocked = (chatId, chatType) => {
+    return lockedChats.some(c => c.chat_id === chatId && c.chat_type === chatType) &&
+           !tempUnlockedChats.some(c => c.id === chatId && c.type === chatType);
+  };
 
   const handleStatusChange = (status, expiry = null) => {
     setCurrentStatus(status);
@@ -239,6 +252,20 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       }).catch(err => console.error('Failed to fetch archived chats:', err));
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getLockedChats().then(data => {
+        setLockedChats(data || []);
+      }).catch(err => console.error('Failed to fetch locked chats:', err));
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user && !user.hasPin && sessionStorage.getItem('pin_prompt_dismissed') !== 'true') {
+      setShowPinSetupModal(true);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!connected) return;
@@ -507,6 +534,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   }));
 
   const handleSelectSpace = async (space) => {
+    if (isChatLocked(space.id, 'space')) {
+      setPendingSelection({ type: 'space', item: space });
+      setShowVerifyModal(true);
+      return;
+    }
     setActiveSpace(space); setActiveDM(null); setActiveView('space'); setSpaceMembers([]);
     setUnreadCounts(prev => ({ ...prev, [`space_${space.id}`]: 0 }));
     if (isMobile) setIsSidebarOpen(false);
@@ -514,9 +546,39 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleSelectDM = (dmUser) => {
+    if (isChatLocked(dmUser.id, 'dm')) {
+      setPendingSelection({ type: 'dm', item: dmUser });
+      setShowVerifyModal(true);
+      return;
+    }
     setActiveDM(dmUser); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null);
     setUnreadCounts(prev => ({ ...prev, [`dm_${dmUser.id}`]: 0 }));
     if (isMobile) setIsSidebarOpen(false);
+  };
+
+  const handleVerifySuccess = () => {
+    if (pendingSelection) {
+      const { type, item } = pendingSelection;
+      setTempUnlockedChats(prev => [...prev, { id: item.id, type }]);
+      
+      if (type === 'space') {
+        setActiveSpace(item); setActiveDM(null); setActiveView('space'); setSpaceMembers([]);
+        setUnreadCounts(prev => ({ ...prev, [`space_${item.id}`]: 0 }));
+        if (isMobile) setIsSidebarOpen(false);
+        getSpaceMembers(item.id).then(setSpaceMembers).catch(() => setSpaceMembers([]));
+      } else if (type === 'dm') {
+        setActiveDM(item); setActiveSpace(null); setActiveView('dm'); setActiveDMConversationId(null);
+        setUnreadCounts(prev => ({ ...prev, [`dm_${item.id}`]: 0 }));
+        if (isMobile) setIsSidebarOpen(false);
+      }
+    }
+    setPendingSelection(null);
+    setShowVerifyModal(false);
+  };
+
+  const handleVerifyClose = () => {
+    setPendingSelection(null);
+    setShowVerifyModal(false);
   };
 
   const handleCreateSpace = () => {
@@ -661,6 +723,34 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to unarchive chat', 'error'); }
   };
 
+  const handleLockChat = async (id, type) => {
+    try {
+      await lockChat(id, type);
+      setLockedChats(prev => [...prev, { chat_id: id, chat_type: type }]);
+      if ((type === 'space' && activeSpace?.id === id) || (type === 'dm' && activeDM?.id === id)) {
+        setActiveSpace(null);
+        setActiveDM(null);
+        setActiveView('home');
+      }
+      showToast('Chat locked', 'success');
+    } catch (err) {
+      console.error('Failed to lock chat:', err);
+      showToast('Failed to lock chat', 'error');
+    }
+  };
+
+  const handleUnlockChatPermanently = async (id, type) => {
+    try {
+      await unlockChat(id, type);
+      setLockedChats(prev => prev.filter(c => !(c.chat_id === id && c.chat_type === type)));
+      setTempUnlockedChats(prev => prev.filter(c => !(c.id === id && c.type === type)));
+      showToast('Chat unlocked permanently', 'success');
+    } catch (err) {
+      console.error('Failed to unlock chat permanently:', err);
+      showToast('Failed to unlock chat permanently', 'error');
+    }
+  };
+
   const handleForwardMessage = async (target, message) => {
     try {
       let result;
@@ -744,9 +834,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 if (isMobile) setIsSidebarOpen(false);
               }}
               onCreateSpace={handleCreateSpace}
-              allSpaces={formattedSpaces.filter(s => !archivedChats.some(a => a.chat_id === s.id && a.chat_type === 'space'))}
+              allSpaces={formattedSpaces.filter(s => !archivedChats.some(a => a.chat_id === s.id && a.chat_type === 'space') && !isChatLocked(s.id, 'space'))}
               currentUser={currentUser}
-              dmUsers={dmUsers.filter(d => !archivedChats.some(a => a.chat_id === d.id && a.chat_type === 'dm'))}
+              dmUsers={dmUsers.filter(d => !archivedChats.some(a => a.chat_id === d.id && a.chat_type === 'dm') && !isChatLocked(d.id, 'dm'))}
               unreadMentions={unreadMentions}
               unreadCounts={unreadCounts}
               isMobile={isMobile}
@@ -769,6 +859,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 archivedChats={archivedChats}
                 onArchiveChat={handleArchiveChat}
                 onUnarchiveChat={handleUnarchiveChat}
+                lockedChats={lockedChats}
+                tempUnlockedChats={tempUnlockedChats}
+                onLockChat={handleLockChat}
+                onUnlockChatPermanently={handleUnlockChatPermanently}
                 selectedId={activeSpace?.id || activeDM?.id}
                 navSearchQuery={navSearchQuery} mentionedMessages={mentionedMessages}
                 allSpaces={formattedSpaces} 
@@ -871,6 +965,23 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       </div>
       {showProfileSettings && <ProfileSettingsModal onClose={() => setShowProfileSettings(false)} />}
       {showChatSettings && <ChatSettingsModal onClose={() => setShowChatSettings(false)} />}
+      {showVerifyModal && (
+        <PinVerifyModal 
+          onSuccess={handleVerifySuccess} 
+          onClose={handleVerifyClose} 
+          chatName={pendingSelection?.item?.name || 'Private Chat'} 
+        />
+      )}
+      {showPinSetupModal && (
+        <PinSetupModal 
+          onClose={(pinCreated) => {
+            setShowPinSetupModal(false);
+            if (pinCreated) {
+              refreshUser();
+            }
+          }} 
+        />
+      )}
     </div>
   );
 }
