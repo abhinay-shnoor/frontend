@@ -61,8 +61,8 @@ export default function ConversationList({
   const isLocked = (item) => (lockedChats || []).some(c => c.chat_id === item.id && c.chat_type === item.type);
   const isTempUnlocked = (item) => (tempUnlockedChats || []).some(c => c.id === item.id && c.type === item.type);
 
-  const activeChats = filtered.filter(i => !isArchived(i) && (!isLocked(i) || isTempUnlocked(i)));
-  const archivedList = filtered.filter(i => isArchived(i) && (!isLocked(i) || isTempUnlocked(i)));
+  const activeChats = filtered.filter(i => !isArchived(i) && !isLocked(i));
+  const archivedList = filtered.filter(i => isArchived(i) && !isLocked(i));
   const lockedList = filtered.filter(i => isLocked(i));
 
   const toggleMenu = (e, id) => {

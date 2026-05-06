@@ -94,7 +94,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [showPinSetupModal, setShowPinSetupModal] = useState(false);
 
   const isChatLocked = (chatId, chatType) => {
-    return lockedChats.some(c => c.chat_id === chatId && c.chat_type === chatType) &&
+    return lockedChats.some(c => c.chat_id === chatId && c.chat_type === chatType);
+  };
+
+  const isPinRequired = (chatId, chatType) => {
+    return isChatLocked(chatId, chatType) &&
            !tempUnlockedChats.some(c => c.id === chatId && c.type === chatType);
   };
 
@@ -534,7 +538,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   }));
 
   const handleSelectSpace = async (space) => {
-    if (isChatLocked(space.id, 'space')) {
+    if (isPinRequired(space.id, 'space')) {
       setPendingSelection({ type: 'space', item: space });
       setShowVerifyModal(true);
       return;
@@ -546,7 +550,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleSelectDM = (dmUser) => {
-    if (isChatLocked(dmUser.id, 'dm')) {
+    if (isPinRequired(dmUser.id, 'dm')) {
       setPendingSelection({ type: 'dm', item: dmUser });
       setShowVerifyModal(true);
       return;
