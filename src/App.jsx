@@ -497,7 +497,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     const cleanup = onNewMessage((msg) => {
       updateConversationPreviews(msg);
 
-      if (msg.sender_id === user.id) return;
+      if (msg.sender_id?.toString() === user.id?.toString()) return;
 
       const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
 
@@ -515,12 +515,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                           (msg.conversation_id && msg.sender_id && isLocked(msg.sender_id, 'dm'));
 
       if (msg.space_id && !msgIsArchived) {
-        if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id !== msg.space_id) {
+        if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id?.toString() !== msg.space_id.toString()) {
           setUnreadCounts(prev => ({ ...prev, [`space_${msg.space_id}`]: (prev[`space_${msg.space_id}`] || 0) + 1 }));
         }
       }
       if (msg.conversation_id && msg.sender_id && !msgIsArchived) {
-        if (activeViewRef.current !== 'dm' || activeDMRef.current?.id !== msg.sender_id) {
+        if (activeViewRef.current !== 'dm' || activeDMRef.current?.id?.toString() !== msg.sender_id.toString()) {
           setUnreadCounts(prev => ({ ...prev, [`dm_${msg.sender_id}`]: (prev[`dm_${msg.sender_id}`] || 0) + 1 }));
         }
       }
@@ -530,15 +530,26 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         if (activeViewRef.current !== 'mentions') setUnreadMentions(prev => prev + 1);
       }
       const isFocused = document.visibilityState === 'visible' && document.hasFocus();
-      const shouldNotify = currentStatusRef.current === 'active' && !msgIsArchived &&
-        ((activeViewRef.current !== (msg.space_id ? 'space' : 'dm') || 
-         (msg.space_id ? activeSpaceRef.current?.id !== msg.space_id : activeDMRef.current?.id !== msg.sender_id)) || !isFocused);
+      
+      const isSameSpace = msg.space_id && activeSpaceRef.current?.id?.toString() === msg.space_id.toString();
+      const isSameDM = msg.sender_id && activeDMRef.current?.id?.toString() === msg.sender_id.toString();
+      const isViewingCurrentChat = (msg.space_id && activeViewRef.current === 'space' && isSameSpace) ||
+                                   (msg.sender_id && activeViewRef.current === 'dm' && isSameDM);
+
+      const shouldNotify = currentStatusRef.current === 'active' && !msgIsArchived && (!isViewingCurrentChat || !isFocused);
 
       if (shouldNotify) {
+        let notificationShown = null;
         if (msgIsLocked) {
-          showNotification('Secure Message', { body: 'Unlock chat to view message details', icon: '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          notificationShown = showNotification('Secure Message', { body: 'Unlock chat to view message details', icon: '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          if (!notificationShown) {
+            showToast('New secure message received', 'info');
+          }
         } else {
-          showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          notificationShown = showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          if (!notificationShown) {
+            showToast(`New message from ${msg.sender_name}: ${content.substring(0, 35)}${content.length > 35 ? '...' : ''}`, 'info');
+          }
         }
       }
     });
