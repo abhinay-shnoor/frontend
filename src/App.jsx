@@ -31,7 +31,7 @@ import {
   deleteSpaceMessage,
   getSpaceMembers
 } from './api/spaces.js';
-import { getAllUsers, getDMMessages, sendDMMessage } from './api/users.js';
+import { getAllUsers, getDMMessages, sendDMMessage, getArchivedChats, archiveChat, unarchiveChat } from './api/users.js';
 import { addReaction, removeReaction, getDMConversations, searchMessages, getMentions, markMentionsRead, starMessage, unstarMessage, getStarredMessages } from './api/messages.js';
 import MentionsActivityFeed from './components/layout/MentionsActivityFeed.jsx';
 import StarredMessagesFeed from './components/layout/StarredMessagesFeed.jsx';
@@ -139,13 +139,16 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [mentionedMessages, setMentionedMessages] = useState([]);
   const [unreadMentions, setUnreadMentions] = useState(0);
   const [starredMessages, setStarredMessages] = useState([]);
+  const [archivedChats, setArchivedChats] = useState([]);
 
   const activeViewRef = useRef(activeView);
   const activeSpaceRef = useRef(activeSpace);
   const activeDMRef = useRef(activeDM);
+  const archivedChatsRef = useRef(archivedChats);
   useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
   useEffect(() => { activeSpaceRef.current = activeSpace; }, [activeSpace]);
   useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
+  useEffect(() => { archivedChatsRef.current = archivedChats; }, [archivedChats]);
 
   const currentStatusRef = useRef(currentStatus);
   useEffect(() => { currentStatusRef.current = currentStatus; }, [currentStatus]);
@@ -229,6 +232,13 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    if (user?.id) {
+      getArchivedChats().then(data => {
+        setArchivedChats(data || []);
+      }).catch(err => console.error('Failed to fetch archived chats:', err));
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!connected) return;
@@ -453,23 +463,27 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
       const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
 
-      if (msg.space_id) {
+      const isArchived = (id, type) => archivedChatsRef.current.some(a => a.chat_id === id && a.chat_type === type);
+      const msgIsArchived = (msg.space_id && isArchived(msg.space_id, 'space')) || 
+                            (msg.conversation_id && msg.sender_id && isArchived(msg.sender_id, 'dm'));
+
+      if (msg.space_id && !msgIsArchived) {
         if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id !== msg.space_id) {
           setUnreadCounts(prev => ({ ...prev, [`space_${msg.space_id}`]: (prev[`space_${msg.space_id}`] || 0) + 1 }));
         }
       }
-      if (msg.conversation_id && msg.sender_id) {
+      if (msg.conversation_id && msg.sender_id && !msgIsArchived) {
         if (activeViewRef.current !== 'dm' || activeDMRef.current?.id !== msg.sender_id) {
           setUnreadCounts(prev => ({ ...prev, [`dm_${msg.sender_id}`]: (prev[`dm_${msg.sender_id}`] || 0) + 1 }));
         }
       }
-      if (isMentioned(content, !!msg.space_id)) {
+      if (isMentioned(content, !!msg.space_id) && !msgIsArchived) {
         const formatted = formatMsg(msg);
         setMentionedMessages(prev => [{ ...formatted, source: msg.space_id ? (spaces.find(s => s.id === msg.space_id)?.name || 'space') : 'Direct Message', sourceId: msg.space_id || msg.sender_id, sourceType: msg.space_id ? 'space' : 'dm' }, ...prev]);
         if (activeViewRef.current !== 'mentions') setUnreadMentions(prev => prev + 1);
       }
       const isFocused = document.visibilityState === 'visible' && document.hasFocus();
-      const shouldNotify = currentStatusRef.current === 'active' && 
+      const shouldNotify = currentStatusRef.current === 'active' && !msgIsArchived &&
         ((activeViewRef.current !== (msg.space_id ? 'space' : 'dm') || 
          (msg.space_id ? activeSpaceRef.current?.id !== msg.space_id : activeDMRef.current?.id !== msg.sender_id)) || !isFocused);
 
@@ -631,6 +645,22 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     } catch { showToast('Failed to update star status', 'error'); }
   };
 
+  const handleArchiveChat = async (id, type) => {
+    try {
+      await archiveChat(id, type);
+      setArchivedChats(prev => [...prev, { chat_id: id, chat_type: type }]);
+      showToast('Chat archived', 'success');
+    } catch { showToast('Failed to archive chat', 'error'); }
+  };
+
+  const handleUnarchiveChat = async (id, type) => {
+    try {
+      await unarchiveChat(id, type);
+      setArchivedChats(prev => prev.filter(a => !(a.chat_id === id && a.chat_type === type)));
+      showToast('Chat unarchived', 'success');
+    } catch { showToast('Failed to unarchive chat', 'error'); }
+  };
+
   const handleForwardMessage = async (target, message) => {
     try {
       let result;
@@ -714,9 +744,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                 if (isMobile) setIsSidebarOpen(false);
               }}
               onCreateSpace={handleCreateSpace}
-              allSpaces={formattedSpaces}
+              allSpaces={formattedSpaces.filter(s => !archivedChats.some(a => a.chat_id === s.id && a.chat_type === 'space'))}
               currentUser={currentUser}
-              dmUsers={dmUsers}
+              dmUsers={dmUsers.filter(d => !archivedChats.some(a => a.chat_id === d.id && a.chat_type === 'dm'))}
               unreadMentions={unreadMentions}
               unreadCounts={unreadCounts}
               isMobile={isMobile}
@@ -736,6 +766,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
                   if (item.type === 'space') { const s = formattedSpaces.find(s => s.id === item.id); if (s) handleSelectSpace(s); }
                   else { const d = dmUsers.find(d => d.id === item.id); if (d) handleSelectDM(d); }
                 }}
+                archivedChats={archivedChats}
+                onArchiveChat={handleArchiveChat}
+                onUnarchiveChat={handleUnarchiveChat}
                 selectedId={activeSpace?.id || activeDM?.id}
                 navSearchQuery={navSearchQuery} mentionedMessages={mentionedMessages}
                 allSpaces={formattedSpaces} 

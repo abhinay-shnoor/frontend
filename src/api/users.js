@@ -40,3 +40,12 @@ export const updateUserRole = (userId, role) =>
 
 export const updateUserStatus = (userId, is_active) =>
   api.patch(`/api/users/${userId}/status`, { is_active }).then(r => r.data);
+
+export const getArchivedChats = () =>
+  api.get('/api/users/me/archived-chats').then(r => r.data);
+
+export const archiveChat = (chat_id, chat_type) =>
+  api.post('/api/users/me/archived-chats', { chat_id, chat_type }).then(r => r.data);
+
+export const unarchiveChat = (chat_id, chat_type) =>
+  api.delete(`/api/users/me/archived-chats/${chat_type}/${chat_id}`).then(r => r.data);
