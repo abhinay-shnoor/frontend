@@ -262,7 +262,7 @@ export default function ConversationList({
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
                       background: selectedId === item.id ? 'rgba(26,115,232,0.09)' : 'none',
                       border: 'none', cursor: 'pointer', textAlign: 'left',
-                      borderBottom: '0.5px solid var(--ws-border)', opacity: 0.8
+                      borderBottom: '0.5px solid var(--ws-border)', opacity: item.unread > 0 ? 1 : 0.8
                     }}
                     onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
                     onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
@@ -281,15 +281,29 @@ export default function ConversationList({
                           statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
                         />
                       )}
+                      {item.unread > 0 && (
+                        <div style={{
+                          position: 'absolute', top: -5, right: -5,
+                          minWidth: 18, height: 18, borderRadius: 9,
+                          background: '#ea4335', color: '#fff', fontSize: 10, fontWeight: 800,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          padding: '0 4px', border: '2px solid var(--ws-bg)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          animation: 'popBadge 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}>
+                          <style>{`@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }`}</style>
+                          {item.unread > 99 ? '99+' : item.unread}
+                        </div>
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 800 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.isGroup ? `#${item.name}` : item.name}
                         </span>
-                        <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
+                        <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
                       </div>
-                      <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 400 }}>
+                      <p style={{ fontSize: 12, color: item.unread > 0 ? 'var(--ws-text)' : 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 600 : 400 }}>
                         {item.preview}
                       </p>
                     </div>

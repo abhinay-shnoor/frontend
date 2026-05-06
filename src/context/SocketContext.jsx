@@ -230,6 +230,13 @@ export function SocketProvider({ children }) {
   const emitMarkSeen = ({ messageId, spaceId, conversationId }) =>
     emit('mark:seen', { messageId, spaceId, conversationId });
 
+  // Mark entire chat (space or DM) as read
+  const emitMarkSpaceRead = (spaceId) =>
+    emit('mark:space_read', spaceId);
+
+  const emitMarkDMRead = (conversationId) =>
+    emit('mark:dm_read', conversationId);
+
   // FIX 4: Helper to get a display status for a user
   // Returns: 'online' | 'away' | 'dnd' | 'offline'
   const getUserStatus = (userId) => {
@@ -296,6 +303,7 @@ export function SocketProvider({ children }) {
       onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged, onReceiptUpdated,
       onMessagePinned, onMessageUnpinned,
       emitMarkDelivered, emitMarkSeen,
+      emitMarkSpaceRead, emitMarkDMRead,
     }}>
       {children}
     </SocketContext.Provider>

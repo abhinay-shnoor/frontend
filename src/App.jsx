@@ -51,7 +51,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
     onDMPreviewUpdated, onSpacePreviewUpdated, onUserRoleChanged,
     onReceiptUpdated, emitMarkDelivered, emitMarkSeen,
     onMessagePinned, onMessageUnpinned,
-    emitStatusChange,
+    emitStatusChange, emitMarkSpaceRead, emitMarkDMRead,
   } = useSocket();
 
   const currentUser = {
@@ -236,6 +236,18 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   }, []);
 
   useEffect(() => {
+    const counts = {};
+    spaces.forEach(s => {
+      if (s.unread > 0) counts[`space_${s.id}`] = s.unread;
+    });
+    (dmConversations || []).forEach(d => {
+      const partnerId = d.partnerId || d.other_user_id || d.id;
+      if (d.unread > 0) counts[`dm_${partnerId}`] = d.unread;
+    });
+    setUnreadCounts(prev => ({ ...prev, ...counts }));
+  }, [spaces, dmConversations]);
+
+  useEffect(() => {
     if (user?.id) {
       getMentions().then(data => {
         if (data?.mentions) {
@@ -305,6 +317,7 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
         .catch(() => showToast('Failed to load messages', 'error'))
         .finally(() => setMessagesLoading(false));
       setUnreadCounts(prev => ({ ...prev, [`space_${activeSpace.id}`]: 0 }));
+      emitMarkSpaceRead(activeSpace.id);
     } else if (activeView === 'dm' && activeDM) {
       setMessagesLoading(true);
       getDMMessages(activeDM.id)
@@ -312,7 +325,10 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
           if (data) {
             setMessages(data.messages || []);
             setHasMore(data.hasMore || false);
-            if (data.conversationId) setActiveDMConversationId(data.conversationId);
+            if (data.conversationId) {
+              setActiveDMConversationId(data.conversationId);
+              emitMarkDMRead(data.conversationId);
+            }
           } else {
             setMessages([]);
             setHasMore(false);
@@ -514,12 +530,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const msgIsLocked = (msg.space_id && isLocked(msg.space_id, 'space')) || 
                           (msg.conversation_id && msg.sender_id && isLocked(msg.sender_id, 'dm'));
 
-      if (msg.space_id && !msgIsArchived) {
+      if (msg.space_id) {
         if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id?.toString() !== msg.space_id.toString()) {
           setUnreadCounts(prev => ({ ...prev, [`space_${msg.space_id}`]: (prev[`space_${msg.space_id}`] || 0) + 1 }));
         }
       }
-      if (msg.conversation_id && msg.sender_id && !msgIsArchived) {
+      if (msg.conversation_id && msg.sender_id) {
         if (activeViewRef.current !== 'dm' || activeDMRef.current?.id?.toString() !== msg.sender_id.toString()) {
           setUnreadCounts(prev => ({ ...prev, [`dm_${msg.sender_id}`]: (prev[`dm_${msg.sender_id}`] || 0) + 1 }));
         }
@@ -535,6 +551,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const isSameDM = msg.sender_id && activeDMRef.current?.id?.toString() === msg.sender_id.toString();
       const isViewingCurrentChat = (msg.space_id && activeViewRef.current === 'space' && isSameSpace) ||
                                    (msg.sender_id && activeViewRef.current === 'dm' && isSameDM);
+
+      if (isViewingCurrentChat && isFocused) {
+        if (msg.space_id) {
+          emitMarkSpaceRead(msg.space_id);
+        } else if (msg.conversation_id) {
+          emitMarkDMRead(msg.conversation_id);
+        }
+      }
 
       const shouldNotify = currentStatusRef.current === 'active' && !msgIsArchived && (!isViewingCurrentChat || !isFocused);
 
