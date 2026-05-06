@@ -22,6 +22,7 @@ export default function ConversationList({
   archivedChats = [], onArchiveChat, onUnarchiveChat
 }) {
   const [showMenuId, setShowMenuId] = useState(null);
+  const [showArchivedOnly, setShowArchivedOnly] = useState(false);
   const { getStatusColor, onlineUsers } = useSocket();
   const items = [
     ...allSpaces.map(s => ({
@@ -105,8 +106,10 @@ export default function ConversationList({
     <div className={className} style={{ display: 'flex', flexDirection: 'column', width: isMobile ? '100%' : 360, borderRight: isMobile ? 'none' : '0.5px solid var(--ws-border)', background: 'var(--ws-bg)', flexShrink: 0, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', height: 57, borderBottom: '0.5px solid var(--ws-border)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>Home</h2>
-          {(() => {
+          <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>
+            {showArchivedOnly ? 'Archived Chats' : 'Home'}
+          </h2>
+          {!showArchivedOnly && (() => {
             const otherCount = onlineUsers ? (onlineUsers.has(currentUserId) ? onlineUsers.size - 1 : onlineUsers.size) : 0;
             if (otherCount <= 0) return null;
             return (
@@ -127,138 +130,176 @@ export default function ConversationList({
             );
           })()}
         </div>
+        <button
+          onClick={() => setShowArchivedOnly(prev => !prev)}
+          title={showArchivedOnly ? "Show Home" : "Show Archived Chats"}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 32,
+            height: 32,
+            borderRadius: '50%',
+            background: showArchivedOnly ? 'rgba(26,115,232,0.15)' : 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: showArchivedOnly ? '#1a73e8' : 'var(--ws-text-muted)',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={e => {
+            if (!showArchivedOnly) e.currentTarget.style.background = 'var(--ws-hover)';
+          }}
+          onMouseLeave={e => {
+            if (!showArchivedOnly) e.currentTarget.style.background = 'none';
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+            <line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" strokeWidth="2" />
+            <line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <polyline points="9 14 12 17 15 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </svg>
+        </button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {activeChats.length === 0 && archivedList.length === 0 && (
-          <div style={{ padding: '40px 18px', textAlign: 'center' }}>
-            <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>No conversations yet</p>
-          </div>
-        )}
-        {activeChats.map(item => (
-          <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
-            <button onClick={() => onSelectConversation(item)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
-                background: selectedId === item.id ? 'rgba(26,115,232,0.09)' : 'none',
-                border: 'none', cursor: 'pointer', textAlign: 'left',
-                borderBottom: '0.5px solid var(--ws-border)',
-              }}
-              onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
-              onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
-            >
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                {item.isGroup ? (
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
-                    #{item.initials[0]}
-                  </div>
-                ) : (
-                  <Avatar 
-                    initials={item.initials} 
-                    color="#0D9488" 
-                    size={40} 
-                    avatarUrl={item.avatar_url} 
-                    statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
-                  />
-                )}
-                {item.unread > 0 && (
-                  <div style={{
-                    position: 'absolute', top: -5, right: -5,
-                    minWidth: 18, height: 18, borderRadius: 9,
-                    background: '#ea4335', color: '#fff', fontSize: 10, fontWeight: 800,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px', border: '2px solid var(--ws-bg)',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    animation: 'popBadge 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                  }}>
-                    <style>{`@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }`}</style>
-                    {item.unread > 99 ? '99+' : item.unread}
-                  </div>
-                )}
+        {showArchivedOnly ? (
+          <>
+            {archivedList.length === 0 ? (
+              <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                <p style={{ fontSize: 14, color: 'var(--ws-text)', fontWeight: 600, margin: '0 0 6px' }}>No archived chats</p>
+                <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>Chats you archive will appear here</p>
               </div>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 800 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {item.isGroup ? `#${item.name}` : item.name}
-                  </span>
-                  <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
-                </div>
-                <p style={{ fontSize: 12, color: item.unread > 0 ? 'var(--ws-text)' : 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 600 : 400 }}>
-                  {item.preview}
-                </p>
-              </div>
-            </button>
-            <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}>
-              <button onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: 'var(--ws-text-muted)', fontSize: 16 }}>⋮</button>
-              {showMenuId === `${item.type}-${item.id}` && (
-                <>
-                  <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} />
-                  <div style={{ position: 'absolute', right: 0, top: 24, background: 'var(--ws-surface)', border: '1px solid var(--ws-border)', borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 101, minWidth: 120, padding: 4 }}>
-                    <button onClick={(e) => { e.stopPropagation(); onArchiveChat?.(item.id, item.type); setShowMenuId(null); }} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: 'var(--ws-text)', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>Archive Chat</button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-        {archivedList.length > 0 && (
-          <div style={{ marginTop: 10 }}>
-            <div style={{ padding: '10px 18px', borderBottom: '0.5px solid var(--ws-border)', background: 'var(--ws-surface-2)' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ws-text-muted)' }}>Archived Chats</span>
-            </div>
-            {archivedList.map(item => (
-              <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
-                <button onClick={() => onSelectConversation(item)}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
-                    background: selectedId === item.id ? 'rgba(26,115,232,0.09)' : 'none',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    borderBottom: '0.5px solid var(--ws-border)', opacity: 0.7
-                  }}
-                  onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
-                  onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
-                >
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    {item.isGroup ? (
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
-                        #{item.initials[0]}
+            ) : (
+              archivedList.map(item => (
+                <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
+                  <button onClick={() => onSelectConversation(item)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
+                      background: selectedId === item.id ? 'rgba(26,115,232,0.09)' : 'none',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      borderBottom: '0.5px solid var(--ws-border)', opacity: 0.8
+                    }}
+                    onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
+                    onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
+                  >
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      {item.isGroup ? (
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
+                          #{item.initials[0]}
+                        </div>
+                      ) : (
+                        <Avatar 
+                          initials={item.initials} 
+                          color="#0D9488" 
+                          size={40} 
+                          avatarUrl={item.avatar_url} 
+                          statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
+                        />
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.isGroup ? `#${item.name}` : item.name}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
                       </div>
-                    ) : (
-                      <Avatar 
-                        initials={item.initials} 
-                        color="#0D9488" 
-                        size={40} 
-                        avatarUrl={item.avatar_url} 
-                        statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
-                      />
+                      <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 400 }}>
+                        {item.preview}
+                      </p>
+                    </div>
+                  </button>
+                  <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}>
+                    <button onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: 'var(--ws-text-muted)', fontSize: 16 }}>⋮</button>
+                    {showMenuId === `${item.type}-${item.id}` && (
+                      <>
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} />
+                        <div style={{ position: 'absolute', right: 0, top: 24, background: 'var(--ws-surface)', border: '1px solid var(--ws-border)', borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 101, minWidth: 130, padding: 4 }}>
+                          <button onClick={(e) => { e.stopPropagation(); onUnarchiveChat?.(item.id, item.type); setShowMenuId(null); }} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: 'var(--ws-text)', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>Unarchive Chat</button>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.isGroup ? `#${item.name}` : item.name}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--ws-text-muted)', fontWeight: 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
-                    </div>
-                    <p style={{ fontSize: 12, color: 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 400 }}>
-                      {item.preview}
-                    </p>
-                  </div>
-                </button>
-                <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}>
-                  <button onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: 'var(--ws-text-muted)', fontSize: 16 }}>⋮</button>
-                  {showMenuId === `${item.type}-${item.id}` && (
-                    <>
-                      <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} />
-                      <div style={{ position: 'absolute', right: 0, top: 24, background: 'var(--ws-surface)', border: '1px solid var(--ws-border)', borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 101, minWidth: 130, padding: 4 }}>
-                        <button onClick={(e) => { e.stopPropagation(); onUnarchiveChat?.(item.id, item.type); setShowMenuId(null); }} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: 'var(--ws-text)', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>Unarchive Chat</button>
-                      </div>
-                    </>
-                  )}
                 </div>
+              ))
+            )}
+          </>
+        ) : (
+          <>
+            {activeChats.length === 0 ? (
+              <div style={{ padding: '40px 18px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: 'var(--ws-text-muted)', margin: 0 }}>No conversations yet</p>
               </div>
-            ))}
-          </div>
+            ) : (
+              activeChats.map(item => (
+                <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
+                  <button onClick={() => onSelectConversation(item)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
+                      background: selectedId === item.id ? 'rgba(26,115,232,0.09)' : 'none',
+                      border: 'none', cursor: 'pointer', textAlign: 'left',
+                      borderBottom: '0.5px solid var(--ws-border)',
+                    }}
+                    onMouseEnter={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'var(--ws-hover)'; }}
+                    onMouseLeave={e => { if (selectedId !== item.id) e.currentTarget.style.background = 'none'; }}
+                  >
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      {item.isGroup ? (
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ws-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: 'var(--ws-text-muted)' }}>
+                          #{item.initials[0]}
+                        </div>
+                      ) : (
+                        <Avatar 
+                          initials={item.initials} 
+                          color="#0D9488" 
+                          size={40} 
+                          avatarUrl={item.avatar_url} 
+                          statusColor={item.statusColor || getStatusColor(item.partnerId || item.id)} 
+                        />
+                      )}
+                      {item.unread > 0 && (
+                        <div style={{
+                          position: 'absolute', top: -5, right: -5,
+                          minWidth: 18, height: 18, borderRadius: 9,
+                          background: '#ea4335', color: '#fff', fontSize: 10, fontWeight: 800,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          padding: '0 4px', border: '2px solid var(--ws-bg)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          animation: 'popBadge 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}>
+                          <style>{`@keyframes popBadge { from { transform: scale(0); } to { transform: scale(1); } }`}</style>
+                          {item.unread > 99 ? '99+' : item.unread}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: item.unread > 0 ? 800 : 500, color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.isGroup ? `#${item.name}` : item.name}
+                        </span>
+                        <span style={{ fontSize: 11, color: item.unread > 0 ? '#ea4335' : 'var(--ws-text-muted)', fontWeight: item.unread > 0 ? 600 : 400, flexShrink: 0, marginLeft: 6 }}>{formatSidebarTime(item.time)}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: item.unread > 0 ? 'var(--ws-text)' : 'var(--ws-text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: item.unread > 0 ? 600 : 400 }}>
+                        {item.preview}
+                      </p>
+                    </div>
+                  </button>
+                  <div style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}>
+                    <button onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', color: 'var(--ws-text-muted)', fontSize: 16 }}>⋮</button>
+                    {showMenuId === `${item.type}-${item.id}` && (
+                      <>
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 100 }} onClick={(e) => toggleMenu(e, `${item.type}-${item.id}`)} />
+                        <div style={{ position: 'absolute', right: 0, top: 24, background: 'var(--ws-surface)', border: '1px solid var(--ws-border)', borderRadius: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 101, minWidth: 120, padding: 4 }}>
+                          <button onClick={(e) => { e.stopPropagation(); onArchiveChat?.(item.id, item.type); setShowMenuId(null); }} style={{ width: '100%', padding: '8px 12px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: 'var(--ws-text)', cursor: 'pointer', borderRadius: 4 }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>Archive Chat</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </>
         )}
       </div>
     </div>
