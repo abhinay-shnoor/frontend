@@ -539,17 +539,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
       const shouldNotify = currentStatusRef.current === 'active' && !msgIsArchived && (!isViewingCurrentChat || !isFocused);
 
       if (shouldNotify) {
-        let notificationShown = null;
         if (msgIsLocked) {
-          notificationShown = showNotification('Secure Message', { body: 'Unlock chat to view message details', icon: '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
-          if (!notificationShown) {
-            showToast('New secure message received', 'info');
-          }
+          showNotification('Secure Message', { body: 'Unlock chat to view message details', icon: '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          showToast('New secure message received', 'info');
         } else {
-          notificationShown = showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
-          if (!notificationShown) {
-            showToast(`New message from ${msg.sender_name}: ${content.substring(0, 35)}${content.length > 35 ? '...' : ''}`, 'info');
-          }
+          showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+          showToast(`New message from ${msg.sender_name}: ${content.substring(0, 35)}${content.length > 35 ? '...' : ''}`, 'info');
         }
       }
     });
