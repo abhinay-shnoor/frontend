@@ -256,7 +256,7 @@ export default function ConversationList({
               </div>
             ) : (
               archivedList.map(item => (
-                <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
+                <div key={`${item.type}-${item.id}`} style={{ position: 'relative', zIndex: showMenuId === `${item.type}-${item.id}` ? 10 : 'auto' }}>
                   <button onClick={() => onSelectConversation(item)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
@@ -323,7 +323,7 @@ export default function ConversationList({
               </div>
             ) : (
               lockedList.map(item => (
-                <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
+                <div key={`${item.type}-${item.id}`} style={{ position: 'relative', zIndex: showMenuId === `${item.type}-${item.id}` ? 10 : 'auto' }}>
                   <button onClick={() => onSelectConversation(item)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
@@ -387,7 +387,7 @@ export default function ConversationList({
               </div>
             ) : (
               activeChats.map(item => (
-                <div key={`${item.type}-${item.id}`} style={{ position: 'relative' }}>
+                <div key={`${item.type}-${item.id}`} style={{ position: 'relative', zIndex: showMenuId === `${item.type}-${item.id}` ? 10 : 'auto' }}>
                   <button onClick={() => onSelectConversation(item)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px',
