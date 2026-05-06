@@ -103,6 +103,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleStatusChange = (status, expiry = null) => {
+    if (Notification.permission === 'default') {
+      requestNotificationPermission().catch(() => {});
+    }
     setCurrentStatus(status);
     setCurrentDndExpiry(expiry);
     emitStatusChange(status, user?.id);
@@ -538,6 +541,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   }));
 
   const handleSelectSpace = async (space) => {
+    if (Notification.permission === 'default') {
+      requestNotificationPermission().catch(() => {});
+    }
     if (isPinRequired(space.id, 'space')) {
       setPendingSelection({ type: 'space', item: space });
       setShowVerifyModal(true);
@@ -550,6 +556,9 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   };
 
   const handleSelectDM = (dmUser) => {
+    if (Notification.permission === 'default') {
+      requestNotificationPermission().catch(() => {});
+    }
     if (isPinRequired(dmUser.id, 'dm')) {
       setPendingSelection({ type: 'dm', item: dmUser });
       setShowVerifyModal(true);
