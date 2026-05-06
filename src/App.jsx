@@ -94,12 +94,14 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const [showPinSetupModal, setShowPinSetupModal] = useState(false);
 
   const isChatLocked = (chatId, chatType) => {
-    return lockedChats.some(c => c.chat_id === chatId && c.chat_type === chatType);
+    if (!chatId) return false;
+    return lockedChats.some(c => c.chat_id?.toString() === chatId.toString() && c.chat_type === chatType);
   };
 
   const isPinRequired = (chatId, chatType) => {
+    if (!chatId) return false;
     return isChatLocked(chatId, chatType) &&
-           !tempUnlockedChats.some(c => c.id === chatId && c.type === chatType);
+           !tempUnlockedChats.some(c => c.id?.toString() === chatId.toString() && c.type === chatType);
   };
 
   const handleStatusChange = (status, expiry = null) => {
@@ -165,10 +167,12 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
   const activeSpaceRef = useRef(activeSpace);
   const activeDMRef = useRef(activeDM);
   const archivedChatsRef = useRef(archivedChats);
+  const lockedChatsRef = useRef(lockedChats);
   useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
   useEffect(() => { activeSpaceRef.current = activeSpace; }, [activeSpace]);
   useEffect(() => { activeDMRef.current = activeDM; }, [activeDM]);
   useEffect(() => { archivedChatsRef.current = archivedChats; }, [archivedChats]);
+  useEffect(() => { lockedChatsRef.current = lockedChats; }, [lockedChats]);
 
   const currentStatusRef = useRef(currentStatus);
   useEffect(() => { currentStatusRef.current = currentStatus; }, [currentStatus]);
@@ -497,9 +501,18 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
 
       const content = msg.content || msg.text || (msg.attachments?.length ? 'Attachment' : '');
 
-      const isArchived = (id, type) => archivedChatsRef.current.some(a => a.chat_id === id && a.chat_type === type);
+      const isArchived = (id, type) => {
+        if (!id) return false;
+        return archivedChatsRef.current.some(a => a.chat_id?.toString() === id.toString() && a.chat_type === type);
+      };
+      const isLocked = (id, type) => {
+        if (!id) return false;
+        return lockedChatsRef.current.some(c => c.chat_id?.toString() === id.toString() && c.chat_type === type);
+      };
       const msgIsArchived = (msg.space_id && isArchived(msg.space_id, 'space')) || 
                             (msg.conversation_id && msg.sender_id && isArchived(msg.sender_id, 'dm'));
+      const msgIsLocked = (msg.space_id && isLocked(msg.space_id, 'space')) || 
+                          (msg.conversation_id && msg.sender_id && isLocked(msg.sender_id, 'dm'));
 
       if (msg.space_id && !msgIsArchived) {
         if (activeViewRef.current !== 'space' || activeSpaceRef.current?.id !== msg.space_id) {
@@ -522,7 +535,11 @@ function ChatApp({ onSignOut, onOpenAdmin }) {
          (msg.space_id ? activeSpaceRef.current?.id !== msg.space_id : activeDMRef.current?.id !== msg.sender_id)) || !isFocused);
 
       if (shouldNotify) {
-        showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+        if (msgIsLocked) {
+          showNotification('Secure Message', { body: 'Unlock chat to view message details', icon: '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+        } else {
+          showNotification(msg.sender_name, { body: content, icon: msg.avatar_url || '/shnoor-logo.png', tag: msg.space_id ? `space_${msg.space_id}` : `dm_${msg.sender_id}` });
+        }
       }
     });
     return cleanup;

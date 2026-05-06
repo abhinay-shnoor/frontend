@@ -57,9 +57,9 @@ export default function ConversationList({
     filtered = filtered.filter(i => i.name.toLowerCase().includes(q) || i.preview?.toLowerCase().includes(q));
   }
 
-  const isArchived = (item) => archivedChats.some(a => a.chat_id === item.id && a.chat_type === item.type);
-  const isLocked = (item) => (lockedChats || []).some(c => c.chat_id === item.id && c.chat_type === item.type);
-  const isTempUnlocked = (item) => (tempUnlockedChats || []).some(c => c.id === item.id && c.type === item.type);
+  const isArchived = (item) => archivedChats.some(a => a.chat_id?.toString() === item.id?.toString() && a.chat_type === item.type);
+  const isLocked = (item) => (lockedChats || []).some(c => c.chat_id?.toString() === item.id?.toString() && c.chat_type === item.type);
+  const isTempUnlocked = (item) => (tempUnlockedChats || []).some(c => c.id?.toString() === item.id?.toString() && c.type === item.type);
 
   const activeChats = filtered.filter(i => !isArchived(i) && !isLocked(i));
   const archivedList = filtered.filter(i => isArchived(i) && !isLocked(i));
