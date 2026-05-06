@@ -132,9 +132,18 @@ export default function ConversationList({
               </svg>
             </button>
           )}
-          <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>
-            {showArchivedOnly ? 'Archived Chats' : 'Home'}
-          </h2>
+          {showArchivedOnly ? (
+            <h2 style={{ fontSize: 20, fontWeight: 500, color: 'var(--ws-text)', margin: 0 }}>
+              Archived Chats
+            </h2>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text)', padding: '4px 0' }} title="Home">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </div>
+          )}
           {!showArchivedOnly && (() => {
             const otherCount = onlineUsers ? (onlineUsers.has(currentUserId) ? onlineUsers.size - 1 : onlineUsers.size) : 0;
             if (otherCount <= 0) return null;
