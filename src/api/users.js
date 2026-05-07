@@ -15,8 +15,8 @@ export const getDMMessages = (userId, before = null) => {
 export const sendDMMessage = (userId, content, parentMessageId = null, attachments = [], isForwarded = false) =>
   api.post(`/api/dm/${userId}/messages`, { content, parent_message_id: parentMessageId, attachments, is_forwarded: isForwarded }).then(r => r.data);
 
-export const updateMyProfile = (name) =>
-  api.patch('/api/users/me', { name }).then(r => r.data);
+export const updateMyProfile = (data) =>
+  api.patch('/api/users/me', data).then(r => r.data);
 
 // Old base64 avatar — kept for compatibility but new code uses uploadAvatarToCloud
 export const updateMyAvatar = (avatar) =>

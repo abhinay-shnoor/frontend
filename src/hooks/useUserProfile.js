@@ -20,9 +20,9 @@ export function useUserProfile() {
 
   const saveProfile = async (updated) => {
     try {
-      const freshUser = await updateMyProfile(updated.name);
+      const freshUser = await updateMyProfile(updated);
       // Update the auth context so the navbar reflects the change immediately
-      setUser(prev => ({ ...prev, name: freshUser.name }));
+      setUser(prev => ({ ...prev, ...freshUser }));
     } catch (err) {
       console.error('Failed to save profile:', err);
       throw err;

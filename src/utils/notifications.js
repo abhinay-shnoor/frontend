@@ -58,8 +58,7 @@ export const showNotification = (title, options = {}) => {
     return notification;
   } catch (error) {
     console.error('[Notification] Error creating standard HTML5 notification:', error);
-    
-    // Fallback to Service Worker registration if available
+
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then((registration) => {
         registration.showNotification(title, {

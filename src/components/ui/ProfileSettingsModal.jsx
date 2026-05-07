@@ -8,17 +8,27 @@ export default function ProfileSettingsModal({ onClose }) {
   const { user, setUser } = useAuth();
   const { showToast }     = useToast();
 
-  const [displayName,   setDisplayName]   = useState(user?.name || '');
-  const [profileImage,  setProfileImage]  = useState(user?.avatar_url || null);
-  const [pendingFile,   setPendingFile]   = useState(null); // the actual File object
-  const [saving,        setSaving]        = useState(false);
+  const [displayName,    setDisplayName]    = useState(user?.name || '');
+  const [profileImage,   setProfileImage]   = useState(user?.avatar_url || null);
+  const [pendingFile,    setPendingFile]    = useState(null); // the actual File object
+  const [contactNo,      setContactNo]      = useState(user?.contact_no || '');
+  const [alternateEmail, setAlternateEmail] = useState(user?.alternate_email || '');
+  const [department,     setDepartment]     = useState(user?.department || '');
+  const [designation,    setDesignation]    = useState(user?.designation || '');
+  const [saving,         setSaving]         = useState(false);
+
   const fileInputRef = useRef(null);
   const modalRef     = useRef(null);
 
   const initials     = (user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  const hasNameChange  = displayName.trim() !== user?.name;
+  const hasNameChange  = displayName.trim() !== (user?.name || '');
   const hasAvatarChange = pendingFile !== null;
-  const hasChanges     = hasNameChange || hasAvatarChange;
+  const hasContactNoChange = contactNo.trim() !== (user?.contact_no || '');
+  const hasAlternateEmailChange = alternateEmail.trim() !== (user?.alternate_email || '');
+  const hasDepartmentChange = department.trim() !== (user?.department || '');
+  const hasDesignationChange = designation.trim() !== (user?.designation || '');
+
+  const hasChanges = hasNameChange || hasAvatarChange || hasContactNoChange || hasAlternateEmailChange || hasDepartmentChange || hasDesignationChange;
 
   useEffect(() => {
     const onKey     = (e) => { if (e.key === 'Escape') onClose(); };
@@ -42,23 +52,45 @@ export default function ProfileSettingsModal({ onClose }) {
   const handleSave = async () => {
     if (!displayName.trim()) return showToast('Name is required', 'error');
     if (displayName.trim().length < 2) return showToast('Name must be at least 2 characters', 'error');
+    if (alternateEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alternateEmail.trim())) {
+      return showToast('Please enter a valid alternate email', 'error');
+    }
+
     setSaving(true);
     try {
       let updatedUser = { ...user };
-      if (hasNameChange) {
-        const result = await updateMyProfile(displayName.trim());
-        updatedUser = { ...updatedUser, name: result.name };
+      const hasTextChanges = hasNameChange || hasContactNoChange || hasAlternateEmailChange || hasDepartmentChange || hasDesignationChange;
+      
+      if (hasTextChanges) {
+        const result = await updateMyProfile({
+          name: displayName.trim(),
+          contact_no: contactNo.trim() || null,
+          alternate_email: alternateEmail.trim() || null,
+          department: department.trim() || null,
+          designation: designation.trim() || null
+        });
+        updatedUser = { 
+          ...updatedUser, 
+          name: result.name,
+          contact_no: result.contact_no,
+          alternate_email: result.alternate_email,
+          department: result.department,
+          designation: result.designation
+        };
       }
+      
       if (hasAvatarChange) {
-        // Upload to Cloudinary via the backend endpoint
+        // Upload to Cloudinary or Local storage via the backend endpoint
         const result = await uploadAvatarToCloud(pendingFile);
         updatedUser = { ...updatedUser, avatar_url: result.avatar_url };
       }
+      
       setUser(updatedUser);
-      showToast('Profile saved', 'success');
+      showToast('Profile saved successfully', 'success');
       onClose();
     } catch (err) {
-      showToast('Failed to save profile. Check Cloudinary credentials in .env if changing photo.', 'error');
+      console.error('Failed to save profile:', err);
+      showToast('Failed to save profile. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -75,7 +107,7 @@ export default function ProfileSettingsModal({ onClose }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ws-text-muted)', fontSize: 18 }}>✕</button>
         </div>
 
-        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: 20, maxHeight: '65vh', overflowY: 'auto' }}>
           {/* Photo */}
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Profile Photo</label>
@@ -97,7 +129,7 @@ export default function ProfileSettingsModal({ onClose }) {
                 <button onClick={() => fileInputRef.current?.click()} style={{ padding: '7px 14px', border: '0.5px solid var(--ws-border)', borderRadius: 8, fontSize: 13, cursor: 'pointer', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}>
                   Change Photo
                 </button>
-                <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>Uploaded to Cloudinary. Max 5MB.</p>
+                <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>Uploaded dynamically. Max 5MB.</p>
                 {hasAvatarChange && (
                   <button onClick={() => { setPendingFile(null); setProfileImage(user?.avatar_url || null); }} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                     Remove change
@@ -119,13 +151,57 @@ export default function ProfileSettingsModal({ onClose }) {
             <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: '5px 0 0' }}>Visible to everyone in the workspace.</p>
           </div>
 
+          {/* Contact number */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Contact Number</label>
+            <input type="text" value={contactNo} onChange={e => setContactNo(e.target.value)}
+              placeholder="+1 (555) 000-0000"
+              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 9, fontSize: 14, color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)' }}
+              onFocus={e => e.target.style.borderColor = '#0D9488'}
+              onBlur={e => e.target.style.borderColor = 'var(--ws-border)'}
+            />
+          </div>
+
+          {/* Alternate email */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Alternate Email</label>
+            <input type="email" value={alternateEmail} onChange={e => setAlternateEmail(e.target.value)}
+              placeholder="alternate@email.com"
+              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 9, fontSize: 14, color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)' }}
+              onFocus={e => e.target.style.borderColor = '#0D9488'}
+              onBlur={e => e.target.style.borderColor = 'var(--ws-border)'}
+            />
+          </div>
+
+          {/* Department */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Department</label>
+            <input type="text" value={department} onChange={e => setDepartment(e.target.value)}
+              placeholder="Engineering, Design, Operations, etc."
+              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 9, fontSize: 14, color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)' }}
+              onFocus={e => e.target.style.borderColor = '#0D9488'}
+              onBlur={e => e.target.style.borderColor = 'var(--ws-border)'}
+            />
+          </div>
+
+          {/* Designation */}
+          <div>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Designation</label>
+            <input type="text" value={designation} onChange={e => setDesignation(e.target.value)}
+              placeholder="Lead Engineer, Product Manager, etc."
+              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 9, fontSize: 14, color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', background: 'var(--ws-bg)' }}
+              onFocus={e => e.target.style.borderColor = '#0D9488'}
+              onBlur={e => e.target.style.borderColor = 'var(--ws-border)'}
+            />
+          </div>
+
           {/* Email (readonly) */}
           <div>
-            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Email Address</label>
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Primary Email Address</label>
             <input type="email" value={user?.email || ''} readOnly
               style={{ width: '100%', padding: '10px 12px', border: '0.5px solid var(--ws-border)', borderRadius: 9, fontSize: 14, color: 'var(--ws-text-muted)', background: 'var(--ws-surface)', cursor: 'default', boxSizing: 'border-box' }}
             />
-            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: '5px 0 0' }}>Contact your admin to change this.</p>
+            <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: '5px 0 0' }}>Primary login email (cannot be modified).</p>
           </div>
         </div>
 
