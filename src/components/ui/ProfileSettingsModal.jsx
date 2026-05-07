@@ -16,6 +16,7 @@ export default function ProfileSettingsModal({ onClose }) {
   const [department,     setDepartment]     = useState(user?.department || '');
   const [designation,    setDesignation]    = useState(user?.designation || '');
   const [saving,         setSaving]         = useState(false);
+  const [imgError,       setImgError]       = useState(false);
 
   const fileInputRef = useRef(null);
   const modalRef     = useRef(null);
@@ -43,6 +44,7 @@ export default function ProfileSettingsModal({ onClose }) {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'error'); return; }
     setPendingFile(file);
+    setImgError(false); // Reset image error state on new photo select
     // Show local preview immediately
     const reader = new FileReader();
     reader.onloadend = () => setProfileImage(reader.result);
@@ -113,8 +115,8 @@ export default function ProfileSettingsModal({ onClose }) {
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: 'var(--ws-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Profile Photo</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div onClick={() => fileInputRef.current?.click()} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--ws-border)' }} />
+                {profileImage && !imgError ? (
+                  <img src={profileImage} alt="Profile" onError={() => setImgError(true)} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--ws-border)' }} />
                 ) : (
                   <Avatar initials={initials} color="#0D9488" size={64} />
                 )}
@@ -131,7 +133,7 @@ export default function ProfileSettingsModal({ onClose }) {
                 </button>
                 <p style={{ fontSize: 11, color: 'var(--ws-text-muted)', margin: 0 }}>Uploaded dynamically. Max 5MB.</p>
                 {hasAvatarChange && (
-                  <button onClick={() => { setPendingFile(null); setProfileImage(user?.avatar_url || null); }} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+                  <button onClick={() => { setPendingFile(null); setProfileImage(user?.avatar_url || null); setImgError(false); }} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                     Remove change
                   </button>
                 )}

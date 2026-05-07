@@ -1,13 +1,18 @@
+import { useState } from 'react';
+
 // Shows a real profile photo if avatarUrl is provided, falls back to an initials circle.
 // Every place that renders a user's avatar should pass avatarUrl so photos show up
 // as soon as the user has uploaded one.
 export default function Avatar({ initials, color, size = 32, avatarUrl, statusColor }) {
+  const [imgError, setImgError] = useState(false);
+
   const renderAvatar = () => {
-    if (avatarUrl) {
+    if (avatarUrl && !imgError) {
       return (
         <img
           src={avatarUrl}
           alt={initials || "User"}
+          onError={() => setImgError(true)}
           style={{
             width: size,
             height: size,
